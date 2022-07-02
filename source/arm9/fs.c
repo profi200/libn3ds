@@ -226,7 +226,7 @@ Result fReadDir(DHandle h, FILINFO *const fi, u32 num, u32 *const entriesRead)
 
 	u32 i;
 	DIR *const dir = &g_fsState.dTable[h];
-	Result res;
+	Result res = RES_OK;
 	for(i = 0; i < num; i++)
 	{
 		res = fres2Res(f_readdir(dir, &fi[i]));

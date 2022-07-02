@@ -164,14 +164,15 @@ void IRQ_registerIsr(Interrupt id, u8 prio, u8 cpuMask, IrqIsr isr)
 
 	// Priority
 	GicDist *const gicDist = getGicDistRegs();
+	const u32 idx = id / 4;
 	u32 shift = (id % 4 * 8) + 4;
-	u32 tmp = gicDist->pri[id / 4] & ~(0xFu<<shift);
-	gicDist->pri[id / 4] = tmp | (u32)prio<<shift;
+	u32 tmp = gicDist->pri[idx] & ~(0xFu<<shift);
+	gicDist->pri[idx] = tmp | (u32)prio<<shift;
 
 	// Target
 	shift = id % 4 * 8;
-	tmp = gicDist->target[id / 4] & ~(0xFu<<shift);
-	gicDist->target[id / 4] = tmp | (u32)cpuMask<<shift;
+	tmp = gicDist->target[idx] & ~(0xFu<<shift);
+	gicDist->target[idx] = tmp | (u32)cpuMask<<shift;
 
 	// Enable it.
 	gicDist->enable_set[id / 32] = 1u<<(id % 32);
@@ -199,9 +200,10 @@ void IRQ_setPriority(Interrupt id, u8 prio)
 	const u32 oldState = enterCriticalSection();
 
 	GicDist *const gicDist = getGicDistRegs();
+	const u32 idx = id / 4;
 	const u32 shift = (id % 4 * 8) + 4;
-	u32 tmp = gicDist->pri[id / 4] & ~(0xFu<<shift);
-	gicDist->pri[id / 4] = tmp | (u32)prio<<shift;
+	u32 tmp = gicDist->pri[idx] & ~(0xFu<<shift);
+	gicDist->pri[idx] = tmp | (u32)prio<<shift;
 
 	leaveCriticalSection(oldState);
 }

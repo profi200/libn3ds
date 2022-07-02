@@ -52,7 +52,7 @@ Result fsQuickWrite(const char *const path, const void *const buf, u32 size)
 		closeRes = fClose(f);
 	}
 
-	return (res != RES_OK ? res : closeRes);;
+	return (res != RES_OK ? res : closeRes);
 }
 
 Result fsMakePath(const char *const path)
