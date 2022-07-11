@@ -86,7 +86,7 @@ enum
 typedef struct
 {
 	ToshsdPort port;
-	u8 devType;      // Device type. 0 = none, 1 = (e)MMC, 2 = High capacity (e)MMC,
+	u8 type;         // Device type. 0 = none, 1 = (e)MMC, 2 = High capacity (e)MMC,
 	                 // 3 = SDSC, 4 = SDHC/SDXC, 5 = SDUC.
 	u8 wrProt;       // Write protection bits. Each bit 1 = protected.
 	                 // Bit 0 SD card slider, bit 1 temporary write protection (CSD),
@@ -445,7 +445,7 @@ u32 SDMMC_init(const u8 devNum)
 	if(devNum > SDMMC_MAX_DEV_NUM) return SDMMC_ERR_INVAL_PARAM;
 
 	SdmmcDev *const dev = &g_devs[devNum];
-	if(dev->devType != DEV_TYPE_NONE) return SDMMC_ERR_INITIALIZED;
+	if(dev->type != DEV_TYPE_NONE) return SDMMC_ERR_INITIALIZED;
 
 	// Check SD card write protection slider.
 	if(devNum == SDMMC_DEV_CARD)
@@ -496,8 +496,8 @@ u32 SDMMC_init(const u8 devNum)
 	res = initTranState(dev, devType, rca, spec_vers);
 	if(res != 0) return res;
 
-	// Only set devType on successful init.
-	dev->devType = devType;
+	// Only set dev type on successful init.
+	dev->type = devType;
 
 	return SDMMC_ERR_NONE;
 }
@@ -525,7 +525,7 @@ u32 SDMMC_exportDevState(const u8 devNum, u8 devOut[60])
 
 	// Check if the device is initialized.
 	const SdmmcDev *const dev = &g_devs[devNum];
-	if(dev->devType == DEV_TYPE_NONE) return SDMMC_ERR_NO_CARD;
+	if(dev->type == DEV_TYPE_NONE) return SDMMC_ERR_NO_CARD;
 
 	memcpy(devOut, dev, 60);
 
@@ -541,7 +541,7 @@ u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[60])
 
 	// Check if the device is initialized.
 	SdmmcDev *const dev = &g_devs[devNum];
-	if(dev->devType != DEV_TYPE_NONE) return SDMMC_ERR_INITIALIZED;
+	if(dev->type != DEV_TYPE_NONE) return SDMMC_ERR_INITIALIZED;
 
 	memcpy(dev, devIn, 60);
 
@@ -559,7 +559,7 @@ u32 SDMMC_getDevInfo(const u8 devNum, SdmmcInfo *const infoOut)
 	const SdmmcDev *const dev = &g_devs[devNum];
 	const ToshsdPort *const port = &dev->port;
 
-	infoOut->type    = dev->devType;
+	infoOut->type    = dev->type;
 	infoOut->wrProt  = dev->wrProt;
 	infoOut->rca     = dev->rca;
 	infoOut->sectors = dev->sectors;
@@ -583,11 +583,26 @@ u32 SDMMC_getCid(const u8 devNum, u32 cidOut[4])
 	return SDMMC_ERR_NONE;
 }
 
-u8 SDMMC_getWriteProtBits(const u8 devNum)
+#include "fatfs/ff.h"     // Needed for the "byte" type used in diskio.h.
+#include "fatfs/diskio.h"
+u8 SDMMC_getDiskStatus(const u8 devNum)
 {
-	if(devNum > SDMMC_MAX_DEV_NUM) return 0xFF;
+	if(devNum > SDMMC_MAX_DEV_NUM) return STA_NODISK | STA_NOINIT;
 
-	return g_devs[devNum].wrProt;
+	u8 status = 0;
+	if(devNum == SDMMC_DEV_CARD)
+		status = (TOSHSD_cardDetected() == true ? 0 : STA_NODISK | STA_NOINIT);
+
+	const SdmmcDev *const dev = &g_devs[devNum];
+	status |= (dev->wrProt != 0 ? STA_PROTECT : 0);
+	if(dev->type == DEV_TYPE_NONE)
+		status |= STA_NOINIT;
+
+	// "Not valid if STA_NODISK is set."
+	/*if(status & STA_NODISK)
+		status &= ~STA_PROTECT;*/
+
+	return status;
 }
 
 u32 SDMMC_getSectors(const u8 devNum)
@@ -606,7 +621,7 @@ u32 SDMMC_readSectors(const u8 devNum, u32 sect, u32 *const buf, const u16 count
 
 	// Check if the device is initialized.
 	SdmmcDev *const dev = &g_devs[devNum];
-	const u8 devType = dev->devType;
+	const u8 devType = dev->type;
 	if(devType == DEV_TYPE_NONE) return SDMMC_ERR_NO_CARD;
 
 	// Set destination buffer and sector count.
@@ -632,7 +647,7 @@ u32 SDMMC_writeSectors(const u8 devNum, u32 sect, const u32 *const buf, const u1
 
 	// Check if the device is initialized.
 	SdmmcDev *const dev = &g_devs[devNum];
-	const u8 devType = dev->devType;
+	const u8 devType = dev->type;
 	if(devType == DEV_TYPE_NONE) return SDMMC_ERR_NO_CARD;
 
 	// Check if the device is write protected.

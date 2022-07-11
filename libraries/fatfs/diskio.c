@@ -27,10 +27,7 @@ DSTATUS disk_status (
 {
 	(void)pdrv;
 
-	// TODO: On hotswap the old write protection bits are stuck which may cause issues.
-	// TODO: SDMMC_getWriteProtBits() --> SDMMC_getStatus()?
-	return (SDMMC_getWriteProtBits(SDMMC_DEV_CARD) != 0 ? STA_PROTECT : 0) |
-	       (TOSHSD_cardDetected() == true ? 0 : (STA_NODISK | STA_NOINIT));
+	return SDMMC_getDiskStatus(SDMMC_DEV_CARD);
 }
 
 

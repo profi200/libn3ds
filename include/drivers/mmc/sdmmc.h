@@ -141,14 +141,13 @@ u32 SDMMC_getDevInfo(const u8 devNum, SdmmcInfo *const infoOut);
 u32 SDMMC_getCid(const u8 devNum, u32 cidOut[4]);
 
 /**
- * @brief      Returns the write protection bits of a (e)MMC/SD card device.
+ * @brief      Returns the DSTATUS bits of a (e)MMC/SD card device. See FatFs diskio.h.
  *
  * @param[in]  devNum  The device.
  *
- * @return     Returns the write protection bits or 0xFF on failure.
- *             See SDMMC_WR_PROT_ defines above for details.
+ * @return     Returns the DSTATUS bits or STA_NODISK | STA_NOINIT on failure.
  */
-u8 SDMMC_getWriteProtBits(const u8 devNum);
+u8 SDMMC_getDiskStatus(const u8 devNum);
 
 /**
  * @brief      Outputs the number of sectors for a (e)MMC/SD card device.
