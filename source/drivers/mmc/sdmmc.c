@@ -18,8 +18,8 @@
 
 #include <string.h>
 #include "drivers/mmc/sdmmc.h" // Includes types.h.
-#include "drivers/toshsd.h"
-#include "drivers/toshsd_config.h"
+#include "drivers/tmio.h"
+#include "drivers/tmio_config.h"
 #ifdef _3DS
 #ifdef ARM9
 #include "arm9/drivers/timer.h"
@@ -46,10 +46,10 @@
 #ifdef ARM9
 // TODO: Use a timer instead? The delay is only ~283 µs at ~261 kHz though.
 // ARM9 timer clock = controller clock. CPU is x2 timer clock.
-#define INIT_DELAY_FUNC()  wait_cycles(2 * TOSHSD_CLK2DIV(INIT_CLOCK) * 74)
+#define INIT_DELAY_FUNC()  wait_cycles(2 * TMIO_CLK2DIV(INIT_CLOCK) * 74)
 #elif ARM11
 // ARM11 timer is x2 controller clock.
-#define INIT_DELAY_FUNC()  TIMER_sleepTicks(2 * TOSHSD_CLK2DIV(INIT_CLOCK) * 74)
+#define INIT_DELAY_FUNC()  TIMER_sleepTicks(2 * TMIO_CLK2DIV(INIT_CLOCK) * 74)
 #endif // #ifdef ARM9
 
 #define SLEEP_MS_FUNC(ms)  TIMER_sleepMs(ms)
@@ -59,7 +59,7 @@
 // ARM7 timer clock = controller clock = CPU clock.
 // swiDelay() doesn't seem to be cycle accurate meaning
 // one cycle is 4 (?) CPU cycles.
-#define INIT_DELAY_FUNC()  swiDelay(TOSHSD_CLK2DIV(INIT_CLOCK) * 74 / 4)
+#define INIT_DELAY_FUNC()  swiDelay(TMIO_CLK2DIV(INIT_CLOCK) * 74 / 4)
 #define SLEEP_MS_FUNC(ms)  swiDelay(8378 * (ms))
 #endif // #ifdef _3DS
 
@@ -85,18 +85,18 @@ enum
 
 typedef struct
 {
-	ToshsdPort port;
-	u8 type;         // Device type. 0 = none, 1 = (e)MMC, 2 = High capacity (e)MMC,
-	                 // 3 = SDSC, 4 = SDHC/SDXC, 5 = SDUC.
-	u8 wrProt;       // Write protection bits. Each bit 1 = protected.
-	                 // Bit 0 SD card slider, bit 1 temporary write protection (CSD),
-	                 // bit 2 permanent write protection (CSD).
-	u16 rca;         // Relative Card Address (RCA).
-	u16 ccc;         // (e)MMC/SD command class support from CSD. One per bit starting at 0.
-	u32 sectors;     // Size in 512 byte units.
+	TmioPort port;
+	u8 type;       // Device type. 0 = none, 1 = (e)MMC, 2 = High capacity (e)MMC,
+	               // 3 = SDSC, 4 = SDHC/SDXC, 5 = SDUC.
+	u8 wrProt;     // Write protection bits. Each bit 1 = protected.
+	               // Bit 0 SD card slider, bit 1 temporary write protection (CSD),
+	               // bit 2 permanent write protection (CSD).
+	u16 rca;       // Relative Card Address (RCA).
+	u16 ccc;       // (e)MMC/SD command class support from CSD. One per bit starting at 0.
+	u32 sectors;   // Size in 512 byte units.
 
 	// Cached card infos.
-	u32 cid[4];      // Raw CID without the CRC.
+	u32 cid[4];    // Raw CID without the CRC.
 } SdmmcDev;
 
 static SdmmcDev g_devs[2] = {0};
@@ -104,27 +104,27 @@ static SdmmcDev g_devs[2] = {0};
 
 
 // R1 status in port->resp[0].
-/*static u32 sendCardStatus(ToshsdPort *const port, u32 rca)
+/*static u32 sendCardStatus(TmioPort *const port, u32 rca)
 {
 	// Same CMD for (e)MMC/SD but the argument format differs slightly.
-	return TOSHSD_sendCommand(port, MMC_SEND_STATUS, rca);
+	return TMIO_sendCommand(port, MMC_SEND_STATUS, rca);
 }*/
 
-static u32 sendAppCmd(ToshsdPort *const port, const u16 cmd, const u32 arg, const u32 rca)
+static u32 sendAppCmd(TmioPort *const port, const u16 cmd, const u32 arg, const u32 rca)
 {
 	// Send app CMD. Same CMD for (e)MMC/SD.
 	// TODO: Check the APP_CMD bit in the response?
 	//       Linux does it but is it really necessary? SD spec 4.3.9.1.
-	u32 res = TOSHSD_sendCommand(port, MMC_APP_CMD, rca);
+	u32 res = TMIO_sendCommand(port, MMC_APP_CMD, rca);
 	if(res == 0)
 	{
-		res = TOSHSD_sendCommand(port, cmd, arg);
+		res = TMIO_sendCommand(port, cmd, arg);
 	}
 
 	return res;
 }
 
-static u32 goIdleState(ToshsdPort *const port)
+static u32 goIdleState(TmioPort *const port)
 {
 	// Enter idle state before we start the init procedure.
 	// Works from all but inactive state. CMD is the same for (e)MMC/SD.
@@ -132,17 +132,17 @@ static u32 goIdleState(ToshsdPort *const port)
 	// arg = 0x00000000 -> GO_IDLE_STATE.
 	// arg = 0xF0F0F0F0 -> GO_PRE_IDLE_STATE.
 	// arg = 0xFFFFFFFA -> BOOT_INITIATION.
-	u32 res = TOSHSD_sendCommand(port, MMC_GO_IDLE_STATE, 0);
+	u32 res = TMIO_sendCommand(port, MMC_GO_IDLE_STATE, 0);
 	if(res != 0) return SDMMC_ERR_GO_IDLE_STATE;
 
 	return SDMMC_ERR_NONE;
 }
 
-static u32 initIdleState(ToshsdPort *const port, u8 *const devTypeOut)
+static u32 initIdleState(TmioPort *const port, u8 *const devTypeOut)
 {
 	// Tell the card what interfaces and voltages we support.
 	// Only SD v2 and up will respond. (e)MMC won't respond.
-	u32 res = TOSHSD_sendCommand(port, SD_SEND_IF_COND, SD_IF_COND_ARG);
+	u32 res = TMIO_sendCommand(port, SD_SEND_IF_COND, SD_IF_COND_ARG);
 	if(res == 0)
 	{
 		// If the card supports the interfaces and voltages
@@ -170,7 +170,7 @@ static u32 initIdleState(ToshsdPort *const port, u8 *const devTypeOut)
 		u32 ocr;
 		while(1)
 		{
-			res = TOSHSD_sendCommand(port, MMC_SEND_OP_COND, MMC_OP_COND_ARG);
+			res = TMIO_sendCommand(port, MMC_SEND_OP_COND, MMC_OP_COND_ARG);
 			if(res != 0) return SDMMC_ERR_SEND_OP_COND;
 
 			ocr = port->resp[0];
@@ -222,12 +222,12 @@ static u32 initIdleState(ToshsdPort *const port, u8 *const devTypeOut)
 
 static u32 initReadyState(SdmmcDev *const dev)
 {
-	ToshsdPort *const port = &dev->port;
+	TmioPort *const port = &dev->port;
 
 	// SD card voltage switch sequence goes here if supported.
 
 	// Get the CID. CMD is the same for (e)MMC/SD.
-	u32 res = TOSHSD_sendCommand(port, MMC_ALL_SEND_CID, 0);
+	u32 res = TMIO_sendCommand(port, MMC_ALL_SEND_CID, 0);
 	if(res != 0) return SDMMC_ERR_ALL_SEND_CID;
 	memcpy(dev->cid, port->resp, 16);
 
@@ -236,14 +236,14 @@ static u32 initReadyState(SdmmcDev *const dev)
 
 static u32 initIdentState(SdmmcDev *const dev, const u8 devType, u32 *const rcaOut)
 {
-	ToshsdPort *const port = &dev->port;
+	TmioPort *const port = &dev->port;
 
 	u32 rca;
 	if(devType < DEV_TYPE_SDSC) // (e)MMC.
 	{
 		// Set the RCA of the (e)MMC to 1. 0 is reserved.
 		// The RCA is in the upper 16 bits of the argument.
-		u32 res = TOSHSD_sendCommand(port, MMC_SET_RELATIVE_ADDR, 1u<<16);
+		u32 res = TMIO_sendCommand(port, MMC_SET_RELATIVE_ADDR, 1u<<16);
 		if(res != 0) return SDMMC_ERR_SET_SEND_RCA;
 
 		rca = 1;
@@ -251,7 +251,7 @@ static u32 initIdentState(SdmmcDev *const dev, const u8 devType, u32 *const rcaO
 	else // SD card.
 	{
 		// Ask the SD card to send its RCA.
-		u32 res = TOSHSD_sendCommand(port, SD_SEND_RELATIVE_ADDR, 0);
+		u32 res = TMIO_sendCommand(port, SD_SEND_RELATIVE_ADDR, 0);
 		if(res != 0) return SDMMC_ERR_SET_SEND_RCA;
 
 		rca = port->resp[0]>>16; // RCA in upper 16 bits.
@@ -320,16 +320,16 @@ static void parseCsd(SdmmcDev *const dev, const u8 devType, u8 *const spec_vers_
 
 static u32 initStandbyState(SdmmcDev *const dev, const u8 devType, const u32 rca, u8 *const spec_vers_out)
 {
-	ToshsdPort *const port = &dev->port;
+	TmioPort *const port = &dev->port;
 
 	// Get the CSD. CMD is the same for (e)MMC/SD.
-	u32 res = TOSHSD_sendCommand(port, MMC_SEND_CSD, rca);
+	u32 res = TMIO_sendCommand(port, MMC_SEND_CSD, rca);
 	if(res != 0) return SDMMC_ERR_SEND_CSD;
 	parseCsd(dev, devType, spec_vers_out);
 
 	// Select card and switch to transfer state.
 	const u16 selCardCmd = (devType < DEV_TYPE_SDSC ? MMC_SELECT_CARD : SD_SELECT_CARD);
-	res = TOSHSD_sendCommand(port, selCardCmd, rca);
+	res = TMIO_sendCommand(port, selCardCmd, rca);
 	if(res != 0) return SDMMC_ERR_SELECT_CARD;
 
 	// The SD card spec mentions that we should check the lock bit in the
@@ -342,11 +342,11 @@ static u32 initStandbyState(SdmmcDev *const dev, const u8 devType, const u32 rca
 	return SDMMC_ERR_NONE;
 }
 
-// TODO: Set the timeout based on clock speed (Toshsd uses SDCLK for timeouts).
-//       The toshsd driver sets a sane default but we should calculate it anyway.
+// TODO: Set the timeout based on clock speed (Tmio uses SDCLK for timeouts).
+//       The tmio driver sets a sane default but we should calculate it anyway.
 static u32 initTranState(SdmmcDev *const dev, const u8 devType, const u32 rca, const u8 spec_vers)
 {
-	ToshsdPort *const port = &dev->port;
+	TmioPort *const port = &dev->port;
 
 	if(devType < DEV_TYPE_SDSC) // (e)MMC.
 	{
@@ -362,16 +362,16 @@ static u32 initTranState(SdmmcDev *const dev, const u8 devType, const u32 rca, c
 #ifndef TWL
 			// Switch to high speed timing (max. 52 MHz).
 			const u32 hsArg = MMC_SWITCH_ARG(MMC_SWITCH_ACC_WR_BYTE, EXT_CSD_HS_TIMING, 1, 0);
-			res = TOSHSD_sendCommand(port, MMC_SWITCH, hsArg);
+			res = TMIO_sendCommand(port, MMC_SWITCH, hsArg);
 			if(res != 0) return SDMMC_ERR_SWITCH_HS;
-			TOSHSD_setClock(port, HS_CLOCK);
+			TMIO_setClock(port, HS_CLOCK);
 #endif
 
 			// Switch to 4 bit bus mode.
 			const u32 busWidthArg = MMC_SWITCH_ARG(MMC_SWITCH_ACC_WR_BYTE, EXT_CSD_BUS_WIDTH, 1, 0);
-			res = TOSHSD_sendCommand(port, MMC_SWITCH, busWidthArg);
+			res = TMIO_sendCommand(port, MMC_SWITCH, busWidthArg);
 			if(res != 0) return SDMMC_ERR_SET_BUS_WIDTH;
-			TOSHSD_setBusWidth(port, 4);
+			TMIO_setBusWidth(port, 4);
 
 			// We should also check in the EXT_CSD the power budget for the card.
 			// Nintendo seems to leave it on default (no change).
@@ -381,8 +381,8 @@ static u32 initTranState(SdmmcDev *const dev, const u8 devType, const u32 rca, c
 				// Note: The EXT_CSD is normally read before touching HS timing and bus width.
 				//       We can take advantage of the faster data transfer with this order.
 				alignas(4) u8 ext_csd[512];
-				TOSHSD_setBuffer(port, (u32*)ext_csd, 1);
-				res = TOSHSD_sendCommand(port, MMC_SEND_EXT_CSD, 0);
+				TMIO_setBuffer(port, (u32*)ext_csd, 1);
+				res = TMIO_sendCommand(port, MMC_SEND_EXT_CSD, 0);
 				if(res != 0) return SDMMC_ERR_SEND_EXT_CSD;
 
 				// Get sector count from EXT_CSD only if sector addressing is used because
@@ -401,28 +401,28 @@ static u32 initTranState(SdmmcDev *const dev, const u8 devType, const u32 rca, c
 		// Switch to 4 bit bus mode.
 		res = sendAppCmd(port, SD_APP_SET_BUS_WIDTH, 2, rca); // arg = 2 is 4 bit bus width.
 		if(res != 0) return SDMMC_ERR_SET_BUS_WIDTH;
-		TOSHSD_setBusWidth(port, 4);
+		TMIO_setBusWidth(port, 4);
 
 #ifndef TWL
 		if(dev->ccc & 1u<<10) // Class 10 command support.
 		{
 			// Set 64 bytes block length for SWITCH_FUNC status.
-			TOSHSD_setBlockLen(port, 64);
+			TMIO_setBlockLen(port, 64);
 
 			alignas(4) u8 switchStat[64]; // MSB first and big endian.
-			TOSHSD_setBuffer(port, (u32*)switchStat, 1);
+			TMIO_setBuffer(port, (u32*)switchStat, 1);
 			const u32 arg = SD_SWITCH_FUNC_ARG(1, 0xF, 0xF, 0xF, 1);
-			res = TOSHSD_sendCommand(port, SD_SWITCH_FUNC, arg);
+			res = TMIO_sendCommand(port, SD_SWITCH_FUNC, arg);
 			if(res != 0) return SDMMC_ERR_SWITCH_HS;
 
 			// Restore default 512 bytes block length.
-			TOSHSD_setBlockLen(port, 512);
+			TMIO_setBlockLen(port, 512);
 
 			// [415:400] Support Bits of Functions in Function Group 1.
 			if(switchStat[63u - 400 / 8] & 1u<<1) // Is group 1, function 1 "High-Speed" supported?
 			{
 				// High-Speed (max. 50 MHz at 3.3V) supported. Switch to highest supported clock.
-				TOSHSD_setClock(port, HS_CLOCK);
+				TMIO_setClock(port, HS_CLOCK);
 			}
 		}
 #endif
@@ -437,7 +437,7 @@ static u32 initTranState(SdmmcDev *const dev, const u8 devType, const u32 rca, c
 
 ALWAYS_INLINE u8 dev2portNum(const u8 devNum)
 {
-	return (devNum == SDMMC_DEV_eMMC ? TOSHSD_eMMC_PORT : TOSHSD_CARD_PORT);
+	return (devNum == SDMMC_DEV_eMMC ? TMIO_eMMC_PORT : TMIO_CARD_PORT);
 }
 
 u32 SDMMC_init(const u8 devNum)
@@ -449,12 +449,12 @@ u32 SDMMC_init(const u8 devNum)
 
 	// Check SD card write protection slider.
 	if(devNum == SDMMC_DEV_CARD)
-		dev->wrProt = !TOSHSD_cardWritable();
+		dev->wrProt = !TMIO_cardWritable();
 
 	// Init port, enable clock output and wait 74 clocks.
-	ToshsdPort *const port = &dev->port;
-	TOSHSD_initPort(port, dev2portNum(devNum));
-	TOSHSD_startInitClock(port, INIT_CLOCK); // Continuous init clock.
+	TmioPort *const port = &dev->port;
+	TMIO_initPort(port, dev2portNum(devNum));
+	TMIO_startInitClock(port, INIT_CLOCK); // Continuous init clock.
 	INIT_DELAY_FUNC();
 
 	u32 res = goIdleState(port);
@@ -466,7 +466,7 @@ u32 SDMMC_init(const u8 devNum)
 	if(res != 0) return res;
 
 	// Stop clock at idle, init clock.
-	TOSHSD_setClock(port, INIT_CLOCK);
+	TMIO_setClock(port, INIT_CLOCK);
 
 	// (e)MMC/SD now in ready state (ready).
 	res = initReadyState(dev);
@@ -486,7 +486,7 @@ u32 SDMMC_init(const u8 devNum)
 	// Since the absolute minimum clock rate is 20 MHz and we are in push-pull
 	// mode already can we cheat and switch to <=20 MHz before getting the CSD?
 	// Note: This seems to be working just fine in all tests.
-	TOSHSD_setClock(port, DEFAULT_CLOCK);
+	TMIO_setClock(port, DEFAULT_CLOCK);
 
 	u8 spec_vers;
 	res = initStandbyState(dev, devType, rca, &spec_vers);
@@ -537,7 +537,7 @@ u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[60])
 	if(devNum > SDMMC_MAX_DEV_NUM) return SDMMC_ERR_INVAL_PARAM;
 
 	// Make sure there is a card inserted.
-	if(devNum == SDMMC_DEV_CARD && !TOSHSD_cardDetected()) return SDMMC_ERR_NO_CARD;
+	if(devNum == SDMMC_DEV_CARD && !TMIO_cardDetected()) return SDMMC_ERR_NO_CARD;
 
 	// Check if the device is initialized.
 	SdmmcDev *const dev = &g_devs[devNum];
@@ -546,7 +546,7 @@ u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[60])
 	memcpy(dev, devIn, 60);
 
 	// Update write protection slider state just in case.
-	dev->wrProt |= !TOSHSD_cardWritable();
+	dev->wrProt |= !TMIO_cardWritable();
 
 	return SDMMC_ERR_NONE;
 }
@@ -557,7 +557,7 @@ u32 SDMMC_getDevInfo(const u8 devNum, SdmmcInfo *const infoOut)
 	if(devNum > SDMMC_MAX_DEV_NUM) return SDMMC_ERR_INVAL_PARAM;
 
 	const SdmmcDev *const dev = &g_devs[devNum];
-	const ToshsdPort *const port = &dev->port;
+	const TmioPort *const port = &dev->port;
 
 	infoOut->type    = dev->type;
 	infoOut->wrProt  = dev->wrProt;
@@ -565,7 +565,7 @@ u32 SDMMC_getDevInfo(const u8 devNum, SdmmcInfo *const infoOut)
 	infoOut->sectors = dev->sectors;
 
 	const u32 clkSetting = port->sd_clk_ctrl & 0xFFu;
-	infoOut->clock       = TOSHSD_HCLK / (clkSetting ? clkSetting<<2 : 2);
+	infoOut->clock       = TMIO_HCLK / (clkSetting ? clkSetting<<2 : 2);
 
 	memcpy(infoOut->cid, dev->cid, 16);
 	infoOut->ccc      = dev->ccc;
@@ -591,7 +591,7 @@ u8 SDMMC_getDiskStatus(const u8 devNum)
 
 	u8 status = 0;
 	if(devNum == SDMMC_DEV_CARD)
-		status = (TOSHSD_cardDetected() == true ? 0 : STA_NODISK | STA_NOINIT);
+		status = (TMIO_cardDetected() == true ? 0 : STA_NODISK | STA_NOINIT);
 
 	const SdmmcDev *const dev = &g_devs[devNum];
 	status |= (dev->wrProt != 0 ? STA_PROTECT : 0);
@@ -625,14 +625,14 @@ u32 SDMMC_readSectors(const u8 devNum, u32 sect, u32 *const buf, const u16 count
 	if(devType == DEV_TYPE_NONE) return SDMMC_ERR_NO_CARD;
 
 	// Set destination buffer and sector count.
-	ToshsdPort *const port = &dev->port;
-	TOSHSD_setBuffer(port, buf, count);
+	TmioPort *const port = &dev->port;
+	TMIO_setBuffer(port, buf, count);
 
 	// Read a single 512 bytes block. Same CMD for (e)MMC/SD.
 	// Read multiple 512 bytes blocks. Same CMD for (e)MMC/SD.
 	const u16 cmd = (count == 1 ? MMC_READ_SINGLE_BLOCK : MMC_READ_MULTIPLE_BLOCK);
 	if(devType == DEV_TYPE_MMC || devType == DEV_TYPE_SDSC) sect *= 512; // Byte addressing.
-	const u32 res = TOSHSD_sendCommand(port, cmd, sect);
+	const u32 res = TMIO_sendCommand(port, cmd, sect);
 	if(res != 0) return SDMMC_ERR_SECT_RW; // TODO: In case of errors check the card status.
 
 	return SDMMC_ERR_NONE;
@@ -654,14 +654,14 @@ u32 SDMMC_writeSectors(const u8 devNum, u32 sect, const u32 *const buf, const u1
 	if(dev->wrProt != 0) return SDMMC_ERR_WRITE_PROT;
 
 	// Set source buffer and sector count.
-	ToshsdPort *const port = &dev->port;
-	TOSHSD_setBuffer(port, (u32*)buf, count);
+	TmioPort *const port = &dev->port;
+	TMIO_setBuffer(port, (u32*)buf, count);
 
 	// Write a single 512 bytes block. Same CMD for (e)MMC/SD.
 	// Write multiple 512 bytes blocks. Same CMD for (e)MMC/SD.
 	const u16 cmd = (count == 1 ? MMC_WRITE_BLOCK : MMC_WRITE_MULTIPLE_BLOCK);
 	if(devType == DEV_TYPE_MMC || devType == DEV_TYPE_SDSC) sect *= 512; // Byte addressing.
-	const u32 res = TOSHSD_sendCommand(port, cmd, sect);
+	const u32 res = TMIO_sendCommand(port, cmd, sect);
 	if(res != 0) return SDMMC_ERR_SECT_RW; // TODO: In case of errors check the card status.
 
 	return SDMMC_ERR_NONE;

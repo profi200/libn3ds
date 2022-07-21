@@ -20,7 +20,7 @@
 
 // Based on SD specification version 8.00.
 
-#include "drivers/toshsd.h"
+#include "drivers/tmio.h"
 
 
 // Controller specific macros. Add controller specific bits here.

@@ -20,7 +20,7 @@
 
 // Based on JEDEC eMMC Card Product Standard V4.41.
 
-#include "drivers/toshsd.h"
+#include "drivers/tmio.h"
 
 
 // Controller specific macros. Add controller specific bits here.

@@ -15,9 +15,10 @@ enum
 	SDIO_ERR_SELECT_CARD      =  6u, // SELECT_CARD CMD error.
 	SDIO_ERR_INVALID_ARG      =  7u, // Invalid function argument(s).
 	SDIO_ERR_IO_RW_DIRECT     =  8u, // IO_RW_DIRECT CMD error.
-	SDIO_ERR_R5_ERROR         =  9u, // SDIO R5 ERROR bit set in response.
-	SDIO_ERR_R5_INVALID_FUNC  = 10u, // SDIO R5 FUNCTION_NUMBER bit set in response.
-	SDIO_ERR_R5_OUT_OF_RANGE  = 11u  // SDIO R5 OUT_OF_RANGE bit set in response.
+	SDIO_ERR_IO_RW_EXTENDED   =  9u, // IO_RW_EXTENDED CMD error.
+	SDIO_ERR_R5_ERROR         = 10u, // SDIO R5 ERROR bit set in response.
+	SDIO_ERR_R5_INVALID_FUNC  = 11u, // SDIO R5 FUNCTION_NUMBER bit set in response.
+	SDIO_ERR_R5_OUT_OF_RANGE  = 12u  // SDIO R5 OUT_OF_RANGE bit set in response.
 };
 
 
@@ -25,7 +26,7 @@ enum
 u32 SDIO_init(void);
 u32 SDIO_reset(void);
 u32 SDIO_io_rw_direct(const bool write, const u8 func, const u32 addr, const u8 in, u8 *const out);
-
+u32 SDIO_io_rw_extended(const bool write, const u8 func, const u32 addr, const bool incAddr, u8 *buf, const u16 count, const u16 size);
 u8 SDIO_readReg8(const u8 func, const u32 addr);
 u32 SDIO_writeReg8(const u8 func, const u32 addr, const u8 in);
 u8 SDIO_writeReadReg8(const u8 func, const u32 addr, const u8 in);

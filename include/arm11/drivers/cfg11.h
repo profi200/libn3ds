@@ -83,8 +83,8 @@ ALWAYS_INLINE Cfg11* getCfg11Regs(void)
 #define CDMA_CNT_NTRCARD_EN     (1u<<1)
 #define CDMA_CNT_CAM1_EN        (1u<<2)
 #define CDMA_CNT_CAM2_EN        (1u<<3)
-#define CDMA_CNT_TOSHSD2_EN     (1u<<4) // WiFi
-#define CDMA_CNT_TOSHSD3_EN     (1u<<5)
+#define CDMA_CNT_TMIO2_EN       (1u<<4) // WiFi
+#define CDMA_CNT_TMIO3_EN       (1u<<5)
 
 // REG_CFG11_GPUPROT
 // When the lower FCRAM protection is set to non-zero,

@@ -62,10 +62,10 @@ typedef enum
 	IRQ_CDMA_FAULT    =  57u, // Old3DS CDMA.
 	IRQ_CDMA2_EVENT   =  58u, // New3DS-only CDMA event 0-31.
 	IRQ_CDMA2_FAULT   =  59u, // New3DS-only CDMA.
-	IRQ_TOSHSD2       =  64u, // Toshsd 2 SDIO controller (WiFi).
-	IRQ_TOSHSD2_IRQ   =  65u, // Toshsd 2 SDIO IRQ pin (WiFi).
-	IRQ_TOSHSD3       =  66u, // Toshsd 3 SDIO controller.
-	IRQ_TOSHSD3_IRQ   =  67u, // Toshsd 3 SDIO IRQ pin.
+	IRQ_TMIO2         =  64u, // Tmio 2 SDIO controller (WiFi).
+	IRQ_TMIO2_IRQ     =  65u, // Tmio 2 SDIO IRQ pin (WiFi).
+	IRQ_TMIO3         =  66u, // Tmio 3 SDIO controller.
+	IRQ_TMIO3_IRQ     =  67u, // Tmio 3 SDIO IRQ pin.
 	IRQ_NTRCARD       =  68u, // NTRCARD controller.
 	IRQ_L2B1          =  69u, // New3DS-only first L2B converter.
 	IRQ_L2B2          =  70u, // New3DS-only second L2B converter.

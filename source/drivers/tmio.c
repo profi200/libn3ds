@@ -18,8 +18,8 @@
 
 #include <stdatomic.h>
 #include "types.h"
-#include "drivers/toshsd.h"
-#include "drivers/toshsd_config.h"
+#include "drivers/tmio.h"
+#include "drivers/tmio_config.h"
 
 
 // Using atomic load/store produces better code than volatile
@@ -44,10 +44,10 @@ ALWAYS_INLINE u8 port2Controller(const u8 portNum)
 	return portNum / 2;
 }
 
-static void toshsdIsr(const u32 id)
+static void tmioIsr(const u32 id)
 {
-	const u8 controller = (id == TOSHSD_IRQ_ID_CONTROLLER1 ? 0 : 1);
-	Toshsd *const regs = getToshsdRegs(controller);
+	const u8 controller = (id == TMIO_IRQ_ID_CONTROLLER1 ? 0 : 1);
+	Tmio *const regs = getTmioRegs(controller);
 
 	g_status[controller] |= regs->sd_status;
 	regs->sd_status = STATUS_CMD_BUSY; // Never acknowledge STATUS_CMD_BUSY.
@@ -55,20 +55,20 @@ static void toshsdIsr(const u32 id)
 	// TODO: Some kind of event to notify the main loop for remove/insert.
 }
 
-void TOSHSD_init(void)
+void TMIO_init(void)
 {
-	// Do controller and port mapping (see toshsd_config.h).
-	TOSHSD_MAP_CONTROLLERS();
+	// Do controller and port mapping (see tmio_config.h).
+	TMIO_MAP_CONTROLLERS();
 
 	// Register ISR and enable IRQs.
 	// IRQs are only fired on the side a controller is mapped to.
-	TOSHSD_REGISTER_ISR(toshsdIsr);
+	TMIO_REGISTER_ISR(tmioIsr);
 
 	// Reset all controllers.
-	for(u32 i = 0; i < TOSHSD_NUM_CONTROLLERS; i++)
+	for(u32 i = 0; i < TMIO_NUM_CONTROLLERS; i++)
 	{
 		// Setup 32 bit FIFO.
-		Toshsd *const regs = getToshsdRegs(i);
+		Tmio *const regs = getTmioRegs(i);
 		regs->sd_fifo32_cnt   = FIFO32_CLEAR | FIFO32_EN;
 		regs->sd_blocklen32   = 512;
 		regs->sd_blockcount32 = 1;
@@ -97,16 +97,16 @@ void TOSHSD_init(void)
 	}
 }
 
-void TOSHSD_deinit(void)
+void TMIO_deinit(void)
 {
 	// Unregister ISR and disable IRQs.
-	TOSHSD_UNREGISTER_ISR();
+	TMIO_UNREGISTER_ISR();
 
 	// Mask all IRQs.
-	for(u32 i = 0; i < TOSHSD_NUM_CONTROLLERS; i++)
+	for(u32 i = 0; i < TMIO_NUM_CONTROLLERS; i++)
 	{
 		// 32 bit FIFO IRQs.
-		Toshsd *const regs = getToshsdRegs(i);
+		Tmio *const regs = getTmioRegs(i);
 		regs->sd_fifo32_cnt = 0; // FIFO and all IRQs disabled/masked.
 
 		// Regular IRQs.
@@ -116,11 +116,11 @@ void TOSHSD_deinit(void)
 		regs->sdio_status_mask = SDIO_STATUS_MASK_ALL;
 	}
 
-	// Reset controller and port mapping (see toshsd_config.h).
-	TOSHSD_UNMAP_CONTROLLERS();
+	// Reset controller and port mapping (see tmio_config.h).
+	TMIO_UNMAP_CONTROLLERS();
 }
 
-void TOSHSD_initPort(ToshsdPort *const port, const u8 portNum)
+void TMIO_initPort(TmioPort *const port, const u8 portNum)
 {
 	// Reset port state.
 	port->portNum     = portNum;
@@ -130,7 +130,7 @@ void TOSHSD_initPort(ToshsdPort *const port, const u8 portNum)
 }
 
 // TODO: What if we get rid of setPort() and only use one port per controller?
-static void setPort(Toshsd *const regs, const ToshsdPort *const port)
+static void setPort(Tmio *const regs, const TmioPort *const port)
 {
 	// TODO: Can we somehow prevent all these reg writes each time?
 	//       Maybe some kind of dirty flag + active port check?
@@ -142,27 +142,27 @@ static void setPort(Toshsd *const regs, const ToshsdPort *const port)
 	regs->sd_blocklen32 = blocklen;
 }
 
-bool TOSHSD_cardDetected(void)
+bool TMIO_cardDetected(void)
 {
-	return getToshsdRegs(port2Controller(TOSHSD_CARD_PORT))->sd_status & STATUS_DETECT;
+	return getTmioRegs(port2Controller(TMIO_CARD_PORT))->sd_status & STATUS_DETECT;
 }
 
-bool TOSHSD_cardWritable(void)
+bool TMIO_cardWritable(void)
 {
-	return getToshsdRegs(port2Controller(TOSHSD_CARD_PORT))->sd_status & STATUS_NO_WRPROT;
+	return getTmioRegs(port2Controller(TMIO_CARD_PORT))->sd_status & STATUS_NO_WRPROT;
 }
 
 // TODO: This might be a little dodgy not using setPort() before changing clock.
 //       It's fine as long as only one port is used per controller
 //       and there is no concurrent access to it.
-void TOSHSD_startInitClock(ToshsdPort *const port, const u32 clk)
+void TMIO_startInitClock(TmioPort *const port, const u32 clk)
 {
-	const u16 sd_clk_ctrl = SD_CLK_EN | TOSHSD_CLK2DIV(clk)>>2;
+	const u16 sd_clk_ctrl = SD_CLK_EN | TMIO_CLK2DIV(clk)>>2;
 	port->sd_clk_ctrl = sd_clk_ctrl;
-	getToshsdRegs(port2Controller(port->portNum))->sd_clk_ctrl = sd_clk_ctrl;
+	getTmioRegs(port2Controller(port->portNum))->sd_clk_ctrl = sd_clk_ctrl;
 }
 
-static void getResponse(const Toshsd *const regs, ToshsdPort *const port, const u16 cmd)
+static void getResponse(const Tmio *const regs, TmioPort *const port, const u16 cmd)
 {
 	// We could check for response type none as well but it's not worth it.
 	if((cmd & CMD_RESP_MASK) != CMD_RESP_R2)
@@ -184,11 +184,11 @@ static void getResponse(const Toshsd *const regs, ToshsdPort *const port, const 
 // Note: Using STATUS_DATA_END to detect transfer end doesn't work reliably
 //       because STATUS_DATA_END fires before we even read anything on
 //       single block read transfer.
-static void doCpuTransfer(Toshsd *const regs, const u16 cmd, u32 *buf, const u32 *const statusPtr)
+static void doCpuTransfer(Tmio *const regs, const u16 cmd, u32 *buf, const u32 *const statusPtr)
 {
 	const u32 wordBlockLen = regs->sd_blocklen / 4;
 	u32 blockCount         = regs->sd_blockcount;
-	vu32 *const fifo = getToshsdFifo(regs);
+	vu32 *const fifo = getTmioFifo(regs);
 	if(cmd & CMD_DIR_R)
 	{
 		do
@@ -233,10 +233,10 @@ static void doCpuTransfer(Toshsd *const regs, const u16 cmd, u32 *buf, const u32
 	}
 }
 
-u32 TOSHSD_sendCommand(ToshsdPort *const port, const u16 cmd, const u32 arg)
+u32 TMIO_sendCommand(TmioPort *const port, const u16 cmd, const u32 arg)
 {
 	const u8 controller = port2Controller(port->portNum);
-	Toshsd *const regs = getToshsdRegs(controller);
+	Tmio *const regs = getTmioRegs(controller);
 
 	// Clear status before sending another command.
 	u32 *const statusPtr = &g_status[controller];

@@ -21,7 +21,7 @@
 #include "arm9/drivers/timer.h"
 #include "arm9/drivers/ndma.h"
 #include "drivers/corelink_dma-330.h"
-#include "drivers/toshsd.h"
+#include "drivers/tmio.h"
 #include "drivers/pxi.h"
 
 
@@ -33,13 +33,13 @@ void WEAK __systemInit(void)
 	TIMER_init();
 	NDMA_init();
 	DMA330_init();
-	TOSHSD_init();
+	TMIO_init();
 	PXI_init();
 }
 
 void WEAK __systemDeinit(void)
 {
-	TOSHSD_deinit();
+	TMIO_deinit();
 	DMA330_init();
 	NDMA_init();
 	IRQ_init();

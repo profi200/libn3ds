@@ -1,7 +1,7 @@
 #include "drivers/gfx.h"
 #include "arm11/console.h"
 #include "arm11/drivers/timer.h"
-#include "drivers/toshsd.h"
+#include "drivers/tmio.h"
 #include "arm11/fmt.h"
 #include "arm11/drivers/hid.h"
 #include "drivers/mmc/sdmmc.h"
@@ -63,7 +63,7 @@ int main(void)
 	consoleInit(SCREEN_BOT, NULL);
 
 	TIMER_sleepMs(1000);
-	TOSHSD_init();
+	TMIO_init();
 
 	ee_puts("Insert SD/MMC and press A.");
 	while(1)
@@ -77,7 +77,7 @@ int main(void)
 		}
 
 		ee_printf("\x1b[1;0H\x1b[0J\x1b[1;0H");
-		ee_printf("Card inserted: %u\n", TOSHSD_cardDetected());
+		ee_printf("Card inserted: %u\n", TMIO_cardDetected());
 		u32 tries = 3;
 		u32 initRes;
 		do

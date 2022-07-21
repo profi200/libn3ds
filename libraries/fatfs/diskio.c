@@ -10,7 +10,7 @@
 #include "ff.h"			/* Obtains integer types */
 #include "diskio.h"		/* Declarations of disk functions */
 #include "types.h"
-#include "drivers/toshsd.h"
+#include "drivers/tmio.h"
 #include "drivers/mmc/sdmmc.h"
 #include "arm9/drivers/ndma.h"
 #include "drivers/cache.h"
@@ -69,11 +69,11 @@ DRESULT disk_read (
 		flushDCacheRange(buff, 512 * count);
 
 		NdmaCh *const ndmaCh = getNdmaChRegs(5);
-		ndmaCh->sad  = (u32)getToshsdFifo(getToshsdRegs(1)); // TODO: SDMMC dev to FIFO function.
+		ndmaCh->sad  = (u32)getTmioFifo(getTmioRegs(1)); // TODO: SDMMC dev to FIFO function.
 		ndmaCh->dad  = (u32)buff;
 		ndmaCh->wcnt = 512 / 4;
 		ndmaCh->bcnt = NDMA_FASTEST;
-		ndmaCh->cnt  = NDMA_EN | NDMA_START_TOSHSD3 | NDMA_REPEAT_MODE |
+		ndmaCh->cnt  = NDMA_EN | NDMA_START_TMIO3 | NDMA_REPEAT_MODE |
 		               NDMA_BURST(64 / 4) | NDMA_SAD_FIX | NDMA_DAD_INC;
 
 		do
@@ -123,10 +123,10 @@ DRESULT disk_write (
 
 		NdmaCh *const ndmaCh = getNdmaChRegs(5);
 		ndmaCh->sad  = (u32)buff;
-		ndmaCh->dad  = (u32)getToshsdFifo(getToshsdRegs(1)); // TODO: SDMMC dev to FIFO function.
+		ndmaCh->dad  = (u32)getTmioFifo(getTmioRegs(1)); // TODO: SDMMC dev to FIFO function.
 		ndmaCh->wcnt = 512 / 4;
 		ndmaCh->bcnt = NDMA_FASTEST;
-		ndmaCh->cnt  = NDMA_EN | NDMA_START_TOSHSD3 | NDMA_REPEAT_MODE |
+		ndmaCh->cnt  = NDMA_EN | NDMA_START_TMIO3 | NDMA_REPEAT_MODE |
 		               NDMA_BURST(64 / 4) | NDMA_SAD_INC | NDMA_DAD_FIX;
 
 		do

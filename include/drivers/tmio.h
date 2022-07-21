@@ -8,21 +8,21 @@
 // The real controller number is in the comment.
 #ifdef _3DS
 #ifdef ARM9
-#define TOSHSD1_REGS_BASE (0x10006000u) // Controller 1.
-#define TOSHSD2_REGS_BASE (0x10007000u) // Controller 3. Remappable.
+#define TMIO1_REGS_BASE (0x10006000u) // Controller 1.
+#define TMIO2_REGS_BASE (0x10007000u) // Controller 3. Remappable.
 #elif ARM11
-#define TOSHSD1_REGS_BASE (0x10122000u) // Controller 2.
-#define TOSHSD2_REGS_BASE (0x10100000u) // Controller 3. Remappable.
+#define TMIO1_REGS_BASE (0x10122000u) // Controller 2.
+#define TMIO2_REGS_BASE (0x10100000u) // Controller 3. Remappable.
 #endif // #ifdef ARM9
 
-#define TOSHSD_HCLK       (67027964u) // In Hz.
+#define TMIO_HCLK       (67027964u) // In Hz.
 
 #elif TWL
 
-#define TOSHSD1_REGS_BASE (0x04004800u) // Controller 1.
-#define TOSHSD2_REGS_BASE (0x04004A00u) // Controller 2.
+#define TMIO1_REGS_BASE (0x04004800u) // Controller 1.
+#define TMIO2_REGS_BASE (0x04004A00u) // Controller 2.
 
-#define TOSHSD_HCLK       (33513982u) // In Hz.
+#define TMIO_HCLK       (33513982u) // In Hz.
 #endif // #ifdef _3DS
 
 typedef struct
@@ -65,15 +65,15 @@ typedef struct
 	vu16 sd_blockcount32;     // 0x108
 	u8 _0x10a[2];
 	vu32 sd_fifo32;           // 0x10C Note: This is in the FIFO region on ARM11 (3DS).
-} Toshsd;
-static_assert(offsetof(Toshsd, sd_fifo32) == 0x10C, "Error: Member sd_fifo32 of Toshsd is not at offset 0x10C!");
+} Tmio;
+static_assert(offsetof(Tmio, sd_fifo32) == 0x10C, "Error: Member sd_fifo32 of Tmio is not at offset 0x10C!");
 
-ALWAYS_INLINE Toshsd* getToshsdRegs(const u8 controller)
+ALWAYS_INLINE Tmio* getTmioRegs(const u8 controller)
 {
-	return (controller == 0 ? (Toshsd*)TOSHSD1_REGS_BASE : (Toshsd*)TOSHSD2_REGS_BASE);
+	return (controller == 0 ? (Tmio*)TMIO1_REGS_BASE : (Tmio*)TMIO2_REGS_BASE);
 }
 
-ALWAYS_INLINE vu32* getToshsdFifo(Toshsd *const regs)
+ALWAYS_INLINE vu32* getTmioFifo(Tmio *const regs)
 {
 #if (_3DS && ARM11)
 	return (vu32*)((uintptr_t)regs + 0x200000); // FIFO is in the DMA region.
@@ -173,16 +173,16 @@ ALWAYS_INLINE vu32* getToshsdFifo(Toshsd *const regs)
 
 // Outputs the matching divider for clk.
 // Shift the output right by 2 to get the value for REG_SD_CLK_CTRL.
-#define TOSHSD_CLK2DIV(clk)                        \
-({                                                 \
-	u32 __shift = 1;                               \
-	while((clk) < TOSHSD_HCLK>>__shift) ++__shift; \
-	1u<<__shift;                                   \
+#define TMIO_CLK2DIV(clk)                        \
+({                                               \
+	u32 __shift = 1;                             \
+	while((clk) < TMIO_HCLK>>__shift) ++__shift; \
+	1u<<__shift;                                 \
 })
 
 // Clock off by default.
 // Nearest possible for 400 kHz is 261.827984375 kHz.
-#define SD_CLK_DEFAULT  (TOSHSD_CLK2DIV(400000)>>2)
+#define SD_CLK_DEFAULT  (TMIO_CLK2DIV(400000)>>2)
 
 // REG_SD_OPTION
 // Note on card detection time:
@@ -312,42 +312,42 @@ typedef struct
 	u16 sd_option;
 	u32 *buf;
 	u16 blocks;
-	u32 resp[4]; // Little endian, MSB first.
-} ToshsdPort;
+	u32 resp[4];     // Little endian, MSB first.
+} TmioPort;
 
 
 
 /**
- * @brief      Initializes the toshsd driver.
+ * @brief      Initializes the tmio driver.
  */
-void TOSHSD_init(void);
+void TMIO_init(void);
 
 /**
- * @brief      Deinitializes the toshsd driver.
+ * @brief      Deinitializes the tmio driver.
  */
-void TOSHSD_deinit(void);
+void TMIO_deinit(void);
 
 /**
- * @brief      Initializes a toshsd port to defaults.
+ * @brief      Initializes a tmio port to defaults.
  *
  * @param      port     A pointer to the port struct.
  * @param[in]  portNum  The port number.
  */
-void TOSHSD_initPort(ToshsdPort *const port, const u8 portNum);
+void TMIO_initPort(TmioPort *const port, const u8 portNum);
 
 /**
  * @brief      Checks if a MMC/SD card is inserted.
  *
  * @return     Returns true if a card is inserted.
  */
-bool TOSHSD_cardDetected(void);
+bool TMIO_cardDetected(void);
 
 /**
  * @brief      Checks if the write protect slider is set to locked.
  *
  * @return     Returns true if the card is unlocked.
  */
-bool TOSHSD_cardWritable(void);
+bool TMIO_cardWritable(void);
 
 /**
  * @brief      Outputs a continuous clock for initialization.
@@ -355,7 +355,7 @@ bool TOSHSD_cardWritable(void);
  * @param      port  A pointer to the port struct.
  * @param[in]  clk   The target clock in Hz. Usually 400 kHz.
  */
-void TOSHSD_startInitClock(ToshsdPort *const port, const u32 clk);
+void TMIO_startInitClock(TmioPort *const port, const u32 clk);
 
 /**
  * @brief      Sends a command.
@@ -366,54 +366,54 @@ void TOSHSD_startInitClock(ToshsdPort *const port, const u32 clk);
  *
  * @return     Returns 0 on success otherwise see REG_SD_STATUS1/2 bits.
  */
-u32 TOSHSD_sendCommand(ToshsdPort *const port, const u16 cmd, const u32 arg);
+u32 TMIO_sendCommand(TmioPort *const port, const u16 cmd, const u32 arg);
 
 /**
- * @brief      Sets the clock for a toshsd port.
+ * @brief      Sets the clock for a tmio port.
  *
  * @param      port  A pointer to the port struct.
  * @param[in]  clk   The target clock in Hz.
  */
-ALWAYS_INLINE void TOSHSD_setClock(ToshsdPort *const port, const u32 clk)
+ALWAYS_INLINE void TMIO_setClock(TmioPort *const port, const u32 clk)
 {
-	port->sd_clk_ctrl = SD_CLK_AUTO_OFF | SD_CLK_EN | TOSHSD_CLK2DIV(clk)>>2;
+	port->sd_clk_ctrl = SD_CLK_AUTO_OFF | SD_CLK_EN | TMIO_CLK2DIV(clk)>>2;
 }
 
 /**
- * @brief      Sets the transfer block length for a toshsd port.
+ * @brief      Sets the transfer block length for a tmio port.
  *
  * @param      port      A pointer to the port struct.
  * @param[in]  blockLen  The block length.
  */
-ALWAYS_INLINE void TOSHSD_setBlockLen(ToshsdPort *const port, u16 blockLen)
+ALWAYS_INLINE void TMIO_setBlockLen(TmioPort *const port, u16 blockLen)
 {
 	if(blockLen > 512)       blockLen = 512;
-	if(blockLen < 16)        blockLen = 0; // | Depends on doCpuTransfer() in toshsd.c.
+	if(blockLen < 16)        blockLen = 0; // | Depends on doCpuTransfer() in tmio.c.
 	if((blockLen % 16) != 0) blockLen = 0; // |
 
 	port->sd_blocklen = blockLen;
 }
 
 /**
- * @brief      Sets the bus width for a toshsd port.
+ * @brief      Sets the bus width for a tmio port.
  *
  * @param      port   A pointer to the port struct.
  * @param[in]  width  The bus width.
  */
-ALWAYS_INLINE void TOSHSD_setBusWidth(ToshsdPort *const port, const u8 width)
+ALWAYS_INLINE void TMIO_setBusWidth(TmioPort *const port, const u8 width)
 {
 	port->sd_option = (width == 4 ? OPTION_BUS_WIDTH4 : OPTION_BUS_WIDTH1) |
 	                  OPTION_UNK14 | OPTION_DEFAULT_TIMINGS;
 }
 
 /**
- * @brief      Sets a transfer buffer for a toshsd port.
+ * @brief      Sets a transfer buffer for a tmio port.
  *
  * @param      port    A pointer to the port struct.
  * @param      buf     The buffer pointer.
  * @param[in]  blocks  The number of blocks to transfer.
  */
-ALWAYS_INLINE void TOSHSD_setBuffer(ToshsdPort *const port, u32 *buf, const u16 blocks)
+ALWAYS_INLINE void TMIO_setBuffer(TmioPort *const port, u32 *buf, const u16 blocks)
 {
 	port->buf    = buf;
 	port->blocks = blocks;

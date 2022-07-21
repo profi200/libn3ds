@@ -38,8 +38,8 @@ enum
 	SDMMC_ERR_SEND_CSD       = 11u, // SEND_CSD CMD error.
 	SDMMC_ERR_SELECT_CARD    = 12u, // SELECT_CARD CMD error.
 	SDMMC_ERR_LOCKED         = 13u, // Card is locked with a password.
-    SDMMC_ERR_SEND_EXT_CSD   = 14u, // SEND_EXT_CSD CMD error.
-    SDMMC_ERR_SWITCH_HS      = 15u, // Error on switching to high speed mode.
+	SDMMC_ERR_SEND_EXT_CSD   = 14u, // SEND_EXT_CSD CMD error.
+	SDMMC_ERR_SWITCH_HS      = 15u, // Error on switching to high speed mode.
 	SDMMC_ERR_SET_CLR_CD     = 16u, // SET_CLR_CARD_DETECT CMD error.
 	SDMMC_ERR_SET_BUS_WIDTH  = 17u, // Error on switching to a different bus width.
 	SDMMC_ERR_SEND_STATUS    = 18u, // SEND_STATUS CMD error.
