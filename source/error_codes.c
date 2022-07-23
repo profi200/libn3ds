@@ -16,21 +16,15 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "types.h"
 #include "error_codes.h"
-#include "drivers/gfx.h"
-#ifdef ARM11
-	#include "arm11/fmt.h"
-	#include "arm11/drivers/hid.h"
-#endif
 
 
 
-#ifdef ARM11
-void printError(Result res)
+const char* result2String(Result res)
 {
-	static const char *const common[] =
+	static const char *const resultStrings[] =
 	{
+		// Common errors.
 		"OK",
 		"SD card removed",
 		"Disk full",
@@ -59,37 +53,11 @@ void printError(Result res)
 		"FatFs file locked",
 		"FatFs not enough memory",
 		"FatFs too many open objects",
-		"FatFs invalid parameter"
-	};
-	static const char *const custom[] =
-	{
-		"ROM too big. Max 32 MiB",
-		"Failed to set GBA RTC"
+		"FatFs invalid parameter",
+
+		// Lgy errors.
+		"Invalid GBA RTC time/date"
 	};
 
-	const char *const errStr = (res < CUSTOM_ERR_OFFSET ? common[res] : custom[res - CUSTOM_ERR_OFFSET]);
-	ee_printf("Error: %s.\n", errStr);
+	return (res <= MAX_LIBN3DS_RES_VALUE ? resultStrings[res] : NULL);
 }
-
-void printErrorWaitInput(Result res, u32 waitKeys)
-{
-	printError(res);
-
-	// In case we were already in the process of powering off
-	// don't do so now. Ask the user to press power again.
-	// Error messages will get lost otherwise.
-	// Do not clear the power held flag here because the system
-	// is powering off soon.
-	(void)hidGetExtraKeys(KEY_POWER);
-
-	while(1)
-	{
-		GFX_waitForVBlank0();
-
-		hidScanInput();
-
-		if(hidKeysDown() & waitKeys) break;
-		if(hidGetExtraKeys(0) & (KEY_POWER_HELD | KEY_POWER)) break;
-	}
-}
-#endif // ifdef ARM11

@@ -22,11 +22,10 @@
 
 
 #define CUSTOM_ERR_OFFSET  (200u)
-#define MAKE_CUSTOM_ERR(e) (CUSTOM_ERR_OFFSET + (e))
 
 typedef u32 Result;
 
-// Keep errors in the range of 0-255.
+// Keep errors in the range of 0-CUSTOM_ERR_OFFSET - 1.
 enum
 {
 	// Common errors.
@@ -61,16 +60,12 @@ enum
 	RES_FR_TOO_MANY_OPEN_FILES = 25u, /* (18) Number of open files > FF_FS_LOCK */
 	RES_FR_INVALID_PARAMETER   = 26u, /* (19) Given parameter is invalid */
 
-	// Custom errors.
-	RES_ROM_TOO_BIG            = MAKE_CUSTOM_ERR(0),
-	RES_GBA_RTC_ERR            = MAKE_CUSTOM_ERR(1)
+	// Lgy errors.
+	RES_GBA_RTC_ERR            = 27u,
+
+	MAX_LIBN3DS_RES_VALUE      = RES_GBA_RTC_ERR
 };
 
-#undef MAKE_CUSTOM_ERR
 
 
-
-#ifdef ARM11
-void printError(Result res);
-void printErrorWaitInput(Result res, u32 waitKeys);
-#endif
+const char* result2String(Result res);
