@@ -121,9 +121,11 @@ void sha(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEndiane
  * @brief      Hashes a single block of data with DMA and outputs the hash.
  *
  * @param[in]  data           Pointer to data to hash.
- * @param[in]  size           Size of the data to hash. Must be 64 bytes aligned.
+ * @param[in]  size           Size of the data to hash.
  * @param      hash           Pointer to memory to copy the hash to.
  * @param[in]  params         Extra parameters like endianess. See REG_SHA_CNT defines above.
  * @param[in]  hashEndianess  Endianess bitmask for the hash.
  */
-//void sha_dma(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEndianess);
+#ifdef ARM9
+void sha_dma(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEndianess);
+#endif

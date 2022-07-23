@@ -90,9 +90,9 @@ void sha(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEndiane
 	SHA_finish(hash, hashEndianess);
 }
 
-/*#ifdef ARM11
+#ifdef ARM11
 // Note: The FIFO is 64 bit capable but 64 bit is slower than 32 bit.
-SHA CDMA test prog:
+/*SHA CDMA test prog:
 # 4 bytes burst with 16 transfers. Total 64 bytes per burst.
 # Source incrementing and destination fixed.
 # Source and destination unprivileged, non-secure data access.
@@ -127,28 +127,29 @@ void sha_dma(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEnd
 	} while(DMA330_status(1)); // TODO: Use events.
 	while(sha->cnt & SHA_EN);
 	SHA_finish(hash, hashEndianess);
-}
+}*/
+
 #elif ARM9
+
+#include "arm9/drivers/ndma.h"
+#include "arm9/drivers/interrupt.h"
 void sha_dma(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEndianess)
 {
-	IRQ_registerIsr(IRQ_DMAC_1_2, NULL);
-
 	// Note: XDMA is quite a bit faster.
 	NdmaCh *const ndmaCh = getNdmaChRegs(2);
 	ndmaCh->sad  = (u32)data;
-	ndmaCh->dad  = (u32)REGs_SHA_INFIFO;
+	ndmaCh->dad  = (u32)getShaFifo(getShaRegs());
 	ndmaCh->tcnt = size / 4;
 	ndmaCh->wcnt = 64 / 4;
 	ndmaCh->bcnt = NDMA_FASTEST;
 	ndmaCh->cnt  = NDMA_EN | NDMA_IRQ_EN | NDMA_START_SHA_IN | NDMA_TCNT_MODE |
 	               NDMA_BURST(64 / 4) | NDMA_SAD_INC | NDMA_DAD_FIX;
 
-	SHA_start(params | SHA_I_DMA_E);
+	SHA_start(params | SHA_I_DMA_EN);
 	do
 	{
 		__wfi();
 	} while(ndmaCh->cnt & NDMA_EN);
-	while(REG_SHA_CNT & SHA_ENABLE);
 	SHA_finish(hash, hashEndianess);
 }
-#endif*/ // #ifdef ARM11
+#endif // #ifdef ARM11
