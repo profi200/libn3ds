@@ -1,3 +1,3 @@
-SOURCES		+=	../../libn3ds/source ../../libn3ds/source/drivers/mmc ../../libn3ds/source/drivers \
-				../../libn3ds/source/arm9 ../../libn3ds/source/arm9/drivers ../../libn3ds/libraries/fatfs
-INCLUDES	+=	../../libn3ds/include ../../libn3ds/libraries
+SOURCES		+=	../libraries/libn3ds/source ../libraries/libn3ds/source/drivers/mmc ../libraries/libn3ds/source/drivers \
+				../libraries/libn3ds/source/arm9 ../libraries/libn3ds/source/arm9/drivers ../libraries/libn3ds/libraries/fatfs
+INCLUDES	+=	../libraries/libn3ds/include ../libraries/libn3ds/libraries
