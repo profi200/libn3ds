@@ -94,6 +94,7 @@ typedef struct
 	u16 rca;       // Relative Card Address (RCA).
 	u16 ccc;       // (e)MMC/SD command class support from CSD. One per bit starting at 0.
 	u32 sectors;   // Size in 512 byte units.
+	u32 status;    // R1 card status on error. Only updated on errors.
 
 	// Cached card infos.
 	u32 cid[4];    // Raw CID without the CRC.
@@ -102,13 +103,6 @@ typedef struct
 static SdmmcDev g_devs[2] = {0};
 
 
-
-// R1 status in port->resp[0].
-/*static u32 sendCardStatus(TmioPort *const port, u32 rca)
-{
-	// Same CMD for (e)MMC/SD but the argument format differs slightly.
-	return TMIO_sendCommand(port, MMC_SEND_STATUS, rca);
-}*/
 
 static u32 sendAppCmd(TmioPort *const port, const u16 cmd, const u32 arg, const u32 rca)
 {
@@ -327,9 +321,9 @@ static u32 initStandbyState(SdmmcDev *const dev, const u8 devType, const u32 rca
 	if(res != 0) return SDMMC_ERR_SEND_CSD;
 	parseCsd(dev, devType, spec_vers_out);
 
-	// Select card and switch to transfer state.
-	const u16 selCardCmd = (devType < DEV_TYPE_SDSC ? MMC_SELECT_CARD : SD_SELECT_CARD);
-	res = TMIO_sendCommand(port, selCardCmd, rca);
+	// CMD is the same for (e)MMC/SD however both R1 and R1b responses are used.
+	// We assume R1b and hope it doesn't time out.
+	res = TMIO_sendCommand(port, MMC_SELECT_CARD, rca);
 	if(res != 0) return SDMMC_ERR_SELECT_CARD;
 
 	// The SD card spec mentions that we should check the lock bit in the
@@ -518,8 +512,8 @@ u32 SDMMC_deinit(const u8 devNum)
 
 // People should not mess with the state which is the reason
 // why the struct is not exposed directly.
-static_assert(sizeof(SdmmcDev) == 60, "Wrong SDMMC dev export/import size.");
-u32 SDMMC_exportDevState(const u8 devNum, u8 devOut[60])
+static_assert(sizeof(SdmmcDev) == 64, "Wrong SDMMC dev export/import size.");
+u32 SDMMC_exportDevState(const u8 devNum, u8 devOut[64])
 {
 	if(devNum > SDMMC_MAX_DEV_NUM) return SDMMC_ERR_INVAL_PARAM;
 
@@ -527,12 +521,12 @@ u32 SDMMC_exportDevState(const u8 devNum, u8 devOut[60])
 	const SdmmcDev *const dev = &g_devs[devNum];
 	if(dev->type == DEV_TYPE_NONE) return SDMMC_ERR_NO_CARD;
 
-	memcpy(devOut, dev, 60);
+	memcpy(devOut, dev, 64);
 
 	return SDMMC_ERR_NONE;
 }
 
-u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[60])
+u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[64])
 {
 	if(devNum > SDMMC_MAX_DEV_NUM) return SDMMC_ERR_INVAL_PARAM;
 
@@ -543,7 +537,7 @@ u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[60])
 	SdmmcDev *const dev = &g_devs[devNum];
 	if(dev->type != DEV_TYPE_NONE) return SDMMC_ERR_INITIALIZED;
 
-	memcpy(dev, devIn, 60);
+	memcpy(dev, devIn, 64);
 
 	// Update write protection slider state just in case.
 	dev->wrProt |= !TMIO_cardWritable();
@@ -612,6 +606,20 @@ u32 SDMMC_getSectors(const u8 devNum)
 	return g_devs[devNum].sectors;
 }
 
+static u32 stopTransferUpdateStatus(SdmmcDev *const dev, bool stopTransmission)
+{
+	TmioPort *const port = &dev->port;
+
+	// MMC_STOP_TRANSMISSION: Same CMD for (e)MMC/SD. Relies on the driver returning a proper response.
+	// MMC_SEND_STATUS:       Same CMD for (e)MMC/SD but the argument format differs slightly.
+	u32 res;
+	if(stopTransmission) res = TMIO_sendCommand(port, MMC_STOP_TRANSMISSION, 0);
+	else                 res = TMIO_sendCommand(port, MMC_SEND_STATUS, ((u32)dev->rca)<<16);
+	dev->status = (res == 0 ? port->resp[0] : 0); // Don't update the status with stale data.
+
+	return res;
+}
+
 // Note: On multi-block read from the last 2 sectors there are no errors reported by the controller
 //       however the R1 card status may report ADDRESS_OUT_OF_RANGE on next(?) status read.
 //       This error is normal for (e)MMC and can be ignored.
@@ -630,10 +638,19 @@ u32 SDMMC_readSectors(const u8 devNum, u32 sect, u32 *const buf, const u16 count
 
 	// Read a single 512 bytes block. Same CMD for (e)MMC/SD.
 	// Read multiple 512 bytes blocks. Same CMD for (e)MMC/SD.
-	const u16 cmd = (count == 1 ? MMC_READ_SINGLE_BLOCK : MMC_READ_MULTIPLE_BLOCK);
+	const u16 readCmd = (count == 1 ? MMC_READ_SINGLE_BLOCK : MMC_READ_MULTIPLE_BLOCK);
 	if(devType == DEV_TYPE_MMC || devType == DEV_TYPE_SDSC) sect *= 512; // Byte addressing.
-	const u32 res = TMIO_sendCommand(port, cmd, sect);
-	if(res != 0) return SDMMC_ERR_SECT_RW; // TODO: In case of errors check the card status.
+	u32 res = TMIO_sendCommand(port, readCmd, sect);
+	if(res != 0)
+	{
+		// On error in the middle of multi-block reads the card will be stuck
+		// in data state and we need to send STOP_TRANSMISSION to bring it
+		// back to tran state.
+		// Otherwise for single-block reads just update the status.
+		stopTransferUpdateStatus(dev, count > 1);
+
+		return SDMMC_ERR_SECT_RW;
+	}
 
 	return SDMMC_ERR_NONE;
 }
@@ -659,10 +676,30 @@ u32 SDMMC_writeSectors(const u8 devNum, u32 sect, const u32 *const buf, const u1
 
 	// Write a single 512 bytes block. Same CMD for (e)MMC/SD.
 	// Write multiple 512 bytes blocks. Same CMD for (e)MMC/SD.
-	const u16 cmd = (count == 1 ? MMC_WRITE_BLOCK : MMC_WRITE_MULTIPLE_BLOCK);
+	const u16 writeCmd = (count == 1 ? MMC_WRITE_BLOCK : MMC_WRITE_MULTIPLE_BLOCK);
 	if(devType == DEV_TYPE_MMC || devType == DEV_TYPE_SDSC) sect *= 512; // Byte addressing.
-	const u32 res = TMIO_sendCommand(port, cmd, sect);
-	if(res != 0) return SDMMC_ERR_SECT_RW; // TODO: In case of errors check the card status.
+	const u32 res = TMIO_sendCommand(port, writeCmd, sect);
+	if(res != 0)
+	{
+		// On error in the middle of multi-block writes the card will be stuck
+		// in data state and we need to send STOP_TRANSMISSION to bring it
+		// back to tran state.
+		// Otherwise for single-block writes just update the status.
+		stopTransferUpdateStatus(dev, count > 1);
+
+		return SDMMC_ERR_SECT_RW;
+	}
 
 	return SDMMC_ERR_NONE;
+}
+
+u32 SDMMC_getLastR1error(const u8 devNum)
+{
+	if(devNum > SDMMC_MAX_DEV_NUM) return 0;
+
+	SdmmcDev *const dev = &g_devs[devNum];
+	const u32 status = dev->status;
+	dev->status = 0;
+
+	return status;
 }

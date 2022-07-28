@@ -106,7 +106,7 @@ u32 SDMMC_deinit(const u8 devNum);
  *
  * @return     Returns SDMMC_ERR_NONE on success or SDMMC_ERR_INVAL_PARAM/SDMMC_ERR_NO_CARD on failure.
  */
-u32 SDMMC_exportDevState(const u8 devNum, u8 devOut[60]);
+u32 SDMMC_exportDevState(const u8 devNum, u8 devOut[64]);
 
 /**
  * @brief      Imports a device state for fast init (bootloaders ect.).
@@ -118,7 +118,7 @@ u32 SDMMC_exportDevState(const u8 devNum, u8 devOut[60]);
  * @return     Returns SDMMC_ERR_NONE on success or
  *             SDMMC_ERR_INVAL_PARAM/SDMMC_ERR_NO_CARD/SDMMC_ERR_INITIALIZED on failure.
  */
-u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[60]);
+u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[64]);
 
 /**
  * @brief      Outputs infos about a (e)MMC/SD card device.
@@ -183,5 +183,14 @@ u32 SDMMC_readSectors(const u8 devNum, u32 sect, u32 *const buf, const u16 count
  *             one of the errors listed above on failure.
  */
 u32 SDMMC_writeSectors(const u8 devNum, u32 sect, const u32 *const buf, const u16 count);
+
+/**
+ * @brief      Returns the R1 card status of a previously failed command for a (e)MMC/SD card device.
+ *
+ * @param[in]  devNum  The device.
+ *
+ * @return     Returns the R1 card status or 0 if there was either no command error or invalid devNum.
+ */
+u32 SDMMC_getLastR1error(const u8 devNum);
 
 // TODO: TRIM/erase support.
