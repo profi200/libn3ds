@@ -66,6 +66,9 @@ void NDMA_copy(u32 *const dst, const u32 *const src, u32 size)
 	{
 		__wfi();
 	} while(ndmaCh->cnt & NDMA_EN);
+
+	// NDMA hardware bug workaround.
+	(void)*((const vu8*)src);
 }
 
 void NDMA_fill(u32 *const dst, const u32 value, u32 size)

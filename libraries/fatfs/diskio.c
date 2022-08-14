@@ -144,6 +144,9 @@ DRESULT disk_write (
 
 		// Stop DMA.
 		ndmaCh->cnt = 0;
+
+		// NDMA hardware bug workaround.
+		(void)*((const vu8*)buff);
 	}
 	else res = RES_PARERR;
 

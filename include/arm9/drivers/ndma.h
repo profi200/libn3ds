@@ -18,6 +18,15 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * H̲a̲r̲d̲w̲a̲r̲e̲ ̲b̲u̲g̲ ̲w̲a̲r̲n̲i̲n̲g̲.̲
+ * If the source address of the NDMA transfer is within the range of VRAM start to FCRAM end (AXI bus)
+ * the ARM11 cores completely hang. This hang can only be fixed by doing a dummy read from the
+ * source address of the NDMA transfer using the ARM9 CPU.
+ * In practice this bug will cause transfer size dependent stalls of the ARM11 cores degrading
+ * performance significantly.
+ */
+
 #include <assert.h>
 #include "types.h"
 #include "mem_map.h"
