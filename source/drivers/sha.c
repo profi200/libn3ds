@@ -150,6 +150,10 @@ void sha_dma(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEnd
 	{
 		__wfi();
 	} while(ndmaCh->cnt & NDMA_EN);
+
+	// NDMA hardware bug workaround.
+	(void)*((const vu8*)data);
+
 	SHA_finish(hash, hashEndianess);
 }
 #endif // #ifdef ARM11
