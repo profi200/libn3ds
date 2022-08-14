@@ -255,20 +255,22 @@ u32 TMIO_sendCommand(TmioPort *const port, const u16 cmd, const u32 arg)
 	regs->sd_fifo32_cnt = f32Cnt;
 	regs->sd_cmd        = (blocks > 1 ? CMD_MBT | cmd : cmd); // Start.
 
-	// If we have to transfer data do so now.
-	if((cmd & CMD_DT_EN) && (buf != NULL))
-		doCpuTransfer(regs, cmd, buf, statusPtr);
-
-	// Response end usually comes immediately after the command
-	// has been sent so we need to check before __wfi().
+	// TODO: Benchmark if this order is ideal?
+	// Response end comes immediately after the
+	// command so we need to check before __wfi().
 	// On error response end still fires.
 	while((GET_STATUS(statusPtr) & STATUS_RESP_END) == 0) WAIT_IRQ();
 	getResponse(regs, port, cmd);
 
-	// Wait for data end if needed.
-	// On error data end still fires.
-	if(cmd & CMD_DT_EN)
+	if((cmd & CMD_DT_EN) != 0)
+	{
+		// If we have to transfer data do so now.
+		if(buf != NULL) doCpuTransfer(regs, cmd, buf, statusPtr);
+
+		// Wait for data end if needed.
+		// On error data end still fires.
 		while((GET_STATUS(statusPtr) & STATUS_DATA_END) == 0) WAIT_IRQ();
+	}
 
 	// STATUS_CMD_BUSY is no longer set at this point.
 

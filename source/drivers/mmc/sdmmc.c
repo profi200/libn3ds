@@ -693,6 +693,24 @@ u32 SDMMC_writeSectors(const u8 devNum, u32 sect, const u32 *const buf, const u1
 	return SDMMC_ERR_NONE;
 }
 
+u32 SDMMC_sendCommand(const u8 devNum, MmcCommand *const mmcCmd)
+{
+	if(devNum > SDMMC_MAX_DEV_NUM) return SDMMC_ERR_INVAL_PARAM;
+
+	TmioPort *const port = &g_devs[devNum].port;
+	TMIO_setBlockLen(port, mmcCmd->blkLen);
+	TMIO_setBuffer(port, mmcCmd->buf, mmcCmd->count);
+
+	const u32 res = TMIO_sendCommand(port, mmcCmd->cmd, mmcCmd->arg);
+	if(res != 0) return SDMMC_ERR_SEND_CMD;
+
+	TMIO_setBlockLen(port, 512);
+
+	memcpy(mmcCmd->resp, port->resp, 16);
+
+	return SDMMC_ERR_NONE;
+}
+
 u32 SDMMC_getLastR1error(const u8 devNum)
 {
 	if(devNum > SDMMC_MAX_DEV_NUM) return 0;

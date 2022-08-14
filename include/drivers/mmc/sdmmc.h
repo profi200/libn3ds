@@ -46,7 +46,8 @@ enum
 	SDMMC_ERR_CARD_STATUS    = 19u, // The card returned an error via its status.
 	SDMMC_ERR_NO_CARD        = 20u, // Card unitialized or not inserted.
 	SDMMC_ERR_SECT_RW        = 21u, // Sector read/write error.
-	SDMMC_ERR_WRITE_PROT     = 22u  // The card is write protected.
+	SDMMC_ERR_WRITE_PROT     = 22u, // The card is write protected.
+	SDMMC_ERR_SEND_CMD       = 23u  // An error occured while sending a custom CMD via SDMMC_sendCommand().
 };
 
 // (e)MMC/SD device numbers.
@@ -76,6 +77,16 @@ typedef struct
 	u16 ccc;     // (e)MMC/SD command class support from CSD. One per bit starting at 0.
 	u8 busWidth; // The current bus width used to talk to the card.
 } SdmmcInfo;
+
+typedef struct
+{
+	u16 cmd;     // Command. T̲h̲e̲ ̲f̲o̲r̲m̲a̲t̲ ̲i̲s̲ ̲c̲o̲n̲t̲r̲o̲l̲l̲e̲r̲ ̲s̲p̲e̲c̲i̲f̲i̲c̲!̲
+	u32 arg;     // Command argument.
+	u32 resp[4]; // Card response. Length depends on command.
+	u32 *buf;    // In/out data buffer.
+	u16 blkLen;  // Block length. Usually 512.
+	u16 count;   // Number of blkSize blocks to transfer.
+} MmcCommand;
 
 
 
@@ -183,6 +194,16 @@ u32 SDMMC_readSectors(const u8 devNum, u32 sect, u32 *const buf, const u16 count
  *             one of the errors listed above on failure.
  */
 u32 SDMMC_writeSectors(const u8 devNum, u32 sect, const u32 *const buf, const u16 count);
+
+/**
+ * @brief      Sends a custom command to a (e)MMC/SD card device.
+ *
+ * @param[in]  devNum  The device.
+ * @param      cmd     MMC command struct pointer (see above).
+ *
+ * @return     Returns SDMMC_ERR_NONE on success or SDMMC_ERR_SEND_CMD on failure.
+ */
+u32 SDMMC_sendCommand(const u8 devNum, MmcCommand *const mmcCmd);
 
 /**
  * @brief      Returns the R1 card status of a previously failed command for a (e)MMC/SD card device.
