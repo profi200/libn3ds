@@ -36,7 +36,7 @@
 #define NDMA_REGS_BASE  (IO_MEM_ARM9_ONLY + 0x2000)
 #define REG_NDMA_GCNT   *((vu32*)NDMA_REGS_BASE) // Global control.
 
-// Note: The channel regs are offset by 4 (REG_NDMA_GLOBAL_CNT).
+// Note: The channel regs are offset by 4 (REG_NDMA_GCNT).
 typedef struct
 {
 	vu32 sad;   // 0x00 Source address.

@@ -78,13 +78,13 @@ ALWAYS_INLINE void __setCcnt(u32 val)
 	__asm__ volatile("mcr p15, 0, %0, c15, c12, 1" : : "r" (val) : "memory");
 }
 
-// Read Count Register 0.
+// Write Count Register 0.
 ALWAYS_INLINE void __setPmn0(u32 val)
 {
 	__asm__ volatile("mcr p15, 0, %0, c15, c12, 2" : : "r" (val) : "memory");
 }
 
-// Read Count Register 1.
+// Write Count Register 1.
 ALWAYS_INLINE void __setPmn1(u32 val)
 {
 	__asm__ volatile("mcr p15, 0, %0, c15, c12, 3" : : "r" (val) : "memory");
@@ -106,7 +106,7 @@ ALWAYS_INLINE u32 __getCcnt(void)
 	return tmp;
 }
 
-// Write Count Register 0.
+// Read Count Register 0.
 ALWAYS_INLINE u32 __getPmn0(void)
 {
 	u32 tmp;
@@ -114,7 +114,7 @@ ALWAYS_INLINE u32 __getPmn0(void)
 	return tmp;
 }
 
-// Write Count Register 1.
+// Read Count Register 1.
 ALWAYS_INLINE u32 __getPmn1(void)
 {
 	u32 tmp;
