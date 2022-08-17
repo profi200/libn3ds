@@ -31,7 +31,7 @@
  *
  * @param[in]  cycles  The cycles to wait.
  */
-NAKED void wait_cycles(u32 cycles);
+void wait_cycles(u32 cycles);
 
 /**
  * @brief      Safer strcpy with checks.

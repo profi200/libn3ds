@@ -23,16 +23,15 @@
 
 
 
-NAKED void wait_cycles(u32 cycles)
+void wait_cycles(u32 cycles)
 {
 #ifdef ARM9
-	__asm__("1: subs %0, %0, #4\n\t"
+	__asm__ volatile("1: subs %0, %0, #4\n\t"
 #elif ARM11
-	__asm__("1: subs %0, %0, #2\n\t"
+	__asm__ volatile("1: subs %0, %0, #2\n\t"
 	        "yield\n\t"
 #endif
-	        "bhi 1b\n\t"
-	        "bx lr\n\t" : : "r" (cycles) : "cc");
+	        "bhi 1b" : "+r" (cycles) : : "cc");
 }
 
 size_t safeStrcpy(char *const dst, const char *const src, size_t num)
