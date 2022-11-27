@@ -25,13 +25,19 @@
 
 void wait_cycles(u32 cycles)
 {
+	__asm__ volatile
+	(
 #ifdef ARM9
-	__asm__ volatile("1: subs %0, %0, #4\n\t"
+		"1: subs %0, %0, #4\n\t"
 #elif ARM11
-	__asm__ volatile("1: subs %0, %0, #2\n\t"
-	        "yield\n\t"
+		"1: subs %0, %0, #2\n\t"
+		"yield\n\t"
 #endif
-	        "bhi 1b" : "+r" (cycles) : : "cc");
+		"bhi 1b"
+		: "+r" (cycles)
+		:
+		: "cc"
+	);
 }
 
 size_t safeStrcpy(char *const dst, const char *const src, size_t num)

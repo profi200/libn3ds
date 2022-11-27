@@ -262,4 +262,7 @@ MAKE_INTR_U32_1OP(0, uxtb16)           // Zero extend two Bytes.
 
 #undef MAKE_INTR_U32_1OP
 #undef MAKE_INTR_U32_2OPS
+#undef MAKE_INTR_S32_2OPS
 #undef MAKE_INTR_U32_3OPS
+#undef MAKE_INTR_S32_3OPS
+#undef MAKE_INTR_U64_U32_U32_U64

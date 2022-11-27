@@ -67,7 +67,11 @@
 #define MMC_OCR_VOLT_MASK  (MMC_OCR_3_2_3_3V)                        // We support 3.3V only.
 #define SD_OCR_VOLT_MASK   (SD_OCR_3_2_3_3V)                         // We support 3.3V only.
 #define SD_IF_COND_ARG     (SD_CMD8_VHS_2_7_3_6V | SD_CMD8_CHK_PATT)
+#ifdef _3DS
 #define SD_OP_COND_ARG     (SD_ACMD41_XPC | SD_OCR_VOLT_MASK)        // We support 150 mA and 3.3V. Without HCS bit.
+#elif TWL
+#define SD_OP_COND_ARG     (SD_OCR_VOLT_MASK)                        // We support 100 mA and 3.3V. Without HCS bit.
+#endif
 #define MMC_OP_COND_ARG    (MMC_OCR_SECT_MODE | MMC_OCR_VOLT_MASK)   // We support sector addressing and 3.3V.
 
 // Note: DEV_TYPE_NONE must be zero.
