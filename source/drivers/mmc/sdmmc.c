@@ -294,8 +294,8 @@ static void parseCsd(SdmmcDev *const dev, const u8 devType, u8 *const spec_vers_
 
 		// For SD cards with CSD 1.0 and <=2 GB (e)MMC this calculation is used.
 		// Note: READ_BL_LEN is at least 9.
-		// Slightly modified to calculate sectors instead of bytes.
-		sectors = (c_size + 1) * (1u<<(c_size_mult + 2)) * (1u<<(read_bl_len - 9));
+		// Modified/simplified to calculate sectors instead of bytes.
+		sectors = (c_size + 1)<<(c_size_mult + 2 + read_bl_len - 9);
 	}
 	else if(devType != DEV_TYPE_MMCHC)
 	{
