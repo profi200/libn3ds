@@ -18,16 +18,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef _3DS
 #ifdef ARM9
 #include "arm9/drivers/interrupt.h"
 #include "arm9/drivers/cfg9.h"
 #elif ARM11
 #include "arm11/drivers/interrupt.h"
 #endif // #ifdef ARM9
-#elif TWL
-#include <nds.h>
-#endif // #ifdef _3DS
 
 
 // Note on port numbers:
@@ -38,7 +34,7 @@
 //
 // Examples:
 // Port 0 is port 0 on controller 1, port 3 is port 1 on controller 2.
-#ifdef _3DS
+
 // This define determines whenever the SD slot is accessible on
 // ARM9 or ARM11 when TMIO_CARD_PORT for ARM9 is set to 2.
 #define TMIO_C2_MAP     (0u) // Controller 2 (physical 3) memory mapping. 0=ARM9 0x10007000 or 1=ARM11 0x10100000.
@@ -51,16 +47,9 @@
 #define TMIO_eMMC_PORT  (3u) // Placeholder. Do not change. Not connected/accessible.
 #endif // #ifdef ARM9
 
-#elif TWL
-
-#define TMIO_CARD_PORT  (0u)
-#define TMIO_eMMC_PORT  (1u)
-#endif // #ifdef _3DS
-
 
 
 // Don't modify anything below!
-#ifdef _3DS
 #ifdef ARM9
 #define TMIO_MAP_CONTROLLERS() \
 { \
@@ -97,23 +86,3 @@
 	if(TMIO_NUM_CONTROLLERS == 2u) \
 		IRQ_unregisterIsr(IRQ_TMIO3); \
 }
-
-#elif TWL
-
-#define TMIO_MAP_CONTROLLERS()
-#define TMIO_UNMAP_CONTROLLERS()
-#define TMIO_NUM_CONTROLLERS      (2u)
-#define TMIO_IRQ_ID_CONTROLLER1   (IRQ_SDMMC)
-#define TMIO_REGISTER_ISR(isr) \
-{ \
-	irqSetAUX(TMIO_IRQ_ID_CONTROLLER1, (isr)); \
-	irqSetAUX(BIT(10), (isr)); /* Controller 2. */ \
-	irqEnableAUX(TMIO_IRQ_ID_CONTROLLER1); \
-	irqEnableAUX(BIT(10)); /* Controller 2. */ \
-}
-#define TMIO_UNREGISTER_ISR() \
-{ \
-	irqClearAUX(TMIO_IRQ_ID_CONTROLLER1); \
-	irqClearAUX(BIT(10)); /* Controller 2. */ \
-}
-#endif // #ifdef _3DS

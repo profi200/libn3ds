@@ -6,7 +6,6 @@
 
 // For simplicity we will name the accessible 2 controllers 1 and 2.
 // The real controller number is in the comment.
-#ifdef _3DS
 #ifdef ARM9
 #define TMIO1_REGS_BASE (0x10006000u) // Controller 1.
 #define TMIO2_REGS_BASE (0x10007000u) // Controller 3. Remappable.
@@ -16,14 +15,6 @@
 #endif // #ifdef ARM9
 
 #define TMIO_HCLK       (67027964u) // In Hz.
-
-#elif TWL
-
-#define TMIO1_REGS_BASE (0x04004800u) // Controller 1.
-#define TMIO2_REGS_BASE (0x04004A00u) // Controller 2.
-
-#define TMIO_HCLK       (33513982u) // In Hz.
-#endif // #ifdef _3DS
 
 typedef struct
 {
@@ -75,11 +66,11 @@ ALWAYS_INLINE Tmio* getTmioRegs(const u8 controller)
 
 ALWAYS_INLINE vu32* getTmioFifo(Tmio *const regs)
 {
-#if (_3DS && ARM11)
+#ifdef ARM11
 	return (vu32*)((uintptr_t)regs + 0x200000); // FIFO is in the DMA region.
 #else
 	return &regs->sd_fifo32;
-#endif // #if (_3DS && ARM11)
+#endif // #ifdef ARM11
 }
 
 
@@ -195,15 +186,9 @@ ALWAYS_INLINE vu32* getTmioFifo(Tmio *const regs)
 #define OPTION_BUS_WIDTH4        (0u)     // 4 bit bus width.
 #define OPTION_BUS_WIDTH1        (1u<<15) // 1 bit bus width.
 
-#ifdef _3DS
 // Card detect time: 0x400<<9 / 67027964 = 0.007821929 seconds.
 // Data timeout:     0x2000<<12 / (67027964 / 2) = 1.001206959 seconds.
 #define OPTION_DEFAULT_TIMINGS   (12u<<4 | 9u)
-#elif TWL
-// Card detect time: 0x400<<8 / 33513982 = 0.007821929 seconds.
-// Data timeout:     0x2000<<11 / (33513982 / 2) = 1.001206959 seconds.
-#define OPTION_DEFAULT_TIMINGS   (11u<<4 | 8u)
-#endif // #ifdef _3DS
 
 // REG_SD_ERR_STATUS1/2  Write 0 to acknowledge a bit.
 // TODO: Are all of these actually supported on this controller?

@@ -28,13 +28,6 @@
 #define SET_STATUS(ptr, val)  atomic_store_explicit((ptr), (val), memory_order_relaxed)
 
 
-#ifdef _3DS
-#define WAIT_IRQ()  __wfi()
-#elif TWL
-#define WAIT_IRQ()  swiHalt()
-#endif // #ifdef _3DS
-
-
 static u32 g_status[2] = {0};
 
 
@@ -155,6 +148,7 @@ bool TMIO_cardWritable(void)
 // TODO: This might be a little dodgy not using setPort() before changing clock.
 //       It's fine as long as only one port is used per controller
 //       and there is no concurrent access to it.
+// TODO: Turn this into a "powerup sequence" sort of function.
 void TMIO_startInitClock(TmioPort *const port, const u32 clk)
 {
 	const u16 sd_clk_ctrl = SD_CLK_EN | TMIO_CLK2DIV(clk)>>2;
@@ -193,7 +187,7 @@ static void doCpuTransfer(Tmio *const regs, const u16 cmd, u32 *buf, const u32 *
 	{
 		do
 		{
-			WAIT_IRQ();
+			__wfi();
 			if(regs->sd_fifo32_cnt & FIFO32_FULL) // RX ready.
 			{
 				const u32 *const blockEnd = buf + wordBlockLen;
@@ -215,7 +209,7 @@ static void doCpuTransfer(Tmio *const regs, const u16 cmd, u32 *buf, const u32 *
 		// gbatek Command/Param/Response/Data at bottom of page.
 		do
 		{
-			WAIT_IRQ();
+			__wfi();
 			if(!(regs->sd_fifo32_cnt & FIFO32_NOT_EMPTY)) // TX request.
 			{
 				const u32 *const blockEnd = buf + wordBlockLen;
@@ -259,7 +253,7 @@ u32 TMIO_sendCommand(TmioPort *const port, const u16 cmd, const u32 arg)
 	// Response end comes immediately after the
 	// command so we need to check before __wfi().
 	// On error response end still fires.
-	while((GET_STATUS(statusPtr) & STATUS_RESP_END) == 0) WAIT_IRQ();
+	while((GET_STATUS(statusPtr) & STATUS_RESP_END) == 0) __wfi();
 	getResponse(regs, port, cmd);
 
 	if((cmd & CMD_DT_EN) != 0)
@@ -269,7 +263,7 @@ u32 TMIO_sendCommand(TmioPort *const port, const u16 cmd, const u32 arg)
 
 		// Wait for data end if needed.
 		// On error data end still fires.
-		while((GET_STATUS(statusPtr) & STATUS_DATA_END) == 0) WAIT_IRQ();
+		while((GET_STATUS(statusPtr) & STATUS_DATA_END) == 0) __wfi();
 	}
 
 	// STATUS_CMD_BUSY is no longer set at this point.

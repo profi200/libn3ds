@@ -42,7 +42,6 @@
 #define DEFAULT_CLOCK  (20000000u) // Maximum 20 MHz.
 #define HS_CLOCK       (50000000u) // Maximum 50 MHz.
 
-#ifdef _3DS
 #ifdef ARM9
 // TODO: Use a timer instead? The delay is only ~283 µs at ~261 kHz though.
 // ARM9 timer clock = controller clock. CPU is x2 timer clock.
@@ -52,26 +51,11 @@
 #define INIT_DELAY_FUNC()  TIMER_sleepTicks(2 * TMIO_CLK2DIV(INIT_CLOCK) * 74)
 #endif // #ifdef ARM9
 
-#define SLEEP_MS_FUNC(ms)  TIMER_sleepMs(ms)
-
-#elif TWL
-
-// ARM7 timer clock = controller clock = CPU clock.
-// swiDelay() doesn't seem to be cycle accurate meaning
-// one cycle is 4 (?) CPU cycles.
-#define INIT_DELAY_FUNC()  swiDelay(TMIO_CLK2DIV(INIT_CLOCK) * 74 / 4)
-#define SLEEP_MS_FUNC(ms)  swiDelay(8378 * (ms))
-#endif // #ifdef _3DS
-
 
 #define MMC_OCR_VOLT_MASK  (MMC_OCR_3_2_3_3V)                        // We support 3.3V only.
 #define SD_OCR_VOLT_MASK   (SD_OCR_3_2_3_3V)                         // We support 3.3V only.
 #define SD_IF_COND_ARG     (SD_CMD8_VHS_2_7_3_6V | SD_CMD8_CHK_PATT)
-#ifdef _3DS
 #define SD_OP_COND_ARG     (SD_ACMD41_XPC | SD_OCR_VOLT_MASK)        // We support 150 mA and 3.3V. Without HCS bit.
-#elif TWL
-#define SD_OP_COND_ARG     (SD_OCR_VOLT_MASK)                        // We support 100 mA and 3.3V. Without HCS bit.
-#endif
 #define MMC_OP_COND_ARG    (MMC_OCR_SECT_MODE | MMC_OCR_VOLT_MASK)   // We support sector addressing and 3.3V.
 
 // Note: DEV_TYPE_NONE must be zero.
@@ -177,7 +161,7 @@ static u32 initIdleState(TmioPort *const port, u8 *const devTypeOut)
 			// Linux uses 10 ms but the card doesn't become ready faster
 			// when polling with delay. Use 5 ms as compromise so not much
 			// time is wasted when the card becomes ready in the middle of the delay.
-			SLEEP_MS_FUNC(5);
+			TIMER_sleepMs(5);
 		}
 
 		// (e)MMC didn't finish init within 1 second.
@@ -200,7 +184,7 @@ static u32 initIdleState(TmioPort *const port, u8 *const devTypeOut)
 			// Linux uses 10 ms but the card doesn't become ready faster
 			// when polling with delay. Use 5 ms as compromise so not much
 			// time is wasted when the card becomes ready in the middle of the delay.
-			SLEEP_MS_FUNC(5);
+			TIMER_sleepMs(5);
 
 			res = sendAppCmd(port, SD_APP_SD_SEND_OP_COND, opCondArg, 0);
 			if(res != 0) return SDMMC_ERR_SEND_OP_COND;
@@ -356,14 +340,11 @@ static u32 initTranState(SdmmcDev *const dev, const u8 devType, const u32 rca, c
 			// I think we can get away without checking this because support for HS timing
 			// and 4 bit bus width is mandatory for this spec version. If the card is
 			// non-standard we will encounter errors on the next CMD anyway.
-			u32 res;
-#ifndef TWL
 			// Switch to high speed timing (max. 52 MHz).
 			const u32 hsArg = MMC_SWITCH_ARG(MMC_SWITCH_ACC_WR_BYTE, EXT_CSD_HS_TIMING, 1, 0);
-			res = TMIO_sendCommand(port, MMC_SWITCH, hsArg);
+			u32 res = TMIO_sendCommand(port, MMC_SWITCH, hsArg);
 			if(res != 0) return SDMMC_ERR_SWITCH_HS;
 			TMIO_setClock(port, HS_CLOCK);
-#endif
 
 			// Switch to 4 bit bus mode.
 			const u32 busWidthArg = MMC_SWITCH_ARG(MMC_SWITCH_ACC_WR_BYTE, EXT_CSD_BUS_WIDTH, 1, 0);
@@ -401,7 +382,6 @@ static u32 initTranState(SdmmcDev *const dev, const u8 devType, const u32 rca, c
 		if(res != 0) return SDMMC_ERR_SET_BUS_WIDTH;
 		TMIO_setBusWidth(port, 4);
 
-#ifndef TWL
 		if(dev->ccc & 1u<<10) // Class 10 command support.
 		{
 			// Set 64 bytes block length for SWITCH_FUNC status.
@@ -423,7 +403,6 @@ static u32 initTranState(SdmmcDev *const dev, const u8 devType, const u32 rca, c
 				TMIO_setClock(port, HS_CLOCK);
 			}
 		}
-#endif
 	}
 
 	// SD:     The description for CMD SET_BLOCKLEN says 512 bytes is the default.
