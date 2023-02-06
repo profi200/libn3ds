@@ -176,18 +176,17 @@ static void getResponse(const Tmio *const regs, TmioPort *const port, const u16 
 }
 
 // Note: Using STATUS_DATA_END to detect transfer end doesn't work reliably
-//       because STATUS_DATA_END fires before we even read anything on
-//       single block read transfer.
+//       because STATUS_DATA_END fires before we even read anything from FIFO
+//       on single block read transfer.
 static void doCpuTransfer(Tmio *const regs, const u16 cmd, u32 *buf, const u32 *const statusPtr)
 {
-	const u32 wordBlockLen = regs->sd_blocklen / 4;
+	const u32 wordBlockLen = (regs->sd_blocklen + 3) / 4; // Round up for odd sizes.
 	u32 blockCount         = regs->sd_blockcount;
 	vu32 *const fifo = getTmioFifo(regs);
 	if(cmd & CMD_DIR_R)
 	{
-		do
+		while((GET_STATUS(statusPtr) & STATUS_MASK_ERR) == 0 && blockCount > 0)
 		{
-			__wfi();
 			if(regs->sd_fifo32_cnt & FIFO32_FULL) // RX ready.
 			{
 				const u32 *const blockEnd = buf + wordBlockLen;
@@ -201,15 +200,15 @@ static void doCpuTransfer(Tmio *const regs, const u16 cmd, u32 *buf, const u32 *
 
 				blockCount--;
 			}
-		} while((GET_STATUS(statusPtr) & STATUS_MASK_ERR) == 0 && blockCount > 0);
+			else __wfi();
+		}
 	}
 	else
 	{
 		// TODO: Write first block ahead of time?
 		// gbatek Command/Param/Response/Data at bottom of page.
-		do
+		while((GET_STATUS(statusPtr) & STATUS_MASK_ERR) == 0 && blockCount > 0)
 		{
-			__wfi();
 			if(!(regs->sd_fifo32_cnt & FIFO32_NOT_EMPTY)) // TX request.
 			{
 				const u32 *const blockEnd = buf + wordBlockLen;
@@ -223,7 +222,8 @@ static void doCpuTransfer(Tmio *const regs, const u16 cmd, u32 *buf, const u32 *
 
 				blockCount--;
 			}
-		} while((GET_STATUS(statusPtr) & STATUS_MASK_ERR) == 0 && blockCount > 0);
+			else __wfi();
+		}
 	}
 }
 

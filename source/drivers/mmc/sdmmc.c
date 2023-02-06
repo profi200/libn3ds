@@ -76,9 +76,9 @@ typedef struct
 	TmioPort port;
 	u8 type;       // Device type. 0 = none, 1 = (e)MMC, 2 = High capacity (e)MMC,
 	               // 3 = SDSC, 4 = SDHC/SDXC, 5 = SDUC.
-	u8 wrProt;     // Write protection bits. Each bit 1 = protected.
+	u8 prot;       // Protection bits. Each bit 1 = protected.
 	               // Bit 0 SD card slider, bit 1 temporary write protection (CSD),
-	               // bit 2 permanent write protection (CSD).
+	               // bit 2 permanent write protection (CSD) and bit 3 password protection.
 	u16 rca;       // Relative Card Address (RCA).
 	u16 ccc;       // (e)MMC/SD command class support from CSD. One per bit starting at 0.
 	u32 sectors;   // Size in 512 byte units.
@@ -295,9 +295,9 @@ static void parseCsd(SdmmcDev *const dev, const u8 devType, u8 *const spec_vers_
 	dev->sectors = sectors;
 
 	// Parse temporary and permanent write protection bits.
-	u8 wrProt = UNSTUFF_BITS(csd, 12, 1)<<1; // [12:12] Not checked by Linux.
-	wrProt |= UNSTUFF_BITS(csd, 13, 1)<<2;   // [13:13]
-	dev->wrProt |= wrProt;
+	u8 prot = UNSTUFF_BITS(csd, 12, 1)<<1; // [12:12] Not checked by Linux.
+	prot |= UNSTUFF_BITS(csd, 13, 1)<<2;   // [13:13]
+	dev->prot |= prot;
 }
 
 static u32 initStandbyState(SdmmcDev *const dev, const u8 devType, const u32 rca, u8 *const spec_vers_out)
@@ -315,11 +315,11 @@ static u32 initStandbyState(SdmmcDev *const dev, const u8 devType, const u32 rca
 	if(res != 0) return SDMMC_ERR_SELECT_CARD;
 
 	// The SD card spec mentions that we should check the lock bit in the
-	// response to CMD7 to identify cards requiring a password
-	// to unlock which we don't support. Same seems to apply for (e)MMC.
+	// response to CMD7 to identify cards requiring a password to unlock.
+	// Same seems to apply for (e)MMC.
 	// Same bit for (e)MMC/SD R1 card status.
-	if(port->resp[0] & MMC_R1_CARD_IS_LOCKED) // Not checked by Linux?
-		return SDMMC_ERR_LOCKED;
+	if(port->resp[0] & MMC_R1_CARD_IS_LOCKED)
+		dev->prot |= 1u<<3;
 
 	return SDMMC_ERR_NONE;
 }
@@ -426,7 +426,7 @@ u32 SDMMC_init(const u8 devNum)
 
 	// Check SD card write protection slider.
 	if(devNum == SDMMC_DEV_CARD)
-		dev->wrProt = !TMIO_cardWritable();
+		dev->prot = !TMIO_cardWritable();
 
 	// Init port, enable clock output and wait 74 clocks.
 	TmioPort *const port = &dev->port;
@@ -493,6 +493,68 @@ u32 SDMMC_deinit(const u8 devNum)
 	return SDMMC_ERR_NONE;
 }
 
+u32 SDMMC_lockUnlock(const u8 devNum, const u8 mode, const u8 *const pwd, const u8 pwdLen)
+{
+	// Password length is maximum 16 bytes except when replacing a password.
+	if(devNum > SDMMC_MAX_DEV_NUM || pwdLen > 32) return SDMMC_ERR_INVAL_PARAM;
+
+	// Set block length on (e)MMC/SD side and host.
+	// Same CMD for (e)MMC/SD.
+	SdmmcDev *const dev = &g_devs[devNum];
+	TmioPort *const port = &dev->port;
+	const u32 blockLen = (mode != SDMMC_LK_ERASE ? 2 + pwdLen : 1);
+	u32 res = TMIO_sendCommand(port, MMC_SET_BLOCKLEN, blockLen);
+	if(res != 0) return SDMMC_ERR_SET_BLOCKLEN;
+	TMIO_setBlockLen(port, blockLen);
+
+	do
+	{
+		// Prepare lock/unlock data block.
+		alignas(4) u8 buf[48] = {0}; // Size multiple of 16 (TMIO driver workaround).
+		buf[0] = mode;
+		buf[1] = pwdLen;
+		memcpy(&buf[2], pwd, pwdLen);
+
+		// Dirty hack to extend the data timeout to a bit over 4 minutes with TMIO controller.
+		// We need 3 minutes minimum for erase.
+		const u16 clk_ctrl_backup = port->sd_clk_ctrl;
+		TMIO_setClock(port, 130913);
+
+		// Note: Command class 7 support is mandatory for (e)MMC. Not for SD cards until 2.00.
+		// Same CMD for (e)MMC/SD.
+		TMIO_setBuffer(port, (u32*)buf, 1);
+		res = TMIO_sendCommand(port, MMC_LOCK_UNLOCK, 0);
+		port->sd_clk_ctrl = clk_ctrl_backup; // Undo the data timeout hack.
+		if(res != 0)
+		{
+			res = SDMMC_ERR_LOCK_UNLOCK;
+			break;
+		}
+
+		// Restore default block length and get the R1 status.
+		// Same CMD for (e)MMC/SD.
+		res = TMIO_sendCommand(port, MMC_SET_BLOCKLEN, 512);
+		if(res != 0)
+		{
+			res = SDMMC_ERR_SET_BLOCKLEN;
+			break;
+		}
+		TMIO_setBlockLen(port, 512);
+
+		// Check if lock/unlock worked.
+		// Same bit for (e)MMC/SD R1 card status.
+		const u32 status = port->resp[0];
+		if(status & MMC_R1_LOCK_UNLOCK_FAILED)
+			res = SDMMC_ERR_LOCK_UNLOCK_FAIL;
+
+		// Update lock status.
+		const u8 prot = dev->prot & ~(1u<<3);
+		dev->prot = prot | (status>>22 & 1u<<3);
+	} while(0);
+
+	return res;
+}
+
 // People should not mess with the state which is the reason
 // why the struct is not exposed directly.
 static_assert(sizeof(SdmmcDev) == 64, "Wrong SDMMC dev export/import size.");
@@ -523,7 +585,7 @@ u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[64])
 	memcpy(dev, devIn, 64);
 
 	// Update write protection slider state just in case.
-	dev->wrProt |= !TMIO_cardWritable();
+	dev->prot |= !TMIO_cardWritable();
 
 	return SDMMC_ERR_NONE;
 }
@@ -537,7 +599,7 @@ u32 SDMMC_getDevInfo(const u8 devNum, SdmmcInfo *const infoOut)
 	const TmioPort *const port = &dev->port;
 
 	infoOut->type    = dev->type;
-	infoOut->wrProt  = dev->wrProt;
+	infoOut->prot    = dev->prot;
 	infoOut->rca     = dev->rca;
 	infoOut->sectors = dev->sectors;
 
@@ -571,7 +633,7 @@ u8 SDMMC_getDiskStatus(const u8 devNum)
 		status = (TMIO_cardDetected() == true ? 0 : STA_NODISK | STA_NOINIT);
 
 	const SdmmcDev *const dev = &g_devs[devNum];
-	status |= (dev->wrProt != 0 ? STA_PROTECT : 0);
+	status |= (dev->prot != 0 ? STA_PROTECT : 0);
 	if(dev->type == DEV_TYPE_NONE)
 		status |= STA_NOINIT;
 
@@ -589,7 +651,7 @@ u32 SDMMC_getSectors(const u8 devNum)
 	return g_devs[devNum].sectors;
 }
 
-static u32 stopTransferUpdateStatus(SdmmcDev *const dev, bool stopTransmission)
+static u32 stopTransferUpdateStatus(SdmmcDev *const dev, const bool stopTransmission)
 {
 	TmioPort *const port = &dev->port;
 
@@ -651,7 +713,7 @@ u32 SDMMC_writeSectors(const u8 devNum, u32 sect, const u32 *const buf, const u1
 	if(devType == DEV_TYPE_NONE) return SDMMC_ERR_NO_CARD;
 
 	// Check if the device is write protected.
-	if(dev->wrProt != 0) return SDMMC_ERR_WRITE_PROT;
+	if(dev->prot != 0) return SDMMC_ERR_WRITE_PROT;
 
 	// Set source buffer and sector count.
 	TmioPort *const port = &dev->port;
@@ -694,7 +756,7 @@ u32 SDMMC_sendCommand(const u8 devNum, MmcCommand *const mmcCmd)
 	return SDMMC_ERR_NONE;
 }
 
-u32 SDMMC_getLastR1error(const u8 devNum)
+u32 SDMMC_getLastRwR1error(const u8 devNum)
 {
 	if(devNum > SDMMC_MAX_DEV_NUM) return 0;
 

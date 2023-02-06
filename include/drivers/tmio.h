@@ -372,9 +372,7 @@ ALWAYS_INLINE void TMIO_setClock(TmioPort *const port, const u32 clk)
  */
 ALWAYS_INLINE void TMIO_setBlockLen(TmioPort *const port, u16 blockLen)
 {
-	if(blockLen > 512)       blockLen = 512;
-	if(blockLen < 16)        blockLen = 0; // | Depends on doCpuTransfer() in tmio.c.
-	if((blockLen % 16) != 0) blockLen = 0; // |
+	if(blockLen > 512) blockLen = 512;
 
 	port->sd_blocklen = blockLen;
 }
