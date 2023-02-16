@@ -50,7 +50,8 @@ enum
 	SDMMC_ERR_SEND_CMD         = 23u, // An error occured while sending a custom CMD via SDMMC_sendCommand().
 	SDMMC_ERR_SET_BLOCKLEN     = 24u, // SET_BLOCKLEN CMD error.
 	SDMMC_ERR_LOCK_UNLOCK      = 25u, // LOCK_UNLOCK CMD error.
-	SDMMC_ERR_LOCK_UNLOCK_FAIL = 26u  // Lock/unlock operation failed (R1 status).
+	SDMMC_ERR_LOCK_UNLOCK_FAIL = 26u, // Lock/unlock operation failed (R1 status).
+	SDMMC_ERR_SLEEP_AWAKE      = 27u  // (e)MMC SLEEP_AWAKE CMD error.
 };
 
 // (e)MMC/SD device numbers.
@@ -112,6 +113,18 @@ typedef struct
 u32 SDMMC_init(const u8 devNum);
 
 /**
+ * @brief      Switches a (e)MMC/SD card device between sleep/awake mode.
+ *             Note that SD cards don't have a true sleep mode.
+ *
+ * @param[in]  devNum   The device.
+ * @param[in]  enabled  The mode. true to enable sleep and false to wake up.
+ *
+ * @return     Returns SDMMC_ERR_NONE on success or
+ *             one of the errors listed above on failure.
+ */
+u32 SDMMC_setSleepMode(const u8 devNum, const bool enabled);
+
+/**
  * @brief      Deinitializes a (e)MMC/SD card device.
  *
  * @param[in]  devNum  The device to deinitialize.
@@ -154,6 +167,16 @@ u32 SDMMC_exportDevState(const u8 devNum, u8 devOut[64]);
  *             SDMMC_ERR_INVAL_PARAM/SDMMC_ERR_NO_CARD/SDMMC_ERR_INITIALIZED on failure.
  */
 u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[64]);
+
+/**
+ * @brief      Imports eMMC device state from boot9 (3DS only).
+ *
+ * @return     Returns SDMMC_ERR_NONE on success or SDMMC_ERR_NO_CARD
+ *             if the state could not be imported.
+ */
+#ifdef ARM9
+u32 SDMMC_importHosEmmcState(void);
+#endif
 
 /**
  * @brief      Outputs infos about a (e)MMC/SD card device.
@@ -230,12 +253,12 @@ u32 SDMMC_writeSectors(const u8 devNum, u32 sect, const u32 *const buf, const u1
 u32 SDMMC_sendCommand(const u8 devNum, MmcCommand *const mmcCmd);
 
 /**
- * @brief      Returns the R1 card status for a previously failed read/write command.
+ * @brief      Returns the R1 card status for a previously failed read/write/custom command.
  *
  * @param[in]  devNum  The device.
  *
  * @return     Returns the R1 card status or 0 if there was either no command error or invalid devNum.
  */
-u32 SDMMC_getLastRwR1error(const u8 devNum);
+u32 SDMMC_getLastR1error(const u8 devNum);
 
 // TODO: TRIM/erase support.

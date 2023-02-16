@@ -20,16 +20,12 @@
 #include "drivers/mmc/sdmmc.h" // Includes types.h.
 #include "drivers/tmio.h"
 #include "drivers/tmio_config.h"
-#ifdef _3DS
 #ifdef ARM9
 #include "arm9/drivers/timer.h"
 #include "util.h" // wait_cycles()
 #elif ARM11
 #include "arm11/drivers/timer.h"
 #endif // #ifdef ARM9
-#elif TWL
-#include <nds.h>
-#endif // #ifdef _3DS
 #include "drivers/mmc/mmc_spec.h"
 #include "drivers/mmc/sd_spec.h"
 
@@ -69,6 +65,8 @@ enum
 	DEV_TYPE_SDHC  = 4u, // SDHC, SDXC.
 	DEV_TYPE_SDUC  = 5u  // SDUC.
 };
+
+#define IS_DEV_MMC(dev)  ((dev) < DEV_TYPE_SDSC)
 
 
 typedef struct
@@ -221,14 +219,13 @@ static u32 initIdentState(SdmmcDev *const dev, const u8 devType, u32 *const rcaO
 	TmioPort *const port = &dev->port;
 
 	u32 rca;
-	if(devType < DEV_TYPE_SDSC) // (e)MMC.
+	if(IS_DEV_MMC(devType)) // (e)MMC.
 	{
 		// Set the RCA of the (e)MMC to 1. 0 is reserved.
 		// The RCA is in the upper 16 bits of the argument.
-		u32 res = TMIO_sendCommand(port, MMC_SET_RELATIVE_ADDR, 1u<<16);
-		if(res != 0) return SDMMC_ERR_SET_SEND_RCA;
-
 		rca = 1;
+		u32 res = TMIO_sendCommand(port, MMC_SET_RELATIVE_ADDR, rca<<16);
+		if(res != 0) return SDMMC_ERR_SET_SEND_RCA;
 	}
 	else // SD card.
 	{
@@ -236,7 +233,8 @@ static u32 initIdentState(SdmmcDev *const dev, const u8 devType, u32 *const rcaO
 		u32 res = TMIO_sendCommand(port, SD_SEND_RELATIVE_ADDR, 0);
 		if(res != 0) return SDMMC_ERR_SET_SEND_RCA;
 
-		rca = port->resp[0]>>16; // RCA in upper 16 bits.
+		// RCA in upper 16 bits. Discards lower status bits of R6 response.
+		rca = port->resp[0]>>16;
 	}
 
 	dev->rca = rca;
@@ -245,36 +243,35 @@ static u32 initIdentState(SdmmcDev *const dev, const u8 devType, u32 *const rcaO
 	return SDMMC_ERR_NONE;
 }
 
-// Based on code from linux/drivers/mmc/core/sd.c.
-// Works only with u32[4] response.
-#define UNSTUFF_BITS(resp, start, size)                     \
-({                                                          \
-	const u32 __size = size;                                \
-	const u32 __mask = (__size < 32 ? 1u<<__size : 0u) - 1; \
-	const u32 __off = 3u - ((start) / 32);                  \
-	const u32 __shift = (start) & 31;                       \
-	u32 __res;                                              \
-	                                                        \
-	__res = resp[__off]>>__shift;                           \
-	if(__size + __shift > 32)                               \
-		__res |= resp[__off - 1]<<((32u - __shift) % 32);   \
-	__res & __mask;                                         \
-})
+// Based on UNSTUFF_BITS from linux/drivers/mmc/core/sd.c.
+// Extracts up to 32 bits from a u32[4] array.
+static inline u32 extractBits(const u32 resp[4], const u32 start, const u32 size)
+{
+	const u32 mask = (size < 32 ? 1u<<size : 0u) - 1;
+	const u32 off = 3 - (start / 32);
+	const u32 shift = start & 31u;
+
+	u32 res = resp[off]>>shift;
+	if(size + shift > 32)
+		res |= resp[off - 1]<<((32u - shift) & 31u);
+
+	return res & mask;
+}
 
 static void parseCsd(SdmmcDev *const dev, const u8 devType, u8 *const spec_vers_out)
 {
 	// Note: The MSBs are in csd[0].
 	const u32 *const csd = dev->port.resp;
 
-	const u8 structure = UNSTUFF_BITS(csd, 126, 2); // [127:126]
-	*spec_vers_out = UNSTUFF_BITS(csd, 122, 4);     // [125:122] All 0 for SD cards.
-	dev->ccc = UNSTUFF_BITS(csd, 84, 12);           // [95:84]
+	const u8 structure = extractBits(csd, 126, 2); // [127:126]
+	*spec_vers_out = extractBits(csd, 122, 4);     // [125:122] All 0 for SD cards.
+	dev->ccc = extractBits(csd, 84, 12);           // [95:84]
 	u32 sectors = 0;
 	if(structure == 0 || devType == DEV_TYPE_MMC) // structure = 0 is CSD version 1.0.
 	{
-		const u32 read_bl_len = UNSTUFF_BITS(csd, 80, 4);  // [83:80]
-		const u32 c_size      = UNSTUFF_BITS(csd, 62, 12); // [73:62]
-		const u32 c_size_mult = UNSTUFF_BITS(csd, 47, 3);  // [49:47]
+		const u32 read_bl_len = extractBits(csd, 80, 4);  // [83:80]
+		const u32 c_size      = extractBits(csd, 62, 12); // [73:62]
+		const u32 c_size_mult = extractBits(csd, 47, 3);  // [49:47]
 
 		// For SD cards with CSD 1.0 and <=2 GB (e)MMC this calculation is used.
 		// Note: READ_BL_LEN is at least 9.
@@ -286,17 +283,17 @@ static void parseCsd(SdmmcDev *const dev, const u8 devType, u8 *const spec_vers_
 		// SD CSD version 3.0 format.
 		// For version 2.0 this is 22 bits however the upper bits
 		// are reserved and zero filled so this is fine.
-		const u32 c_size = UNSTUFF_BITS(csd, 48, 28); // [75:48]
+		const u32 c_size = extractBits(csd, 48, 28); // [75:48]
 
 		// Calculation for SD cards with CSD >1.0.
-		sectors = (c_size + 1) * 1024;
+		sectors = (c_size + 1)<<10;
 	}
 	// Else for high capacity (e)MMC the sectors will be read later from EXT_CSD.
 	dev->sectors = sectors;
 
 	// Parse temporary and permanent write protection bits.
-	u8 prot = UNSTUFF_BITS(csd, 12, 1)<<1; // [12:12] Not checked by Linux.
-	prot |= UNSTUFF_BITS(csd, 13, 1)<<2;   // [13:13]
+	u8 prot = extractBits(csd, 12, 1)<<1; // [12:12] Not checked by Linux.
+	prot |= extractBits(csd, 13, 1)<<2;   // [13:13]
 	dev->prot |= prot;
 }
 
@@ -318,8 +315,7 @@ static u32 initStandbyState(SdmmcDev *const dev, const u8 devType, const u32 rca
 	// response to CMD7 to identify cards requiring a password to unlock.
 	// Same seems to apply for (e)MMC.
 	// Same bit for (e)MMC/SD R1 card status.
-	if(port->resp[0] & MMC_R1_CARD_IS_LOCKED)
-		dev->prot |= 1u<<3;
+	dev->prot |= (port->resp[0] & MMC_R1_CARD_IS_LOCKED)>>22; // Bit 3.
 
 	return SDMMC_ERR_NONE;
 }
@@ -330,7 +326,7 @@ static u32 initTranState(SdmmcDev *const dev, const u8 devType, const u32 rca, c
 {
 	TmioPort *const port = &dev->port;
 
-	if(devType < DEV_TYPE_SDSC) // (e)MMC.
+	if(IS_DEV_MMC(devType)) // (e)MMC.
 	{
 		// EXT_CSD, non-1 bit bus width and HS timing are only
 		// supported by (e)MMC SPEC_VERS 4.1 and higher.
@@ -435,24 +431,24 @@ u32 SDMMC_init(const u8 devNum)
 	INIT_DELAY_FUNC();
 
 	u32 res = goIdleState(port);
-	if(res != 0) return res;
+	if(res != SDMMC_ERR_NONE) return res;
 
 	// (e)MMC/SD now in idle state (idle).
 	u8 devType;
 	res = initIdleState(port, &devType);
-	if(res != 0) return res;
+	if(res != SDMMC_ERR_NONE) return res;
 
 	// Stop clock at idle, init clock.
 	TMIO_setClock(port, INIT_CLOCK);
 
 	// (e)MMC/SD now in ready state (ready).
 	res = initReadyState(dev);
-	if(res != 0) return res;
+	if(res != SDMMC_ERR_NONE) return res;
 
 	// (e)MMC/SD now in identification state (ident).
 	u32 rca;
 	res = initIdentState(dev, devType, &rca);
-	if(res != 0) return res;
+	if(res != SDMMC_ERR_NONE) return res;
 
 	// (e)MMC/SD now in stand-by state (stby).
 	// Maximum at this point would be 20 MHz for (e)MMC and 25 for SD.
@@ -467,11 +463,11 @@ u32 SDMMC_init(const u8 devNum)
 
 	u8 spec_vers;
 	res = initStandbyState(dev, devType, rca, &spec_vers);
-	if(res != 0) return res;
+	if(res != SDMMC_ERR_NONE) return res;
 
 	// (e)MMC/SD now in transfer state (tran).
 	res = initTranState(dev, devType, rca, spec_vers);
-	if(res != 0) return res;
+	if(res != SDMMC_ERR_NONE) return res;
 
 	// Only set dev type on successful init.
 	dev->type = devType;
@@ -479,7 +475,48 @@ u32 SDMMC_init(const u8 devNum)
 	return SDMMC_ERR_NONE;
 }
 
-// TODO: Sleep function (stand-by state(?))?
+u32 SDMMC_setSleepMode(const u8 devNum, const bool enabled)
+{
+	if(devNum > SDMMC_MAX_DEV_NUM) return SDMMC_ERR_INVAL_PARAM;
+
+	SdmmcDev *const dev = &g_devs[devNum];
+	TmioPort *const port = &dev->port;
+	const u32 rca = (u32)dev->rca<<16;
+	const u8 devType = dev->type;
+	if(enabled)
+	{
+		// Deselect card to go back to stand-by state.
+		// CMD is the same for (e)MMC/SD.
+		u32 res = TMIO_sendCommand(port, MMC_DESELECT_CARD, 0);
+		if(res != 0) return SDMMC_ERR_SELECT_CARD;
+
+		// Only (e)MMC can go into true sleep mode.
+		if(IS_DEV_MMC(devType))
+		{
+			// Switch (e)MMC into sleep mode.
+			res = TMIO_sendCommand(port, MMC_SLEEP_AWAKE, rca | 1u<<15);
+			if(res != 0) return SDMMC_ERR_SLEEP_AWAKE;
+			// TODO: Power down eMMC. This is confirmed working on 3DS.
+		}
+	}
+	else
+	{
+		if(IS_DEV_MMC(devType))
+		{
+			// TODO: Power up eMMC. This is confirmed working on 3DS.
+			// Wake (e)MMC up from sleep mode.
+			u32 res = TMIO_sendCommand(port, MMC_SLEEP_AWAKE, rca);
+			if(res != 0) return SDMMC_ERR_SLEEP_AWAKE;
+		}
+
+		// Select card to go back to transfer state.
+		// CMD is the same for (e)MMC/SD.
+		u32 res = TMIO_sendCommand(port, MMC_SELECT_CARD, rca);
+		if(res != 0) return SDMMC_ERR_SELECT_CARD;
+	}
+
+	return SDMMC_ERR_NONE;
+}
 
 // TODO: Is there any "best practice" way of deinitializing cards?
 //       Kick the card back into idle state maybe?
@@ -590,6 +627,102 @@ u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[64])
 	return SDMMC_ERR_NONE;
 }
 
+#ifdef ARM9
+typedef struct
+{
+	bool initialized;
+	bool isMmc;         // Set when the first OP_COND APP CMD fails and MMC init (CMD1) succeeds.
+	bool isSd;          // General SD card flag (including SDHC/SDXC). Set when OP_COND APP CMDs succeed.
+	bool isSdhc;        // CCS bit from OCR. Set for SDHC and SDXC.
+	u32 cid[4];         // In TMIO response format.
+	u32 csd[4];         // In TMIO response format.
+	u32 ocr;
+	u64 scr;            // In big endian? All 0 for (e)MMC.
+	u16 rca;
+	u8 rsvd[2];
+	u32 result;         // Last driver result/error code.
+	u32 cardStatus;     // Last R1 card status.
+	u16 sd_clk_ctrl;
+	u16 sd_option;
+	bool highCapacity;  // (SD) Set when CSD v2.0 (NOT v3.0) or (MMC) when the capacity from CSD is higher than 2 GiB.
+	u8 rsvd2[3];
+	u32 sectors;        // Capacity in sectors.
+	u32 sdProtSectors;  // Capacity in sectors of SD protected area from 512 bit SD status. 0 for (e)MMC.
+
+	u32 initFails;      // Failed init attempts?
+	u32 initFailResult; // Init fail result? Same format as result?
+	u32 rwFails;        // Failed read/write attempts?
+	u32 rwFailResult;   // Read/write fail result? Same format as result?
+
+	u32 controller;     // TMIO controller number (1-based).
+	u32 portNum;        // TMIO port number.
+} HosSdmmcPortCtx;
+static_assert(offsetof(HosSdmmcPortCtx, portNum) == 0x60, "Member portNum of HosSdmmcPortCtx not at offset 0x60.");
+
+u32 SDMMC_importHosEmmcState(void)
+{
+	// Check if the device is already initialized.
+	SdmmcDev *const dev = &g_devs[SDMMC_DEV_eMMC];
+	if(dev->type != DEV_TYPE_NONE) return SDMMC_ERR_INITIALIZED;
+
+	// Check if the HOS port ctx is initialized.
+	const HosSdmmcPortCtx *const ctx = (HosSdmmcPortCtx*)0x01FFCD80;
+	if(!ctx->initialized) return SDMMC_ERR_NO_CARD;
+
+	TmioPort *const port = &dev->port;
+	port->portNum     = dev2portNum(SDMMC_DEV_eMMC);
+	port->sd_clk_ctrl = ctx->sd_clk_ctrl;
+	port->sd_blocklen = 512;              // Assumption.
+	port->sd_option   = (ctx->sd_option & 0xFF00u) | OPTION_DEFAULT_TIMINGS; // Use our own timings.
+	// Remaining fields don't matter.
+
+	u8 devType;
+	if(ctx->isMmc && !ctx->isSd)
+	{
+		// Because Nintendos driver never sets the sector addressing bit
+		// in the argument for CMD1, high capacity eMMC will not work.
+		// We do the check here anyway just in case.
+		devType = (ctx->highCapacity ? DEV_TYPE_MMCHC : DEV_TYPE_MMC);
+	}
+	else
+	{
+		// Unfortunately no flags for detecting SDUC.
+		devType = (ctx->isSdhc ? DEV_TYPE_SDHC : DEV_TYPE_SDSC);
+	}
+	dev->type = devType;
+
+	// CSD is in TMIO response format.
+	u32 csd[4];
+	const u32 *const csdPtr = ctx->csd;
+	csd[0] = csdPtr[3]<<8 | csdPtr[2]>>24;
+	csd[1] = csdPtr[2]<<8 | csdPtr[1]>>24;
+	csd[2] = csdPtr[1]<<8 | csdPtr[0]>>24;
+	csd[3] = csdPtr[0]<<8;
+
+	// Parse write protection and password protection bits.
+	// Since boot9 doesn't support password protection
+	// we could omit parsing that bit. We do it anyway.
+	u8 prot = extractBits(csd, 12, 1)<<1; // [12:12]
+	prot |= extractBits(csd, 13, 1)<<2;   // [13:13]
+	prot |= (ctx->cardStatus & MMC_R1_CARD_IS_LOCKED)>>22; // Bit 3.
+
+	dev->prot    = prot;
+	dev->rca     = ctx->rca;
+	dev->ccc     = extractBits(csd, 84, 12); // [95:84]
+	dev->sectors = ctx->sectors;
+
+	// CID is in TMIO response format.
+	u32 *const dstCid = dev->cid;
+	const u32 *const srcCid = ctx->cid;
+	dstCid[0] = srcCid[3]<<8 | srcCid[2]>>24;
+	dstCid[1] = srcCid[2]<<8 | srcCid[1]>>24;
+	dstCid[2] = srcCid[1]<<8 | srcCid[0]>>24;
+	dstCid[3] = srcCid[0]<<8;
+
+	return SDMMC_ERR_NONE;
+}
+#endif
+
 // TODO: Less controller dependent code.
 u32 SDMMC_getDevInfo(const u8 devNum, SdmmcInfo *const infoOut)
 {
@@ -651,7 +784,7 @@ u32 SDMMC_getSectors(const u8 devNum)
 	return g_devs[devNum].sectors;
 }
 
-static u32 stopTransferUpdateStatus(SdmmcDev *const dev, const bool stopTransmission)
+static u32 updateStatus(SdmmcDev *const dev, const bool stopTransmission)
 {
 	TmioPort *const port = &dev->port;
 
@@ -659,7 +792,7 @@ static u32 stopTransferUpdateStatus(SdmmcDev *const dev, const bool stopTransmis
 	// MMC_SEND_STATUS:       Same CMD for (e)MMC/SD but the argument format differs slightly.
 	u32 res;
 	if(stopTransmission) res = TMIO_sendCommand(port, MMC_STOP_TRANSMISSION, 0);
-	else                 res = TMIO_sendCommand(port, MMC_SEND_STATUS, ((u32)dev->rca)<<16);
+	else                 res = TMIO_sendCommand(port, MMC_SEND_STATUS, (u32)dev->rca<<16);
 	dev->status = (res == 0 ? port->resp[0] : 0); // Don't update the status with stale data.
 
 	return res;
@@ -692,7 +825,7 @@ u32 SDMMC_readSectors(const u8 devNum, u32 sect, u32 *const buf, const u16 count
 		// in data state and we need to send STOP_TRANSMISSION to bring it
 		// back to tran state.
 		// Otherwise for single-block reads just update the status.
-		stopTransferUpdateStatus(dev, count > 1);
+		updateStatus(dev, count > 1);
 
 		return SDMMC_ERR_SECT_RW;
 	}
@@ -730,7 +863,7 @@ u32 SDMMC_writeSectors(const u8 devNum, u32 sect, const u32 *const buf, const u1
 		// in data state and we need to send STOP_TRANSMISSION to bring it
 		// back to tran state.
 		// Otherwise for single-block writes just update the status.
-		stopTransferUpdateStatus(dev, count > 1);
+		updateStatus(dev, count > 1);
 
 		return SDMMC_ERR_SECT_RW;
 	}
@@ -742,21 +875,25 @@ u32 SDMMC_sendCommand(const u8 devNum, MmcCommand *const mmcCmd)
 {
 	if(devNum > SDMMC_MAX_DEV_NUM) return SDMMC_ERR_INVAL_PARAM;
 
-	TmioPort *const port = &g_devs[devNum].port;
+	SdmmcDev *const dev = &g_devs[devNum];
+	TmioPort *const port = &dev->port;
 	TMIO_setBlockLen(port, mmcCmd->blkLen);
 	TMIO_setBuffer(port, mmcCmd->buf, mmcCmd->count);
 
 	const u32 res = TMIO_sendCommand(port, mmcCmd->cmd, mmcCmd->arg);
-	if(res != 0) return SDMMC_ERR_SEND_CMD;
-
-	TMIO_setBlockLen(port, 512);
+	TMIO_setBlockLen(port, 512); // Restore default block length.
+	if(res != 0)
+	{
+		updateStatus(dev, false);
+		return SDMMC_ERR_SEND_CMD;
+	}
 
 	memcpy(mmcCmd->resp, port->resp, 16);
 
 	return SDMMC_ERR_NONE;
 }
 
-u32 SDMMC_getLastRwR1error(const u8 devNum)
+u32 SDMMC_getLastR1error(const u8 devNum)
 {
 	if(devNum > SDMMC_MAX_DEV_NUM) return 0;
 

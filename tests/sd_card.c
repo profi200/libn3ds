@@ -45,8 +45,8 @@ static u32 printCardInfos(void)
 	SdmmcInfo info;
 	SDMMC_getDevInfo(SDMMC_DEV_CARD, &info);
 
-	ee_printf("Card infos:\n type: %u\n wrProt: %u\n rca: 0x%X\n sectors: %lu (~%lu MiB)\n ccc: 0x%X\n CID: ",
-	          info.type, info.wrProt, info.rca, info.sectors, info.sectors / 2048, info.ccc);
+	ee_printf("Card infos:\n type: %u\n prot: %u\n rca: 0x%X\n sectors: %lu (~%lu MiB)\n ccc: 0x%X\n CID: ",
+	          info.type, info.prot, info.rca, info.sectors, info.sectors / 2048, info.ccc);
 	for(u32 i = 0; i < 4; i++)
 	{
 		ee_printf("%08lX", info.cid[i]);

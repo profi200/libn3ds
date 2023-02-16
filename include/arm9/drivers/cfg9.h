@@ -96,7 +96,7 @@ ALWAYS_INLINE Cfg9* getCfg9Regs(void)
 
 // REG_CFG9_SDMMCCTL
 #define SDMMCCTL_CARD_PWR_OFF    (1u)    // Controller 1/3 port 0 (MMC/SD card slot).
-#define SDMMCCTL_eMMC_PWR_OFF    (1u<<1) // Controller 1 port 1.
+#define SDMMCCTL_eMMC_PWR_OFF    (1u<<1) // Controller 1 port 1. eMMC VCC (not VCCQ)?
 #define SDMMCCTL_WiFi_PWR_OFF    (1u<<2) // Controller 2 port 0.
 #define SDMMCCTL_UNK_PWR_OFF     (1u<<3) // Controller 3 port 1 power off? Set at cold boot.
 #define SDMMCCTL_UNK_BIT6        (1u<<6) // Wifi port related? Pull up? Set at cold boot.
