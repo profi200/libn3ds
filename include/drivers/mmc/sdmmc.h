@@ -171,8 +171,8 @@ u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[64]);
 /**
  * @brief      Imports eMMC device state from boot9 (3DS only).
  *
- * @return     Returns SDMMC_ERR_NONE on success or SDMMC_ERR_NO_CARD
- *             if the state could not be imported.
+ * @return     Returns SDMMC_ERR_NONE on success or
+ *             SDMMC_ERR_INITIALIZED/SDMMC_ERR_NO_CARD if the state could not be imported.
  */
 #ifdef ARM9
 u32 SDMMC_importHosEmmcState(void);
