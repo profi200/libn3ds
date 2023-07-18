@@ -114,7 +114,7 @@ MAKE_INTR_SET_REG(1, setCr, "mcr p15, 0, %0, c1, c0, 0", "memory")
 MAKE_INTR_NO_INOUT(1, nop, "nop")
 MAKE_INTR_NO_INOUT(1, wfi, "wfi", "memory")
 MAKE_INTR_NO_INOUT(1, wfe, "wfe", "memory")
-MAKE_INTR_NO_INOUT(1, sev, "sev")
+MAKE_INTR_NO_INOUT(1, sev, "sev", "memory")
 
 #if !__thumb__
 ALWAYS_INLINE u8 __ldrexb(vu8 *addr)
