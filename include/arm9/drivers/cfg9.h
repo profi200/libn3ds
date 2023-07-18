@@ -96,10 +96,11 @@ ALWAYS_INLINE Cfg9* getCfg9Regs(void)
 
 // REG_CFG9_SDMMCCTL
 #define SDMMCCTL_CARD_PWR_OFF    (1u)    // Controller 1/3 port 0 (MMC/SD card slot).
-#define SDMMCCTL_eMMC_PWR_OFF    (1u<<1) // Controller 1 port 1. eMMC VCC (not VCCQ)?
+#define SDMMCCTL_eMMC_PWR_OFF    (1u<<1) // Controller 1 port 1. Only the port and not eMMC VCC/VCCQ?
 #define SDMMCCTL_WiFi_PWR_OFF    (1u<<2) // Controller 2 port 0.
-#define SDMMCCTL_UNK_PWR_OFF     (1u<<3) // Controller 3 port 1 power off? Set at cold boot.
+#define SDMMCCTL_UNK_PWR_OFF     (1u<<3) // Controller 3 port 1 power off? Set at cold boot (old 3DS, not set on New 3DS).
 #define SDMMCCTL_UNK_BIT6        (1u<<6) // Wifi port related? Pull up? Set at cold boot.
+#define SDMMCCTL_UNK_BIT7        (1u<<6) // Unknown. New 3DS only. Set at cold boot.
 #define SDMMCCTL_TMIO3_MAP9      (0u)    // Controller 3 mapping ARM9 0x10007000.
 #define SDMMCCTL_TMIO3_MAP11     (1u<<8) // Controller 3 mapping ARM11 0x10100000.
 #define SDMMCCTL_CARD_TMIO3_SEL  (0u)    // SD card slot controller select TMIO3 0x10007000/0x10100000.
