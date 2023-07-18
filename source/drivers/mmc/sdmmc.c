@@ -547,7 +547,7 @@ u32 SDMMC_lockUnlock(const u8 devNum, const u8 mode, const u8 *const pwd, const 
 	do
 	{
 		// Prepare lock/unlock data block.
-		alignas(4) u8 buf[48] = {0}; // Size multiple of 16 (TMIO driver workaround).
+		alignas(4) u8 buf[36] = {0}; // Size multiple of 4 (TMIO driver limitation).
 		buf[0] = mode;
 		buf[1] = pwdLen;
 		memcpy(&buf[2], pwd, pwdLen);
@@ -801,7 +801,7 @@ static u32 updateStatus(SdmmcDev *const dev, const bool stopTransmission)
 // Note: On multi-block read from the last 2 sectors there are no errors reported by the controller
 //       however the R1 card status may report ADDRESS_OUT_OF_RANGE on next(?) status read.
 //       This error is normal for (e)MMC and can be ignored.
-u32 SDMMC_readSectors(const u8 devNum, u32 sect, u32 *const buf, const u16 count)
+u32 SDMMC_readSectors(const u8 devNum, u32 sect, void *const buf, const u16 count)
 {
 	if(devNum > SDMMC_MAX_DEV_NUM || count == 0) return SDMMC_ERR_INVAL_PARAM;
 
@@ -836,7 +836,7 @@ u32 SDMMC_readSectors(const u8 devNum, u32 sect, u32 *const buf, const u16 count
 // Note: On multi-block write to the last 2 sectors there are no errors reported by the controller
 //       however the R1 card status may report ADDRESS_OUT_OF_RANGE on next(?) status read.
 //       This error is normal for (e)MMC and can be ignored.
-u32 SDMMC_writeSectors(const u8 devNum, u32 sect, const u32 *const buf, const u16 count)
+u32 SDMMC_writeSectors(const u8 devNum, u32 sect, const void *const buf, const u16 count)
 {
 	if(devNum > SDMMC_MAX_DEV_NUM || count == 0) return SDMMC_ERR_INVAL_PARAM;
 
@@ -850,7 +850,7 @@ u32 SDMMC_writeSectors(const u8 devNum, u32 sect, const u32 *const buf, const u1
 
 	// Set source buffer and sector count.
 	TmioPort *const port = &dev->port;
-	TMIO_setBuffer(port, (u32*)buf, count);
+	TMIO_setBuffer(port, (void*)buf, count);
 
 	// Write a single 512 bytes block. Same CMD for (e)MMC/SD.
 	// Write multiple 512 bytes blocks. Same CMD for (e)MMC/SD.

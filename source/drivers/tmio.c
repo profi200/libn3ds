@@ -178,10 +178,10 @@ static void getResponse(const Tmio *const regs, TmioPort *const port, const u16 
 // Note: Using STATUS_DATA_END to detect transfer end doesn't work reliably
 //       because STATUS_DATA_END fires before we even read anything from FIFO
 //       on single block read transfer.
-static void doCpuTransfer(Tmio *const regs, const u16 cmd, u32 *buf, const u32 *const statusPtr)
+static void doCpuTransfer(Tmio *const regs, const u16 cmd, u8 *buf, const u32 *const statusPtr)
 {
-	const u32 wordBlockLen = (regs->sd_blocklen + 3) / 4; // Round up for odd sizes.
-	u32 blockCount         = regs->sd_blockcount;
+	const u32 blockLen = regs->sd_blocklen;
+	u32 blockCount     = regs->sd_blockcount;
 	vu32 *const fifo = getTmioFifo(regs);
 	if(cmd & CMD_DIR_R)
 	{
@@ -189,13 +189,28 @@ static void doCpuTransfer(Tmio *const regs, const u16 cmd, u32 *buf, const u32 *
 		{
 			if(regs->sd_fifo32_cnt & FIFO32_FULL) // RX ready.
 			{
-				const u32 *const blockEnd = buf + wordBlockLen;
+				const u8 *const blockEnd = buf + blockLen;
 				do
 				{
-					*buf++ = *fifo;
-					*buf++ = *fifo;
-					*buf++ = *fifo;
-					*buf++ = *fifo;
+#ifdef ARM11
+					// ARM11 supports unaligned access.
+					// TODO: Adjust diskio to allow unaligned transfers.
+					*((u32*)buf) = *fifo;
+#else
+					if((uintptr_t)buf % 4 == 0)
+					{
+						*((u32*)buf) = *fifo;
+					}
+					else
+					{
+						const u32 tmp = *fifo;
+						buf[0] = tmp;
+						buf[1] = tmp>>8;
+						buf[2] = tmp>>16;
+						buf[3] = tmp>>24;
+					}
+#endif
+					buf += 4;
 				} while(buf < blockEnd);
 
 				blockCount--;
@@ -211,13 +226,27 @@ static void doCpuTransfer(Tmio *const regs, const u16 cmd, u32 *buf, const u32 *
 		{
 			if(!(regs->sd_fifo32_cnt & FIFO32_NOT_EMPTY)) // TX request.
 			{
-				const u32 *const blockEnd = buf + wordBlockLen;
+				const u8 *const blockEnd = buf + blockLen;
 				do
 				{
-					*fifo = *buf++;
-					*fifo = *buf++;
-					*fifo = *buf++;
-					*fifo = *buf++;
+#ifdef ARM11
+					// ARM11 supports unaligned access.
+					*fifo = *((u32*)buf);
+#else
+					if((uintptr_t)buf % 4 == 0)
+					{
+						*fifo = *((u32*)buf);
+					}
+					else
+					{
+						u32 tmp = buf[0];
+						tmp |= (u32)buf[1]<<8;
+						tmp |= (u32)buf[2]<<16;
+						tmp |= (u32)buf[3]<<24;
+						*fifo = tmp;
+					}
+#endif
+					buf += 4;
 				} while(buf < blockEnd);
 
 				blockCount--;
@@ -243,7 +272,7 @@ u32 TMIO_sendCommand(TmioPort *const port, const u16 cmd, const u32 arg)
 	regs->sd_arg        = arg;
 
 	// We don't need FIFO IRQs when using DMA. buf = NULL means DMA.
-	u32 *buf = port->buf;
+	u8 *buf = port->buf;
 	u16 f32Cnt = FIFO32_CLEAR | FIFO32_EN;
 	if(buf != NULL) f32Cnt |= (cmd & CMD_DIR_R ? FIFO32_FULL_IE : FIFO32_NOT_EMPTY_IE);
 	regs->sd_fifo32_cnt = f32Cnt;

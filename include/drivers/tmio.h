@@ -295,7 +295,7 @@ typedef struct
 	u16 sd_clk_ctrl;
 	u16 sd_blocklen; // Also sd_blocklen32.
 	u16 sd_option;
-	u32 *buf;
+	void *buf;
 	u16 blocks;
 	u32 resp[4];     // Little endian, MSB first.
 } TmioPort;
@@ -368,7 +368,7 @@ ALWAYS_INLINE void TMIO_setClock(TmioPort *const port, const u32 clk)
  * @brief      Sets the transfer block length for a tmio port.
  *
  * @param      port      A pointer to the port struct.
- * @param[in]  blockLen  The block length.
+ * @param[in]  blockLen  The block length. Caution: Provide a buffer with multiple of 4 size regardless of block length.
  */
 ALWAYS_INLINE void TMIO_setBlockLen(TmioPort *const port, u16 blockLen)
 {
@@ -396,7 +396,7 @@ ALWAYS_INLINE void TMIO_setBusWidth(TmioPort *const port, const u8 width)
  * @param      buf     The buffer pointer.
  * @param[in]  blocks  The number of blocks to transfer.
  */
-ALWAYS_INLINE void TMIO_setBuffer(TmioPort *const port, u32 *buf, const u16 blocks)
+ALWAYS_INLINE void TMIO_setBuffer(TmioPort *const port, void *buf, const u16 blocks)
 {
 	port->buf    = buf;
 	port->blocks = blocks;
