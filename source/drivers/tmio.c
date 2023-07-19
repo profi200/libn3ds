@@ -20,12 +20,26 @@
 #include "types.h"
 #include "drivers/tmio.h"
 #include "drivers/tmio_config.h"
+#ifdef ARM9
+#include "util.h" // wait_cycles()
+#elif ARM11
+#include "arm11/drivers/timer.h"
+#endif // #ifdef ARM9
 
 
 // Using atomic load/store produces better code than volatile
 // but still ensures that the status is always read from memory.
 #define GET_STATUS(ptr)       atomic_load_explicit((ptr), memory_order_relaxed)
 #define SET_STATUS(ptr, val)  atomic_store_explicit((ptr), (val), memory_order_relaxed)
+
+#ifdef ARM9
+// TODO: Use a timer instead? The delay is only ~283 µs at ~261 kHz though.
+// ARM9 timer clock = controller clock. CPU is x2 timer clock.
+#define INIT_DELAY_FUNC()  wait_cycles(2 * TMIO_CLK2DIV(400000u) * 74)
+#elif ARM11
+// ARM11 timer is x2 controller clock.
+#define INIT_DELAY_FUNC()  TIMER_sleepTicks(2 * TMIO_CLK2DIV(400000u) * 74)
+#endif // #ifdef ARM9
 
 
 static u32 g_status[2] = {0};
@@ -145,15 +159,11 @@ bool TMIO_cardWritable(void)
 	return getTmioRegs(port2Controller(TMIO_CARD_PORT))->sd_status & STATUS_NO_WRPROT;
 }
 
-// TODO: This might be a little dodgy not using setPort() before changing clock.
-//       It's fine as long as only one port is used per controller
-//       and there is no concurrent access to it.
-// TODO: Turn this into a "powerup sequence" sort of function.
-void TMIO_startInitClock(TmioPort *const port, const u32 clk)
+void TMIO_powerupSequence(TmioPort *const port)
 {
-	const u16 sd_clk_ctrl = SD_CLK_EN | TMIO_CLK2DIV(clk)>>2;
-	port->sd_clk_ctrl = sd_clk_ctrl;
-	getTmioRegs(port2Controller(port->portNum))->sd_clk_ctrl = sd_clk_ctrl;
+	port->sd_clk_ctrl = SD_CLK_EN | SD_CLK_DEFAULT;
+	setPort(getTmioRegs(port2Controller(port->portNum)), port);
+	INIT_DELAY_FUNC();
 }
 
 static void getResponse(const Tmio *const regs, TmioPort *const port, const u16 cmd)

@@ -335,12 +335,11 @@ bool TMIO_cardDetected(void);
 bool TMIO_cardWritable(void);
 
 /**
- * @brief      Outputs a continuous clock for initialization.
+ * @brief      Handles the device specific powerup sequence including the 74 clocks.
  *
  * @param      port  A pointer to the port struct.
- * @param[in]  clk   The target clock in Hz. Usually 400 kHz.
  */
-void TMIO_startInitClock(TmioPort *const port, const u32 clk);
+void TMIO_powerupSequence(TmioPort *const port);
 
 /**
  * @brief      Sends a command.
