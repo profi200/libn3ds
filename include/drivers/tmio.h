@@ -159,7 +159,7 @@ ALWAYS_INLINE vu32* getTmioFifo(Tmio *const regs)
 #define SD_CLK_DIV_256           (1u<<6) // Clock divider 256.
 #define SD_CLK_DIV_512           (1u<<7) // Clock divider 512.
 #define SD_CLK_EN                (1u<<8) // Clock enable.
-#define SD_CLK_AUTO_OFF          (1u<<9) // Disables clock on idle.
+#define SD_CLK_PWR_SAVE          (1u<<9) // Disables clock on idle.
 // Bit 10 is writable... at least according to gbatek (can't confirm). Purpose unknown.
 
 // Outputs the matching divider for clk.
@@ -360,7 +360,7 @@ u32 TMIO_sendCommand(TmioPort *const port, const u16 cmd, const u32 arg);
  */
 ALWAYS_INLINE void TMIO_setClock(TmioPort *const port, const u32 clk)
 {
-	port->sd_clk_ctrl = SD_CLK_AUTO_OFF | SD_CLK_EN | TMIO_CLK2DIV(clk)>>2;
+	port->sd_clk_ctrl = SD_CLK_PWR_SAVE | SD_CLK_EN | TMIO_CLK2DIV(clk)>>2;
 }
 
 /**
