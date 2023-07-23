@@ -33,11 +33,11 @@
 #define SD_CMD_R2(id)     (CMD_RESP_R2   | (id))
 #define SD_CMD_R6(id)     (CMD_RESP_R6   | (id))
 #define SD_CMD_R7(id)     (CMD_RESP_R7   | (id))
-#define SD_CMD_R1_R(id)   (CMD_DIR_R | CMD_DT_EN | CMD_RESP_R1 | (id))
-#define SD_CMD_R1_W(id)   (CMD_DIR_W | CMD_DT_EN | CMD_RESP_R1 | (id))
+#define SD_CMD_R1_R(id)   (CMD_DATA_R | CMD_DATA_EN | CMD_RESP_R1 | (id))
+#define SD_CMD_R1_W(id)   (CMD_DATA_W | CMD_DATA_EN | CMD_RESP_R1 | (id))
 #define SD_ACMD_R1(id)    (CMD_RESP_R1 | CMD_ACMD | (id))
 #define SD_ACMD_R3(id)    (CMD_RESP_R3 | CMD_ACMD | (id))
-#define SD_ACMD_R1_R(id)  (CMD_DIR_R | CMD_DT_EN | CMD_RESP_R1 | CMD_ACMD | (id))
+#define SD_ACMD_R1_R(id)  (CMD_DATA_R | CMD_DATA_EN | CMD_RESP_R1 | CMD_ACMD | (id))
 
 
 // Basic Commands (class 0).

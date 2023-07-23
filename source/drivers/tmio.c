@@ -193,7 +193,7 @@ static void doCpuTransfer(Tmio *const regs, const u16 cmd, u8 *buf, const u32 *c
 	const u32 blockLen = regs->sd_blocklen;
 	u32 blockCount     = regs->sd_blockcount;
 	vu32 *const fifo = getTmioFifo(regs);
-	if(cmd & CMD_DIR_R)
+	if(cmd & CMD_DATA_R)
 	{
 		while((GET_STATUS(statusPtr) & STATUS_MASK_ERR) == 0 && blockCount > 0)
 		{
@@ -284,9 +284,9 @@ u32 TMIO_sendCommand(TmioPort *const port, const u16 cmd, const u32 arg)
 	// We don't need FIFO IRQs when using DMA. buf = NULL means DMA.
 	u8 *buf = port->buf;
 	u16 f32Cnt = FIFO32_CLEAR | FIFO32_EN;
-	if(buf != NULL) f32Cnt |= (cmd & CMD_DIR_R ? FIFO32_FULL_IE : FIFO32_NOT_EMPTY_IE);
+	if(buf != NULL) f32Cnt |= (cmd & CMD_DATA_R ? FIFO32_FULL_IE : FIFO32_NOT_EMPTY_IE);
 	regs->sd_fifo32_cnt = f32Cnt;
-	regs->sd_cmd        = (blocks > 1 ? CMD_MBT | cmd : cmd); // Start.
+	regs->sd_cmd        = (blocks > 1 ? CMD_MULTI_DATA | cmd : cmd); // Start.
 
 	// TODO: Benchmark if this order is ideal?
 	// Response end comes immediately after the
@@ -295,7 +295,7 @@ u32 TMIO_sendCommand(TmioPort *const port, const u16 cmd, const u32 arg)
 	while((GET_STATUS(statusPtr) & STATUS_RESP_END) == 0) __wfi();
 	getResponse(regs, port, cmd);
 
-	if((cmd & CMD_DT_EN) != 0)
+	if((cmd & CMD_DATA_EN) != 0)
 	{
 		// If we have to transfer data do so now.
 		if(buf != NULL) doCpuTransfer(regs, cmd, buf, statusPtr);

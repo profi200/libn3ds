@@ -33,8 +33,8 @@
 #define MMC_CMD_R3(id)     (CMD_RESP_R3   | (id))
 #define MMC_CMD_R4(id)     (CMD_RESP_R4   | (id))
 #define MMC_CMD_R5(id)     (CMD_RESP_R5   | (id))
-#define MMC_CMD_R1_R(id)   (CMD_DIR_R | CMD_DT_EN | CMD_RESP_R1 | (id))
-#define MMC_CMD_R1_W(id)   (CMD_DIR_W | CMD_DT_EN | CMD_RESP_R1 | (id))
+#define MMC_CMD_R1_R(id)   (CMD_DATA_R | CMD_DATA_EN | CMD_RESP_R1 | (id))
+#define MMC_CMD_R1_W(id)   (CMD_DATA_W | CMD_DATA_EN | CMD_RESP_R1 | (id))
 
 
 // Basic commands and read-stream command (class 0 and class 1).
