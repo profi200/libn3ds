@@ -77,8 +77,8 @@ iomemset_test_words:
 	ands    r12, r2, #28
 	beq     iomemset_halfword_byte
 	iomemset_words_lp:
-		str    r1, [r0], #4
 		subs   r12, #4
+		str    r1, [r0], #4
 		bne    iomemset_words_lp
 iomemset_halfword_byte:
 	tst     r2, #2
