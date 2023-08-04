@@ -45,8 +45,8 @@ typedef enum
 	MCU_REG_LCD_POW         = 0x22u, // (wo) LCD power control.
 	MCU_REG_RESTART         = 0x23u, // (wo) Stubbed (on retail?) MCU restart register.
 	MCU_REG_PWROFF_DELAY    = 0x24u, // (rw) Force power off delay.
-	MCU_REG_UNK25           = 0x25u, // (rw) Volume related? Volume value for override?
-	MCU_REG_UNK26           = 0x26u, // (rw) Volume related? Bit 0: Enable/disable MCU reporting slider state to CODEC? Bit 1: Force? Bit 2: Mode? Bit 4: Trigger volume update from slider?
+	MCU_REG_UNK25           = 0x25u, // (rw) Stubbed volume slider volue for software volume control.
+	MCU_REG_UNK26           = 0x26u, // (rw) Stubbed volume slider control register.
 	MCU_REG_VOL_SLIDER_RAW  = 0x27u, // (rw) Volume slider raw ADC data (0-0x3F?).
 	MCU_REG_LED_BRIGHTNESS  = 0x28u, // (rw) Master brightness of power/Wifi/3D (and camera?) LEDs.
 	MCU_REG_POWER_LED       = 0x29u, // (rw) 5 bytes power LED state + pattern.
