@@ -21,6 +21,13 @@
 #include "types.h"
 
 
+typedef enum
+{
+	CDC_AUDIO_OUT_AUTO      = 0u,
+	CDC_AUDIO_OUT_SPEAKER   = 1u,
+	CDC_AUDIO_OUT_HEADPHONE = 2u
+} CdcAudioOut;
+
 typedef struct
 {
 	u16 touchX[5];
@@ -45,6 +52,18 @@ void CODEC_deinit(void);
  * @brief      The opposite of CODEC_deinit(). Does a partial init.
  */
 void CODEC_wakeup(void);
+
+/**
+ * @brief      Poll and debounce headphone GPIO. Run this every ~16 ms.
+ */
+void CODEC_runHeadphoneDetection(void);
+
+/**
+ * @brief      Sets the audio output. Default is auto.
+ *
+ * @param[in]  output  The audio output to use.
+ */
+void CODEC_setAudioOutput(const CdcAudioOut output);
 
 /**
  * @brief      Get raw ADC data for Circle-Pad/Touchscreen.

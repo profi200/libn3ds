@@ -186,6 +186,8 @@ alignas(4) static const CodecCal g_fallbackCal =
 	0u
 };
 
+static bool g_forceOutput = false;
+
 
 
 static void switchPage(u16 pageReg)
@@ -427,13 +429,11 @@ static void legacyTouchscreenMode(bool enabled)
 }
 
 
-// TODO: Implement manual output switching or fix auto switching.
 static void headsetInit(void)
 {
 	// Headset detection stuff.
 	GPIO_config(GPIO_2_HEADPH_JACK, GPIO_IRQ_RISING | GPIO_INPUT); // Headphone jack IRQ.
-	//maskReg(CDC_REG_HEADSET_SEL, GPIO_read(GPIO_2_HEADPH_JACK)<<HEADSET_SEL_HP_SHIFT | HEADSET_SEL_HP_EN, 0x30); // GPIO bitmask 8.
-	maskReg(CDC_REG_HEADSET_SEL, 0, 0x30); // With automatic output switching.
+	maskReg(CDC_REG_HEADSET_SEL, GPIO_read(GPIO_2_HEADPH_JACK)<<HEADSET_SEL_HP_SHIFT | HEADSET_SEL_HP_EN, 0x30); // GPIO bitmask 8.
 	maskReg(CDC_REG_100_67, 0, 0x80); // TODO: Can we remove this?
 	maskReg(CDC_REG_100_67, 0x80, 0x80);
 }
@@ -742,6 +742,41 @@ void CODEC_wakeup(void)
 	if(g_touchscreenState) enableTouchscreen();
 	GPIO_write(GPIO_3_0, 0); // GPIO bitmask 0x40
 	TIMER_sleepMs(18); // Fixed 18 ms delay when unsetting this GPIO.
+}
+
+void CODEC_runHeadphoneDetection(void)
+{
+	static u8 prevState = 0;
+	const u8 currState = GPIO_read(GPIO_2_HEADPH_JACK);
+	static u8 debounceCounter = 0;
+	if(prevState != currState)
+	{
+		if(++debounceCounter > 4)
+		{
+			prevState = currState;
+			debounceCounter = 0;
+
+			if(!g_forceOutput)
+				maskReg(CDC_REG_HEADSET_SEL, prevState<<HEADSET_SEL_HP_SHIFT | HEADSET_SEL_HP_EN, 0x30);
+		}
+	}
+	else debounceCounter = 0;
+}
+
+void CODEC_setAudioOutput(const CdcAudioOut output)
+{
+	if(output == CDC_AUDIO_OUT_AUTO)
+	{
+		g_forceOutput = false;
+		return;
+	}
+
+	g_forceOutput = true;
+	u8 selection;
+	if(output == CDC_AUDIO_OUT_SPEAKER) selection = HEADSET_SEL_SP;
+	else                                selection = HEADSET_SEL_HP;
+
+	maskReg(CDC_REG_HEADSET_SEL, selection | HEADSET_SEL_HP_EN, 0x30);
 }
 
 bool CODEC_getRawAdcData(CdcAdcData *data)
