@@ -19,7 +19,8 @@
 #include <assert.h>
 #include <string.h>
 #include "types.h"
-#include "drivers/lgy.h"
+#include "arm11/drivers/lgy11.h"
+#include "drivers/lgy_common.h"
 #include "drivers/pxi.h"
 #include "ipc_handler.h"
 #include "util.h"
@@ -30,50 +31,22 @@
 #include "arm11/drivers/mcu.h"
 
 
-#define LGY_REGS_BASE     (IO_MEM_ARM9_ARM11 + 0x41100)
-
-typedef struct
-{
-	vu16 mode;         // 0x00
-	u8 _0x2[2];
-	vu16 sleep;        // 0x04
-	u8 _0x6[2];
-	const vu16 unk08;  // 0x08 IRQ related?
-	const vu16 padcnt; // 0x0A Read-only mirror of ARM7 "KEYCNT".
-	u8 _0xc[4];
-	vu16 pad_sel;      // 0x10 Select which keys to override. 1 = selected.
-	vu16 pad_val;      // 0x12 Override value. Each bit 0 = pressed.
-	vu16 gpio_sel;     // 0x14 Select which GPIOs to override. 1 = selected.
-	vu16 gpio_val;     // 0x16 Override value.
-	vu8 unk18;         // 0x18 DSi gamecard detection select?
-	vu8 unk19;         // 0x19 DSi gamecard detection value?
-	u8 _0x1a[6];
-	const vu8 unk20;   // 0x20
-} Lgy;
-static_assert(offsetof(Lgy, unk20) == 0x20, "Error: Member unk20 of Lgy is not at offset 0x20!");
-
-ALWAYS_INLINE Lgy* getLgyRegs(void)
-{
-	return (Lgy*)LGY_REGS_BASE;
-}
-
-
 
 static void lgySleepIsr(u32 intSource)
 {
-	Lgy *const lgy = getLgyRegs();
+	Lgy11 *const lgy11 = getLgy11Regs();
 	if(intSource == IRQ_LGY_SLEEP)
 	{
 		// Workaround for The Legend of Zelda - A Link to the Past.
 		// This game doesn't set the IRQ enable bit so we force it
 		// on the 3DS side. Unknown if other games have this bug.
-		REG_HID_PADCNT = lgy->padcnt | 1u<<14;
+		REG_HID_PADCNT = lgy11->padcnt | 1u<<14;
 	}
 	else // IRQ_HID_PADCNT
 	{
 		// TODO: Synchronize with LCD VBlank.
 		REG_HID_PADCNT = 0;
-		lgy->sleep |= 1u; // Acknowledge and wakeup.
+		lgy11->sleep |= 1u; // Acknowledge and wakeup.
 	}
 }
 
@@ -81,8 +54,8 @@ static void powerDownFcramForLegacy(u8 mode)
 {
 	flushDCache();
 	// TODO: Unmap FCRAM.
-	const Lgy *const lgy = getLgyRegs();
-	while(!lgy->mode); // Wait until legacy mode is ready.
+	const Lgy11 *const lgy11 = getLgy11Regs();
+	while(!lgy11->mode); // Wait until legacy mode is ready.
 
 	// For GBA mode we need to additionally apply a bug fix and reset FCRAM.
 	Pdn *const pdn = getPdnRegs();
@@ -137,7 +110,7 @@ Result LGY_prepareGbaMode(bool directBoot, u16 saveType, const char *const saveP
 	powerDownFcramForLegacy(LGY_MODE_AGB);
 
 	// Setup IRQ handlers and sleep mode handling.
-	getLgyRegs()->sleep = 1u<<15;
+	getLgy11Regs()->sleep = 1u<<15;
 	IRQ_registerIsr(IRQ_LGY_SLEEP, 14, 0, lgySleepIsr);
 	IRQ_registerIsr(IRQ_HID_PADCNT, 14, 0, lgySleepIsr);
 
@@ -155,32 +128,17 @@ Result LGY_getGbaRtc(GbaRtc *const out)
 	return PXI_sendCmd(IPC_CMD9_GET_GBA_RTC, cmdBuf, 2);
 }
 
-void LGY_switchMode(void)
-{
-	getLgyRegs()->mode = LGY_MODE_START;
-}
-
-void LGY_handleOverrides(void)
-{
-	Lgy *const lgy = getLgyRegs();
-	// Override D-Pad if Circle-Pad is used.
-	const u32 kHeld = hidKeysHeld();
-	u16 padSel;
-	if(kHeld & KEY_CPAD_MASK)
-	{
-		lgy->pad_val = (kHeld>>24) ^ KEY_DPAD_MASK;
-		padSel = KEY_DPAD_MASK;
-	}
-	else padSel = 0;
-	lgy->pad_sel = padSel;
-}
-
 Result LGY_backupGbaSave(void)
 {
 	return PXI_sendCmd(IPC_CMD9_BACKUP_GBA_SAVE, NULL, 0);
 }
 
-void LGY_deinit(void)
+void LGY11_switchMode(void)
+{
+	getLgy11Regs()->mode = LGY_MODE_START;
+}
+
+void LGY11_deinit(void)
 {
 	LGY_backupGbaSave();
 

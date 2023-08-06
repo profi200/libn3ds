@@ -20,7 +20,7 @@
 #include "ipc_handler.h"
 #include "drivers/cache.h"
 #include "fs.h"
-#include "drivers/lgy.h"
+#include "drivers/lgy_common.h"
 #include "arm9/debug.h"
 
 
