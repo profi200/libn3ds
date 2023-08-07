@@ -23,7 +23,7 @@
 #include "mem_map.h"
 
 
-#define LGY11_REGS_BASE  (IO_MEM_ARM9_ARM11 + 0x41100)
+#define LGY11_REGS_BASE  (IO_COMMON_BASE + 0x41100)
 
 typedef struct
 {

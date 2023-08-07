@@ -1,6 +1,7 @@
 extern "C"
 {
 	#include "types.h"
+	#include "mem_map.h"
 	#include "arm11/allocator/vram.h"
 	#include "arm11/util/rbtree.h"
 }
@@ -12,7 +13,7 @@ static MemPool sVramPool;
 
 static bool vramInit()
 {
-	auto blk = MemBlock::Create((u8*)0x18000000, 0x00600000);
+	auto blk = MemBlock::Create((u8*)VRAM_BASE, VRAM_SIZE);
 	if (blk)
 	{
 		sVramPool.AddBlock(blk);

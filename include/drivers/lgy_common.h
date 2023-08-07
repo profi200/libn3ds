@@ -19,12 +19,13 @@
  */
 
 #include "types.h"
+#include "mem_map.h"
 #include "error_codes.h"
 
 
 #define LGY_MAX_ROM_SIZE    (1024u * 1024 * 32)
 #define LGY_MAX_SAVE_SIZE   (1024u * 128)
-#define LGY_ROM_LOC         (0x20000000u)
+#define LGY_ROM_LOC         (FCRAM_BASE)
 
 
 #define LGY_MODE_TWL    (1u)

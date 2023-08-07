@@ -23,9 +23,9 @@
 #include "mem_map.h"
 
 
-#define I2C1_REGS_BASE  (IO_MEM_ARM9_ARM11 + 0x61000)
-#define I2C2_REGS_BASE  (IO_MEM_ARM9_ARM11 + 0x44000)
-#define I2C3_REGS_BASE  (IO_MEM_ARM9_ARM11 + 0x48000)
+#define I2C1_REGS_BASE  (IO_COMMON_BASE + 0x61000)
+#define I2C2_REGS_BASE  (IO_COMMON_BASE + 0x44000)
+#define I2C3_REGS_BASE  (IO_COMMON_BASE + 0x48000)
 
 typedef struct
 {

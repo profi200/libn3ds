@@ -23,7 +23,7 @@
 #include "mem_map.h"
 
 
-#define SPICARD_REGS_BASE  (IO_MEM_ARM9_ONLY + 0xD800)
+#define SPICARD_REGS_BASE  (IO_AHB_BASE + 0xD800)
 
 typedef struct
 {

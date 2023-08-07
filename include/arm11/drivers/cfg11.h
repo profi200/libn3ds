@@ -23,7 +23,7 @@
 #include "mem_map.h"
 
 
-#define CFG11_REGS_BASE  (IO_MEM_ARM9_ARM11 + 0x40000)
+#define CFG11_REGS_BASE  (IO_COMMON_BASE + 0x40000)
 
 typedef struct
 {
@@ -91,7 +91,7 @@ ALWAYS_INLINE Cfg11* getCfg11Regs(void)
 // the first 0x800000 bytes of upper FCRAM are protected.
 #define GPUPROT_FCRAM_LO(x)     (x)      // Protect lower 128 MiB of FCRAM (0x28000000-(0x800000*x)).
 #define GPUPROT_FCRAM_UP(x)     ((x)<<4) // Protect upper 128 MiB of FCRAM (0x30000000-(0x800000*x)) (New3DS-only).
-#define GPUPROT_AXIWRAM         (1u<<8)  // Protect AXIWRAM.
+#define GPUPROT_AXIWRAM         (1u<<8)  // Protect AXI RAM.
 #define GPUPROT_QTM(x)          ((x)<<9) // Protect QTM RAM (0x1F400000-(0x100000*x)). 2 bits. TODO: Confirm this.
 #define GPUPROT_NO_PROT         (0u)
 #define GPUPROT_PROT_ALL        (GPUPROT_QTM(3u) | GPUPROT_AXIWRAM | \

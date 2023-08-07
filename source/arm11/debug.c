@@ -96,9 +96,9 @@ NOINLINE noreturn void guruMeditation(u8 type, const u32 *excStack)
 
 	ee_puts("Stack dump:");
 	u32 sp = excStack[13];
-	if(sp >= AXIWRAM_BASE && sp < AXIWRAM_BASE + AXIWRAM_SIZE && !(sp & 3u))
+	if(sp >= AXI_RAM_BASE && sp < AXI_RAM_BASE + AXI_RAM_SIZE && !(sp & 3u))
 	{
-		u32 stackWords = ((AXIWRAM_BASE + AXIWRAM_SIZE - sp) / 4 > 48 ? 48 : (AXIWRAM_BASE + AXIWRAM_SIZE - sp) / 4);
+		u32 stackWords = ((AXI_RAM_BASE + AXI_RAM_SIZE - sp) / 4 > 48 ? 48 : (AXI_RAM_BASE + AXI_RAM_SIZE - sp) / 4);
 
 		u32 newlineCounter = 0;
 		for(u32 i = 0; i < stackWords; i++)

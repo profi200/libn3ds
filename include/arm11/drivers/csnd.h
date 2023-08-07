@@ -23,7 +23,7 @@
 #include "mem_map.h"
 
 
-#define CSND_REGS_BASE  (IO_MEM_ARM9_ARM11 + 0x3000)
+#define CSND_REGS_BASE  (IO_COMMON_BASE + 0x3000)
 
 typedef struct
 {

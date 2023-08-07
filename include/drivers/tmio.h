@@ -2,16 +2,17 @@
 
 #include <assert.h>
 #include "types.h"
+#include "mem_map.h"
 
 
 // For simplicity we will name the accessible 2 controllers 1 and 2.
 // The real controller number is in the comment.
 #ifdef ARM9
-#define TMIO1_REGS_BASE (0x10006000u) // Controller 1.
-#define TMIO2_REGS_BASE (0x10007000u) // Controller 3. Remappable.
+#define TMIO1_REGS_BASE (IO_AHB_BASE + 0x6000)     // Controller 1.
+#define TMIO2_REGS_BASE (IO_AHB_BASE + 0x7000)     // Controller 3. Remappable.
 #elif ARM11
-#define TMIO1_REGS_BASE (0x10122000u) // Controller 2.
-#define TMIO2_REGS_BASE (0x10100000u) // Controller 3. Remappable.
+#define TMIO1_REGS_BASE (IO_COMMON_BASE + 0x22000) // Controller 2.
+#define TMIO2_REGS_BASE (IO_COMMON_BASE)           // Controller 3. Remappable.
 #endif // #ifdef ARM9
 
 #define TMIO_HCLK       (67027964u) // In Hz.

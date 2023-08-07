@@ -23,7 +23,7 @@
 
 
 
-#define GX_REGS_BASE             (IO_MEM_ARM11_ONLY + 0x200000)
+#define GX_REGS_BASE             (IO_AXI_BASE + 0x200000)
 #define REG_GX_GPU_CLK           *((vu32*)(GX_REGS_BASE + 0x0004)) // ?
 
 // PSC (memory fill) regs.

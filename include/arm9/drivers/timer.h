@@ -23,7 +23,7 @@
 #include "mem_map.h"
 
 
-#define TIMER_REGS_BASE  (IO_MEM_ARM9_ONLY + 0x3000)
+#define TIMER_REGS_BASE  (IO_AHB_BASE + 0x3000)
 
 typedef struct
 {

@@ -23,16 +23,16 @@
 #include "mem_map.h"
 
 
-//#define USE_NEW_CDMA 1
+//#define USE_NEW_CDMA (1)
 
 #ifdef ARM11
 #ifdef USE_NEW_CDMA
-#define DMA330_REGS_BASE  (IO_MEM_ARM11_ONLY + 0x6000)
+#define DMA330_REGS_BASE  (IO_AXI_BASE + 0x6000)
 #else
-#define DMA330_REGS_BASE  (IO_MEM_ARM11_ONLY + 0x0000)
+#define DMA330_REGS_BASE  (IO_AXI_BASE + 0x0000)
 #endif // ifdef USE_NEW_CDMA
 #elif ARM9
-#define DMA330_REGS_BASE  (IO_MEM_ARM9_ONLY + 0xC000)
+#define DMA330_REGS_BASE  (IO_AHB_BASE + 0xC000)
 #endif // ifdef ARM11
 
 typedef struct

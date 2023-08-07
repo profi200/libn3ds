@@ -24,9 +24,9 @@
 
 
 #ifdef ARM9
-#define PXI_REGS_BASE                   (IO_MEM_ARM9_ONLY + 0x8000)
+#define PXI_REGS_BASE                   (IO_AHB_BASE + 0x8000)
 #elif ARM11
-#define PXI_REGS_BASE                   (IO_MEM_ARM9_ARM11 + 0x63000)
+#define PXI_REGS_BASE                   (IO_COMMON_BASE + 0x63000)
 #endif // #ifdef ARM9
 
 typedef struct

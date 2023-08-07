@@ -75,7 +75,7 @@ BEGIN_ASM_FUNC irqHandler
 	srsfd sp!, #PSR_SYS_MODE     @ Store lr and spsr on system mode stack
 	cps #PSR_SYS_MODE
 	stmfd sp!, {r0-r3, r12, lr}
-	ldr r12, =MPCORE_PRIV_REG_BASE
+	ldr r12, =MPCORE_PRIV_BASE
 	ldr r2, =g_irqIsrTable
 	ldr r0, [r12, #0x10C]        @ REG_GIC_CPU_INTACK
 	and r1, r0, #0x7F
@@ -91,7 +91,7 @@ BEGIN_ASM_FUNC irqHandler
 	str r0, [sp, #-4]!           @ A single ldr/str can't be interrupted
 	blx r3
 	ldr r0, [sp], #4
-	ldr r12, =MPCORE_PRIV_REG_BASE
+	ldr r12, =MPCORE_PRIV_BASE
 	cpsid i
 irqHandler_skip_processing:
 	str r0, [r12, #0x110]        @ REG_GIC_CPU_EOI

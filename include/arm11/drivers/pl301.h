@@ -23,7 +23,7 @@
 #include "mem_map.h"
 
 
-#define PL301_REGS_BASE  (IO_MEM_ARM11_ONLY + 0xF400)
+#define PL301_REGS_BASE  (IO_AXI_BASE + 0xF400)
 
 typedef struct
 {

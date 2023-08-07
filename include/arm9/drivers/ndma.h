@@ -33,7 +33,7 @@
 #include "util.h"
 
 
-#define NDMA_REGS_BASE  (IO_MEM_ARM9_ONLY + 0x2000)
+#define NDMA_REGS_BASE  (IO_AHB_BASE + 0x2000)
 #define REG_NDMA_GCNT   *((vu32*)NDMA_REGS_BASE) // Global control.
 
 // Note: The channel regs are offset by 4 (REG_NDMA_GCNT).

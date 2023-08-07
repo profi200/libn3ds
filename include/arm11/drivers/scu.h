@@ -23,7 +23,7 @@
 #include "mem_map.h"
 
 
-#define SCU_REGS_BASE  (MPCORE_PRIV_REG_BASE)
+#define SCU_REGS_BASE  (MPCORE_PRIV_BASE)
 
 typedef struct
 {

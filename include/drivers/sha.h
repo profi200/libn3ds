@@ -24,9 +24,9 @@
 
 
 #ifdef ARM11
-#define SHA_REGS_BASE  (IO_MEM_ARM9_ARM11 + 0x1000)
+#define SHA_REGS_BASE  (IO_COMMON_BASE + 0x1000)
 #elif ARM9
-#define SHA_REGS_BASE  (IO_MEM_ARM9_ONLY + 0xA000)
+#define SHA_REGS_BASE  (IO_AHB_BASE + 0xA000)
 #endif // #ifdef ARM11
 
 // Vectorizing the FIFO improves code generation at the cost of being slightly slower for small data.
@@ -51,7 +51,7 @@ ALWAYS_INLINE Sha* getShaRegs(void)
 ALWAYS_INLINE volatile ShaFifo* getShaFifo(Sha *const regs)
 {
 #if (_3DS && ARM11)
-	return (volatile ShaFifo*)((uintptr_t)regs + 0x200000u);
+	return (volatile ShaFifo*)((uintptr_t)regs + 0x200000);
 #else
 	return &regs->fifo;
 #endif // #if (_3DS && ARM11)

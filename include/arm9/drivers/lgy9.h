@@ -24,11 +24,11 @@
 
 
 #define LGY9_ARM7_STUB_LOC   (0x3007E00u)
-#define LGY9_ARM7_STUB_LOC9  (0x80BFE00u)
-#define LGY9_SAVE_LOC        (0x8080000u)
+#define LGY9_ARM7_STUB_LOC9  (AHB_RAM_BASE + 0xBFE00u)
+#define LGY9_SAVE_LOC        (AHB_RAM_BASE + 0x80000u)
 
 
-#define LGY9_REGS_BASE  (IO_MEM_ARM9_ONLY + 0x18000)
+#define LGY9_REGS_BASE  (IO_AHB_BASE + 0x18000)
 
 typedef struct
 {

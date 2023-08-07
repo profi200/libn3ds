@@ -24,11 +24,11 @@
 #include "kevent.h"
 
 
-#define LGYFB_TOP_REGS_BASE      (IO_MEM_ARM9_ARM11 + 0x11000)
-#define LGYFB_BOT_REGS_BASE      (IO_MEM_ARM9_ARM11 + 0x10000)
+#define LGYFB_TOP_REGS_BASE      (IO_COMMON_BASE + 0x11000)
+#define LGYFB_BOT_REGS_BASE      (IO_COMMON_BASE + 0x10000)
 
-#define LGYFB_TOP_FIFO           *((const vu32*)(0x10311000))
-#define LGYFB_BOT_FIFO           *((const vu32*)(0x10310000))
+#define LGYFB_TOP_FIFO           *((const vu32*)(LGYFB_TOP_REGS_BASE + 0x200000))
+#define LGYFB_BOT_FIFO           *((const vu32*)(LGYFB_BOT_REGS_BASE + 0x200000))
 
 typedef struct
 {

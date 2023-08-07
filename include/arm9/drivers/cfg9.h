@@ -23,7 +23,7 @@
 #include "mem_map.h"
 
 
-#define CFG9_REGS_BASE  (IO_MEM_ARM9_ONLY)
+#define CFG9_REGS_BASE  (IO_AHB_BASE)
 
 typedef struct
 {

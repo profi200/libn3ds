@@ -172,11 +172,11 @@ void setupMmu(void)
 		iomemset((u32*)g_mmuTables, 0, sizeof(MmuTables));
 
 		// IO mem mapping
-		mmuMapSections(IO_MEM_ARM9_ARM11, IO_MEM_ARM9_ARM11, 4, true,
+		mmuMapSections(IO_COMMON_BASE, IO_COMMON_BASE, 4, true,
 		               PERM_PRIV_RW_USR_NA, 0, true, ATTR_SHARED_DEVICE);
 
 		// MPCore private region mapping
-		mmuMapPages(MPCORE_PRIV_REG_BASE, MPCORE_PRIV_REG_BASE, 2,
+		mmuMapPages(MPCORE_PRIV_BASE, MPCORE_PRIV_BASE, 2,
 		            g_mmuTables->l2PrivReg, false, PERM_PRIV_RW_USR_NA,
 		            0, true, L1_TO_L2(ATTR_SHARED_DEVICE));
 
@@ -198,7 +198,7 @@ void setupMmu(void)
 		extern const u32 __rodata_start__[];
 		extern const u32 __rodata_pages__[];
 		extern const u32 __data_start__[];
-		const u32 dataPages = (AXIWRAM_BASE + AXIWRAM_SIZE - (u32)__data_start__) / 0x1000;
+		const u32 dataPages = (AXI_RAM_BASE + AXI_RAM_SIZE - (u32)__data_start__) / 0x1000;
 
 		// text
 		mmuMapPages((u32)__start__, (u32)__start__, (u32)__text_pages__,
@@ -218,7 +218,7 @@ void setupMmu(void)
 		                    ATTR_NORM_WRITE_BACK_ALLOC);
 
 		// Map fastboot executable start to boot11 mirror (exception vectors)
-		mmuMapPages(BOOT11_MIRROR2, (u32)__start__, 1, g_mmuTables->l2Boot11, true,
+		mmuMapPages(BOOT11_HI_MIRROR, (u32)__start__, 1, g_mmuTables->l2Boot11, true,
 		            PERM_PRIV_RO_USR_NA, 0, false, L1_TO_L2(ATTR_NORM_WRITE_BACK_ALLOC));
 
 		// Invalidate tag RAMs before enabling SMP as recommended by the MPCore doc.

@@ -84,7 +84,7 @@ void DMA330_init(void)
 #ifdef ARM11
 		u16 progBuf[33]; // Max 32 periphals + 1 for DMAEND.
 #elif ARM9
-		u16 *progBuf = (u16*)(A9_RAM_BASE + A9_RAM_SIZE - 33 * 2); // ARM9 DTCM stack workaround.
+		u16 *progBuf = (u16*)(AHB_RAM_BASE + AHB_RAM_SIZE - 33 * 2); // ARM9 DTCM stack workaround.
 #endif // ifdef ARM11
 		for(u32 i = 0; i < PERIPHALS; i++)
 		{

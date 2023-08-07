@@ -23,7 +23,7 @@
 #include "mem_map.h"
 
 
-#define TIMER_REGS_BASE  (MPCORE_PRIV_REG_BASE + 0x600)
+#define TIMER_REGS_BASE  (MPCORE_PRIV_BASE + 0x600)
 
 typedef struct
 {

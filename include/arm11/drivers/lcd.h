@@ -25,7 +25,7 @@
 
 
 // LCD/ABL regs.
-#define LCD_REGS_BASE            (IO_MEM_ARM11_ONLY + 0x2000)
+#define LCD_REGS_BASE            (IO_AXI_BASE + 0x2000)
 #define REG_LCD_PARALLAX_CNT     *((vu32*)(LCD_REGS_BASE + 0x000)) // Controls PWM for the parallax barrier?
 #define REG_LCD_PARALLAX_PWM     *((vu32*)(LCD_REGS_BASE + 0x004)) // Frequency/other PWM stuff maybe?
 #define REG_LCD_UNK00C           *((vu32*)(LCD_REGS_BASE + 0x00C)) // Wtf is "FIX"?

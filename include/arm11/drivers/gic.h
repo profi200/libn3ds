@@ -24,8 +24,8 @@
 
 
 // Most register names from: https://github.com/torvalds/linux/blob/master/include/linux/irqchip/arm-gic.h
-#define GIC_CPU_REGS_BASE   (MPCORE_PRIV_REG_BASE + 0x100)
-#define GIC_DIST_REGS_BASE  (MPCORE_PRIV_REG_BASE + 0x1000)
+#define GIC_CPU_REGS_BASE   (MPCORE_PRIV_BASE + 0x100)
+#define GIC_DIST_REGS_BASE  (MPCORE_PRIV_BASE + 0x1000)
 
 typedef struct
 {

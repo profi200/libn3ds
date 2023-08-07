@@ -73,13 +73,13 @@ BEGIN_ASM_FUNC _start no_section
 	mov r1, #0
 	bl iomemset
 	@ Setup newlib heap
-	ldr r0, =IO_MEM_ARM9_ONLY   @ CFG9 regs
+	ldr r0, =IO_AHB_BASE        @ CFG9 regs
 	ldr r1, [r0, #0xFFC]        @ REG_CFG9_SOCINFO
 	tst r1, #2                  @ Test for LGR1 bit (New 3DS prototype).
 	movne r2, #1
 	strne r2, [r0, #0x200]      @ REG_CFG9_EXTMEMCNT9
 	ldr r0, =A9_HEAP_END
-	addne r0, #A9_RAM_N3DS_EXT_SIZE
+	addne r0, #AHB_RAM_EXT_SIZE
 	ldr r1, =fake_heap_end
 	str r0, [r1]
 	blx __libc_init_array       @ Initialize ctors and dtors
@@ -240,14 +240,14 @@ _mpu_regions:
 	@ Region 5: FCRAM + N3DS extension 256 MiB
 	@ Region 6: DTCM 16 KiB
 	@ Region 7: Exception vectors + ARM9 bootrom 64 KiB
-	.4byte MAKE_REGION(ITCM_KERNEL_MIRROR, REGION_32KiB)
-	.4byte MAKE_REGION(A9_RAM_BASE,        REGION_2MiB)
-	.4byte MAKE_REGION(IO_MEM_ARM9_ONLY,   REGION_2MiB)
-	.4byte MAKE_REGION(VRAM_BASE,          REGION_8MiB)
-	.4byte MAKE_REGION(DSP_MEM_BASE,       REGION_1MiB)
-	.4byte MAKE_REGION(FCRAM_BASE,         REGION_256MiB)
-	.4byte MAKE_REGION(DTCM_BASE,          REGION_16KiB)
-	.4byte MAKE_REGION(BOOT9_BASE,         REGION_64KiB)
+	.4byte MAKE_REGION(ITCM_KERN9_MIRROR, REGION_32KiB)
+	.4byte MAKE_REGION(AHB_RAM_BASE,      REGION_2MiB)
+	.4byte MAKE_REGION(IO_AHB_BASE,       REGION_2MiB)
+	.4byte MAKE_REGION(VRAM_BASE,         REGION_8MiB)
+	.4byte MAKE_REGION(DSP_RAM_BASE,      REGION_1MiB)
+	.4byte MAKE_REGION(FCRAM_BASE,        REGION_256MiB)
+	.4byte MAKE_REGION(DTCM_BASE,         REGION_16KiB)
+	.4byte MAKE_REGION(BOOT9_BASE,        REGION_64KiB)
 _mpu_permissions:
 	@ Data access permissions:
 	@ Region 0: User = --, Privileged = RW
@@ -289,7 +289,7 @@ BEGIN_ASM_FUNC deinitCpu no_section
 
 	msr cpsr_cxsf, #PSR_INT_OFF | PSR_SYS_MODE
 	@ Stub vectors to endless loops
-	ldr r0, =A9_RAM_BASE
+	ldr r0, =AHB_RAM_BASE
 	ldr r2, =MAKE_BRANCH(0, 0)  @ Endless loop
 	mov r1, #6
 	deinitCpu_lp:

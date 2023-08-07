@@ -23,7 +23,7 @@
 #include "mem_map.h"
 
 
-#define PDN_REGS_BASE  (IO_MEM_ARM9_ARM11 + 0x41000)
+#define PDN_REGS_BASE  (IO_COMMON_BASE + 0x41000)
 
 typedef struct
 {

@@ -22,7 +22,7 @@
 #include "mem_map.h"
 
 
-#define GPIO_REGS_BASE  (IO_MEM_ARM9_ARM11 + 0x47000)
+#define GPIO_REGS_BASE  (IO_COMMON_BASE + 0x47000)
 // 3 GPIOs (bits 0-2)
 #define REG_GPIO1_DAT   *((const vu8*)(GPIO_REGS_BASE + 0x00)) // Read-only.
 

@@ -65,7 +65,7 @@ END_ASM_FUNC
 BEGIN_ASM_FUNC irqHandler
 	sub lr, lr, #4
 	stmfd sp!, {r0-r3, r12, lr}
-	ldr r12, =IO_MEM_ARM9_ONLY + 0x1000 @ REG_IRQ_IE
+	ldr r12, =IO_AHB_BASE + 0x1000   @ REG_IRQ_IE
 	ldrd r0, r1, [r12]
 	mov r3, #0x80000000
 	and r1, r0, r1
