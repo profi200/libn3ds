@@ -24,8 +24,8 @@
 
 
 // Most register names from: https://github.com/torvalds/linux/blob/master/include/linux/irqchip/arm-gic.h
-#define GIC_CPU_REGS_BASE   (MPCORE_PRIV_BASE + 0x100)
-#define GIC_DIST_REGS_BASE  (MPCORE_PRIV_BASE + 0x1000)
+#define GICC_REGS_BASE  (MPCORE_PRIV_BASE + 0x100)
+#define GICD_REGS_BASE  (MPCORE_PRIV_BASE + 0x1000)
 
 typedef struct
 {
@@ -36,8 +36,8 @@ typedef struct
 	vu32 eoi;              // 0x10 End of Interrupt Register.
 	const vu32 runningpri; // 0x14 Running Priority Register.
 	const vu32 highpri;    // 0x18 Highest Pending Interrupt Register.
-} GicCpu;
-static_assert(offsetof(GicCpu, highpri) == 0x18, "Error: Member highpri of GicCpu is not at offset 0x18!");
+} Gicc;
+static_assert(offsetof(Gicc, highpri) == 0x18, "Error: Member highpri of Gicc is not at offset 0x18!");
 
 typedef struct
 {
@@ -72,15 +72,15 @@ typedef struct
 	const vu32 primecell1;    // 0xFF4 PrimeCell Identification Register 1.
 	const vu32 primecell2;    // 0xFF8 PrimeCell Identification Register 2.
 	const vu32 primecell3;    // 0xFFC PrimeCell Identification Register 3.
-} GicDist;
-static_assert(offsetof(GicDist, primecell3) == 0xFFC, "Error: Member primecell3 of GicDist is not at offset 0xFFC!");
+} Gicd;
+static_assert(offsetof(Gicd, primecell3) == 0xFFC, "Error: Member primecell3 of Gicd is not at offset 0xFFC!");
 
-ALWAYS_INLINE GicCpu* getGicCpuRegs(void)
+ALWAYS_INLINE Gicc* getGiccRegs(void)
 {
-	return (GicCpu*)GIC_CPU_REGS_BASE;
+	return (Gicc*)GICC_REGS_BASE;
 }
 
-ALWAYS_INLINE GicDist* getGicDistRegs(void)
+ALWAYS_INLINE Gicd* getGicdRegs(void)
 {
-	return (GicDist*)GIC_DIST_REGS_BASE;
+	return (Gicd*)GICD_REGS_BASE;
 }
