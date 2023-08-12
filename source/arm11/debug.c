@@ -44,7 +44,7 @@ NOINLINE noreturn void panic(void)
 	// Wait for A/B/X or Y
 	while(!(REG_HID_PAD & (KEY_A | KEY_B | KEY_X | KEY_Y)));
 
-	MCU_powerOffSys();
+	MCU_sysPowerOff();
 	while(1) __wfi();
 }
 
@@ -61,7 +61,7 @@ NOINLINE noreturn void panicMsg(const char *msg)
 	// Wait for A/B/X or Y
 	while(!(REG_HID_PAD & (KEY_A | KEY_B | KEY_X | KEY_Y)));
 
-	MCU_powerOffSys();
+	MCU_sysPowerOff();
 	while(1) __wfi();
 }
 
@@ -114,7 +114,7 @@ NOINLINE noreturn void guruMeditation(u8 type, const u32 *excStack)
 	// Wait for A/B/X or Y
 	while(!(REG_HID_PAD & (KEY_A | KEY_B | KEY_X | KEY_Y)));
 
-	MCU_powerOffSys();
+	MCU_sysPowerOff();
 	while(1) __wfi();
 }
 

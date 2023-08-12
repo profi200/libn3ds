@@ -38,7 +38,7 @@ noreturn void power_off(void)
 {
 	power_safe_halt();
 
-	MCU_powerOffSys();
+	MCU_sysPowerOff();
 
 	__cpsid(aif);
 	while(1) __wfi();
@@ -48,7 +48,7 @@ noreturn void power_reboot(void)
 {
 	power_safe_halt();
 
-	MCU_rebootSys();
+	MCU_sysReboot();
 
 	__cpsid(aif);
 	while(1) __wfi();

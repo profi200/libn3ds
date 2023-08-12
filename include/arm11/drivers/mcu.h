@@ -222,11 +222,9 @@ u32 MCU_getIrqMask(void);
  */
 bool MCU_setIrqMask(u32 mask);
 
-// TODO: MCU_setSystemPower()?
+void MCU_sysPowerOff(void);
 
-void MCU_powerOffSys(void);
-
-void MCU_rebootSys(void);
+void MCU_sysReboot(void);
 
 /**
  * @brief      { function_description }

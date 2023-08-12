@@ -28,7 +28,7 @@ typedef enum
 	MCU_REG_LCD_VCOM_TOP    = 0x03u, // (rw) Top LCD VCOM ("flicker").
 	MCU_REG_LCD_VCOM_BOT    = 0x04u, // (rw) Bottom LCD VCOM ("flicker").
 	MCU_REG_FW_UPDATE       = 0x05u, // (rw) 0x05-0x07 Firmware update magic "jhl" is written here. If we stop the transfer after the magic the MCU will just reset.
-	MCU_REG_3D_SLIDER       = 0x08u, // (ro) Raw 3D slider position (0-0x3F?).
+	MCU_REG_3D_SLIDER_RAW   = 0x08u, // (ro) 3D slider raw ADC data (0-0xFF).
 	MCU_REG_VOL_SLIDER      = 0x09u, // (ro) Volume slider position (0-0x3F).
 	MCU_REG_BATT_TEMP       = 0x0Au, // (ro) Battery temperature in celsius.
 	MCU_REG_BATT_LEVEL      = 0x0Bu, // (ro) Battery percentage (0-100).
@@ -40,16 +40,16 @@ typedef enum
 	// 0x14 ro, 0x15-0x17 rw. All unused.
 	MCU_REG_IRQ_MASK        = 0x18u, // (rw) 0x18-0x1B Interrupt mask (each bit 0=enabled, 1=disabled).
 	// 0x1C-0x1F rw and unused.
-	MCU_REG_SYS_POW         = 0x20u, // (wo) System power/reset control.
+	MCU_REG_SYS_PWR         = 0x20u, // (wo) System power/reset control.
 	MCU_REG_TWL_IRQ         = 0x21u, // (wo) Various TWL MCU status change signals.
-	MCU_REG_LCD_POW         = 0x22u, // (wo) LCD power control.
+	MCU_REG_LCD_PWR         = 0x22u, // (wo) LCD power control.
 	MCU_REG_RESTART         = 0x23u, // (wo) Stubbed (on retail?) MCU restart register.
 	MCU_REG_PWROFF_DELAY    = 0x24u, // (rw) Force power off delay.
 	MCU_REG_UNK25           = 0x25u, // (rw) Stubbed volume slider volue for software volume control.
 	MCU_REG_UNK26           = 0x26u, // (rw) Stubbed volume slider control register.
-	MCU_REG_VOL_SLIDER_RAW  = 0x27u, // (rw) Volume slider raw ADC data (0-0x3F?).
+	MCU_REG_VOL_SLIDER_RAW  = 0x27u, // (rw) Volume slider raw ADC data (0-0xFF).
 	MCU_REG_LED_BRIGHTNESS  = 0x28u, // (rw) Master brightness of power/Wifi/3D (and camera?) LEDs.
-	MCU_REG_POWER_LED       = 0x29u, // (rw) 5 bytes power LED state + pattern.
+	MCU_REG_PWR_LED         = 0x29u, // (rw) 5 bytes power LED state + pattern.
 	MCU_REG_WIFI_LED        = 0x2Au, // (rw) WiFi LED state.
 	MCU_REG_CAM_LED         = 0x2Bu, // (rw) Camera LED state.
 	MCU_REG_3D_LED          = 0x2Cu, // (rw) 3D LED state.

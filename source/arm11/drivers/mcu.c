@@ -177,7 +177,7 @@ bool MCU_setLcdVcomBot(u8 vcom)
 
 u8 MCU_get3dSliderPosition(void)
 {
-	return MCU_readReg(MCU_REG_3D_SLIDER);
+	return MCU_readReg(MCU_REG_3D_SLIDER_RAW);
 }
 
 u8 MCU_getVolumeSliderPosition(void)
@@ -226,16 +226,15 @@ bool MCU_setIrqMask(u32 mask)
 	return MCU_writeRegBuf(MCU_REG_IRQ_MASK, (const u8*)&mask, sizeof(mask));
 }
 
-// TODO: MCU_setSystemPower()?
-
-void MCU_powerOffSys(void)
+// TODO: Possibly combine power off and reboot?
+void MCU_sysPowerOff(void)
 {
-	I2C_writeRegIntSafe(I2C_DEV_CTR_MCU, MCU_REG_SYS_POW, 1u);
+	I2C_writeRegIntSafe(I2C_DEV_CTR_MCU, MCU_REG_SYS_PWR, 1u);
 }
 
-void MCU_rebootSys(void)
+void MCU_sysReboot(void)
 {
-	I2C_writeRegIntSafe(I2C_DEV_CTR_MCU, MCU_REG_SYS_POW, 1u<<2);
+	I2C_writeRegIntSafe(I2C_DEV_CTR_MCU, MCU_REG_SYS_PWR, 1u<<2);
 }
 
 bool MCU_setTwlIrq(u8 bits)
@@ -245,7 +244,7 @@ bool MCU_setTwlIrq(u8 bits)
 
 void MCU_setLcdPower(u8 bits)
 {
-	MCU_writeReg(MCU_REG_LCD_POW, bits);
+	MCU_writeReg(MCU_REG_LCD_PWR, bits);
 }
 
 u8 MCU_getPoweroffDelay(void)
@@ -300,12 +299,12 @@ bool MCU_setLedMasterBrightness(u8 brightness)
 
 bool MCU_getPowerLedPattern(u8 pattern[5])
 {
-	return MCU_readRegBuf(MCU_REG_POWER_LED, pattern, 5);
+	return MCU_readRegBuf(MCU_REG_PWR_LED, pattern, 5);
 }
 
 bool MCU_setPowerLedPattern(const u8 pattern[5])
 {
-	return MCU_writeRegBuf(MCU_REG_POWER_LED, pattern, 5);
+	return MCU_writeRegBuf(MCU_REG_PWR_LED, pattern, 5);
 }
 
 u8 MCU_getWifiLedState(void)
