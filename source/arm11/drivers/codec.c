@@ -779,6 +779,24 @@ void CODEC_setAudioOutput(const CdcAudioOut output)
 	maskReg(CDC_REG_HEADSET_SEL, selection | HEADSET_SEL_HP_EN, 0x30);
 }
 
+void CODEC_setVolumeOverride(const s8 vol)
+{
+	if(vol > 48)
+	{
+		// Volume control via slider.
+		maskReg(CDC_REG_VOL_MICDET_PIN_SAR_ADC, 0x80, 0x80);
+	}
+	else
+	{
+		// Volume control via register.
+		// Overflows into CDC_REG_DAC_R_VOLUME_CTRL.
+		alignas(4) s8 volumes[2] = {vol, vol};
+		writeRegBuf(CDC_REG_DAC_L_VOLUME_CTRL, (u32*)volumes, 2);
+
+		maskReg(CDC_REG_VOL_MICDET_PIN_SAR_ADC, 0, 0x80);
+	}
+}
+
 bool CODEC_getRawAdcData(CdcAdcData *data)
 {
 	if((readReg(CDC_REG_103_38) & 2u) == 0)

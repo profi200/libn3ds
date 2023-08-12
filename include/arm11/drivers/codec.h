@@ -66,6 +66,16 @@ void CODEC_runHeadphoneDetection(void);
 void CODEC_setAudioOutput(const CdcAudioOut output);
 
 /**
+ * @brief      Sets volume override.
+ *
+ * @param[in]  vol   The volume in 0.5 dB steps. -128 is muted.
+ *                   -127 is minimum & maximum is 48 (-63.5 - +24 dB).
+ *                   Anything above 48 means volume control via slider.
+ *                   Recommended range is -128 - -20 to match the volume slider.
+ */
+void CODEC_setVolumeOverride(const s8 vol);
+
+/**
  * @brief      Get raw ADC data for Circle-Pad/Touchscreen.
  *
  * @param      data  The output data pointer. Must be 4 bytes aligned.

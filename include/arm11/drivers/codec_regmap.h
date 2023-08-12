@@ -73,8 +73,8 @@ enum
 	// 62 Programmable Instruction Mode-Control Bits?
 	CDC_REG_DAC_DATA_PATH_SETUP    =  63u, // I2S1?
 	CDC_REG_DAC_VOLUME_CTRL        =  64u, // I2S1?
-	CDC_REG_DAC_L_VOLUME_CTRL      =  65u, // I2S1?
-	CDC_REG_DAC_R_VOLUME_CTRL      =  66u, // I2S1?
+	CDC_REG_DAC_L_VOLUME_CTRL      =  65u, // I2S1.
+	CDC_REG_DAC_R_VOLUME_CTRL      =  66u, // I2S1.
 	// 67 Headset Detection?
 	// 68 DRC Control 1?
 	// 69 DRC Control 2?
