@@ -1,3 +1,2 @@
-.sublimetext/
-.vscode/
-TODO.txt
+/.*
+!/.git*
