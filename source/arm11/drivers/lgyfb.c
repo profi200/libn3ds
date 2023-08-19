@@ -9,7 +9,8 @@
 
 static KHandle g_frameReadyEvent = 0;
 
-static u8 g_gbaFrameDmaProg[42] =
+// DMA330 docs don't tell you the recommended alignment so we assume it's bus width.
+alignas(8) static u8 g_gbaFrameDmaProg[42] =
 {
 	// All transfer settings for RGB8 at 360x240 to a 512x512 texture.
 	0xBC, 0x01, 0xE6, 0xC2, 0xB9, 0x00, // MOV CCR, SB15 SS64 SAF SP2 DB15 DS64 DAI DP2
@@ -33,7 +34,7 @@ static u8 g_gbaFrameDmaProg[42] =
 
 
 
-static void lgyFbDmaIrqHandler(UNUSED u32 intSource)
+static void gbaDmaIrqHandler(UNUSED u32 intSource)
 {
 	DMA330_ackIrq(0);
 	DMA330_run(0, g_gbaFrameDmaProg);
@@ -49,157 +50,106 @@ static void lgyFbDmaIrqHandler(UNUSED u32 intSource)
 	signalEvent(g_frameReadyEvent, false);
 }
 
-static void patchDmaProg(u8 scaler)
+static void patchDmaProg(const bool is240x160)
 {
-	if(scaler < 2) // 240x160.
+	if(is240x160)
 	{
 		u8 *const prog = g_gbaFrameDmaProg;
 
 		// Adjust bursts. Needs to be 16 transfers for 240x160.
-		prog[2] = 0xF6u;
-		prog[4] = 0xBDu;
+		prog[2] = 0xF6;
+		prog[4] = 0xBD;
 
 		// Adjust outer loop count.
-		prog[21] = 20u - 1;
+		prog[21] = 20 - 1;
 
 		// Adjust inner loop count.
-		prog[25] = 44u - 1;
+		prog[25] = 44 - 1;
 
 		// Adjust gap skip.
-		*((u16*)&prog[34]) = 0x1980u;
+		*((u16*)&prog[34]) = 0x1980;
 
-		// Make sure the DMA controller can see the data.
+		// Make sure the DMA controller can see the code.
 		flushDCacheRange(prog, sizeof(g_gbaFrameDmaProg));
 	}
-	// Else nothing to do.
+	// Else 360x240. Nothing to do.
 }
 
-static void setScaleMatrix(LgyFbScaler *const regs, u32 len, u32 patt, const s16 *const inMatrix, u8 inBits, u8 outBits)
+/*
+ * Scale matrix limitations:
+ * First pattern bit must be 1 and last 0 (for V-scale) or it loses sync with the DS/GBA input.
+ * Vertical scaling is fucked with identity matrix.
+ *
+ * Matrix ranges:
+ * in[-3] -1024-1023 (0xFC00-0x03FF)
+ * in[-2] -4096-4095 (0xF000-0x0FFF)
+ * in[-1] -32768-32767 (0x8000-0x7FFF)
+ * in[0]  -32768-32767 (0x8000-0x7FFF)
+ * in[1]  -4096-4095 (0xF000-0x0FFF)
+ * in[2]  -1024-1023 (0xFC00-0x03FF)
+ *
+ * Note: At scanline start the in FIFO is all filled with the first pixel.
+ * Note: The first column only allows 1 non-zero entry.
+ * Note: Bits 0-3 of each entry are ignored by the hardware.
+ * Note: 16384 (0x4000) is the maximum brightness of a pixel.
+ *       The sum of all entries in a column should be 16384 or clipping will occur.
+ * Note: The window of (the 6) input pixels is post-increment.
+ *       When the matching pattern bit is 0 it does not move forward.
+ */
+static void setScaleMatrix(LgyFbScaler *const scaler, const u32 len, const u32 patt,
+                           const s16 *in, const u8 inBits, const u8 outBits)
 {
-	regs->len  = len - 1;
-	regs->patt = patt;
+	scaler->len  = len - 1;
+	scaler->patt = patt;
 
-	const u8 inMax = (inBits == 0 ? 0u : (0xFF00u>>inBits) & 0xFFu);
-	const u8 outMax = (1u<<outBits) - 1;
-	vu32 (*const outMatrix)[8] = regs->matrix;
-	for(u32 y = 0; y < 6; y++)
+	// Calculate the maximum values for input and output sub pixels.
+	s32 inMax = (0xFF00u>>inBits) & 0xFFu; // Input bits in upper part.
+	inMax = (inMax == 0 ? 1 : inMax);
+	s32 outMax = (1u<<outBits) - 1;
+	outMax = (outMax == 0 ? 1 : outMax);
+
+	vu32 *out = &scaler->matrix[0][0];
+	const vu32 *const outEnd = out + 6 * 8;
+	do
 	{
-		for(u32 x = 0; x < len; x++)
-		{
-			const s32 mEntry = inMatrix[len * y + x];
-
-			// Correct the color range using the scale matrix hardware.
-			// For example when converting RGB555 to RGB8 LgyFb lazily shifts the 5 bits up
-			// so 0b00011111 becomes 0b11111000. This creates wrong spacing between colors.
-			// + 8 for rounding up.
-			if(inMax != 0) outMatrix[y][x] = mEntry * outMax / inMax + 8;
-			else           outMatrix[y][x] = mEntry + 8;
-		}
-	}
+		// Correct the color range using the scale matrix hardware.
+		// For example when converting RGB555 to RGB8 LgyFb lazily shifts the 5 bits up
+		// so 0b00011111 becomes 0b11111000. But for maximum pixel brightness on the
+		// input we also want the maximum on the output (0b11111000 --> 0b11111111).
+		// This will fix it and distribute the colors evenly across the output range.
+		// Also round up because the hardware will ignore the first 4 bits.
+		const s32 mEntry = *in++;
+		*out++ = mEntry * outMax / inMax + 8;
+	} while(out < outEnd);
 }
 
-void LGYFB_init(KHandle frameReadyEvent, u8 scaler)
+KHandle LGYFB_init(/*const bool isTop,*/ const ScalerCfg *const cfg)
 {
-	patchDmaProg(scaler);
-	if(DMA330_run(0, g_gbaFrameDmaProg)) return;
+	// TODO: Support TWL sized frames and using both LgyFb engines.
+	const bool is240x160 = cfg->w == 240 && cfg->h == 160;
 
+	patchDmaProg(is240x160);
+	if(DMA330_run(0, g_gbaFrameDmaProg)) return 0;
+
+	// Create KEvent for frame ready signal.
+	KHandle frameReadyEvent = createEvent(false);
 	g_frameReadyEvent = frameReadyEvent;
 
-	LgyFb *const lgyFbTop = getLgyFbRegs(true);
-	lgyFbTop->size  = (scaler < 2 ? LGYFB_SIZE(240u, 160u) : LGYFB_SIZE(360u, 240u));
-	lgyFbTop->stat  = LGYFB_IRQ_MASK;
-	lgyFbTop->irq   = 0;
-	lgyFbTop->alpha = 0xFF;
+	LgyFb *const lgyFb = getLgyFbRegs(true);
+	lgyFb->size  = LGYFB_SIZE(cfg->w, cfg->h);
+	lgyFb->stat  = LGYFB_IRQ_MASK;
+	lgyFb->irq   = 0;
+	lgyFb->alpha = 0xFF;
 
-	/*
-	 * Scale matrix limitations:
-	 * First pattern bit must be 1 and last 0 (for V-scale) or it loses sync with the DS/GBA input.
-	 * Vertical scaling is fucked with identity matrix.
-	 *
-	 * Matrix ranges:
-	 * in[-3] -1024-1023 (0xFC00-0x03FF)
-	 * in[-2] -4096-4095 (0xF000-0x0FFF)
-	 * in[-1] -32768-32767 (0x8000-0x7FFF)
-	 * in[0]  -32768-32767 (0x8000-0x7FFF)
-	 * in[1]  -4096-4095 (0xF000-0x0FFF)
-	 * in[2]  -1024-1023 (0xFC00-0x03FF)
-	 *
-	 * Note: At scanline start the in FIFO is all filled with the first pixel.
-	 * Note: The first column only allows 1 non-zero entry.
-	 * Note: Bits 0-3 of each entry are ignored by the hardware.
-	 * Note: 16384 (0x4000) is the maximum brightness of a pixel.
-	 *       The sum of all entries in a column should be 16384 or clipping will occur.
-	 * Note: The window of (the 6) input pixels is post-increment.
-	 *       When the matching pattern bit is 0 it does not move forward.
-	 */
-	if(scaler < 2)
+	// TODO: Can't we just always do color corrections on h? Output differs between the 2 when both are active.
+	if(is240x160)
 	{
-		static const s16 scaleMatrixIdentity[6 * 6] =
-		{
-			// Identity (no scaling). Don't use for vertical scaling!
-			      0,       0,       0,       0,       0,       0,
-			      0,       0,       0,       0,       0,       0,
-			      0,       0,       0,       0,       0,       0,
-			 0x4000,  0x4000,  0x4000,  0x4000,  0x4000,  0x4000,
-			      0,       0,       0,       0,       0,       0,
-			      0,       0,       0,       0,       0,       0
-		};
-		setScaleMatrix(&lgyFbTop->h, 6, 0b00111111, scaleMatrixIdentity, 5, 8);
+		setScaleMatrix(&lgyFb->h, cfg->hLen, cfg->hPatt, cfg->hMatrix, 5, 8);
 	}
 	else
 	{
-		static const s16 scaleMatrix[6 * 12 /*6 * 6*/] =
-		{
-			// Original from AGB_FIRM.
-			/*      0,       0,       0,       0,       0,       0, // in[-3]
-			      0,       0,       0,       0,       0,       0, // in[-2]
-			      0,  0x2000,  0x4000,       0,  0x2000,  0x4000, // in[-1]
-			 0x4000,  0x2000,       0,  0x4000,  0x2000,       0, // in[0]
-			      0,       0,       0,       0,       0,       0, // in[1]
-			      0,       0,       0,       0,       0,       0*/  // in[2]
-			// out[0] out[1] out[2]  out[3]  out[4]  out[5]  out[6]  out[7]
-
-			// Pixel duplication. Y'all got any more of them pixels?
-			/*      0,       0,       0,       0,       0,       0,
-			      0,       0,       0,       0,       0,       0,
-			      0,       0,  0x4000,       0,       0,  0x4000,
-			 0x4000,  0x4000,       0,  0x4000,  0x4000,       0,
-			      0,       0,       0,       0,       0,       0,
-			      0,       0,       0,       0,       0,       0*/
-
-			// Sharp interpolated. Basically the same as AGB_FIRM.
-			/*      0,       0,       0,       0,       0,       0,
-			      0,       0,       0,       0,       0,       0,
-			      0,       0,  0x2000,       0,       0,  0x2000,
-			 0x4000,  0x4000,  0x2000,  0x4000,  0x4000,  0x2000,
-			      0,       0,       0,       0,       0,       0,
-			      0,       0,       0,       0,       0,       0*/
-
-			// Sharp + edge enhance. Looks fine but doesn't prevent crumbly edges.
-			      0,       0,       0,       0,       0,       0,
-			      0,       0,       0,       0,       0,       0,
-			      0,  0x24B0,  0x4000,       0,  0x24B0,  0x4000,
-			 0x4000,  0x2000,       0,  0x4000,  0x2000,       0,
-			      0,  -0x4B0,       0,       0,  -0x4B0,       0,
-			      0,       0,       0,       0,       0,       0,
-
-			      0,       0,       0,       0,       0,       0,
-			      0,       0,       0,       0,       0,       0,
-			      0,       0,  0x24B0,       0,       0,  0x24B0,
-			 0x4000,  0x4000,  0x2000,  0x4000,  0x4000,  0x2000,
-			      0,       0,  -0x4B0,       0,       0,  -0x4B0,
-			      0,       0,       0,       0,       0,       0
-
-			// Interpolated + edge filter. Visibly distorts text.
-			/*      0,       0,       0,       0,       0,       0,
-			      0,       0,       0,       0,       0,       0,
-			      0,  0x1555,  0x2AAA,       0,  0x1555,  0x2AAA,
-			 0x3FFF,  0x2AAA,  0x1555,  0x3FFF,  0x2AAA,  0x1555,
-			      0,       0,       0,       0,       0,       0,
-			      0,       0,       0,       0,       0,       0*/
-		};
-		setScaleMatrix(&lgyFbTop->v, 6, 0b00011011, scaleMatrix, 5, 8);
-		setScaleMatrix(&lgyFbTop->h, 6, 0b00011011, scaleMatrix + (6 * 6), 0, 0);
+		setScaleMatrix(&lgyFb->v, cfg->vLen, cfg->vPatt, cfg->vMatrix, 5, 8);
+		setScaleMatrix(&lgyFb->h, cfg->hLen, cfg->hPatt, cfg->hMatrix, 0, 0);
 	}
 
 	// With RGB8 output solid red and blue are converted to 0xF8 and green to 0xFA.
@@ -210,47 +160,46 @@ void LGYFB_init(KHandle frameReadyEvent, u8 scaler)
 	// RGB565:  A little visible dithering. Good color accuracy.
 	// RGB5551: Lots of visible dithering. Good color accuracy (a little worse than 565).
 	u32 cnt = LGYFB_DMA_EN | LGYFB_OUT_SWIZZLE | LGYFB_OUT_FMT_8880 | LGYFB_HSCALE_EN | LGYFB_EN;
-	if(scaler == 2) cnt |= LGYFB_VSCALE_EN;
-	lgyFbTop->cnt = cnt;
+	if(!is240x160) cnt |= LGYFB_VSCALE_EN;
+	lgyFb->cnt = cnt;
 
-	IRQ_registerIsr(IRQ_CDMA_EVENT0, 13, 0, lgyFbDmaIrqHandler);
+	IRQ_registerIsr(IRQ_CDMA_EVENT0, 13, 0, gbaDmaIrqHandler);
+
+	return frameReadyEvent;
 }
 
-void LGYFB_deinit(void)
+void LGYFB_deinit(/*const bool isTop*/ void)
 {
-	getLgyFbRegs(true)->cnt = 0;
-
+	// Disable LgyFb engine, acknowledge IRQs (if any), kill DMA channel and flush the FIFO.
+	LgyFb *const lgyFb = getLgyFbRegs(true);
+	lgyFb->cnt = 0;
+	// Acknowledge IRQs here. Nothing to do since none are enabled.
 	DMA330_kill(0);
+	lgyFb->flush = 0;
 
+	// Unregister isr and delete event (if any was created).
 	IRQ_unregisterIsr(IRQ_CDMA_EVENT0);
+	if(g_frameReadyEvent != 0)
+		deleteEvent(g_frameReadyEvent);
 	g_frameReadyEvent = 0;
 }
 
-void LGYFB_stop(void)
+void LGYFB_stop(/*const bool isTop*/ void)
 {
-	getLgyFbRegs(true)->cnt &= ~LGYFB_EN;
-
+	// Disable LgyFb engine, acknowledge IRQs (if any), kill DMA channel and flush the FIFO.
+	LgyFb *const lgyFb = getLgyFbRegs(true);
+	lgyFb->cnt &= ~LGYFB_EN;
+	// Acknowledge IRQs here. Nothing to do since none are enabled.
 	DMA330_kill(0);
+	lgyFb->flush = 0;
 
+	// Clear event to prevent issues since we just disabled LgyFb.
 	clearEvent(g_frameReadyEvent);
 }
 
-void LGYFB_start(void)
+void LGYFB_start(/*const bool isTop*/ void)
 {
+	// Restart DMA and then LgyFb.
 	if(DMA330_run(0, g_gbaFrameDmaProg)) return;
-
 	getLgyFbRegs(true)->cnt |= LGYFB_EN;
 }
-
-#ifndef NDEBUG
-#include "fsutil.h"
-/*void LGYFB_dbgDumpFrame(void)
-{
-	GX_displayTransfer((u32*)0x18200000, 160u<<16 | 256u, (u32*)0x18400000, 160u<<16 | 256u, 1u<<12 | 1u<<8);
-	GFX_waitForEvent(GFX_EVENT_PPF, false);
-	fsQuickWrite("sdmc:/lgyfb_dbg_frame.bgr", (void*)0x18400000, 256 * 160 * 3);*/
-	/*GX_displayTransfer((u32*)0x18200000, 240u<<16 | 512u, (u32*)0x18400000, 240u<<16 | 512u, 1u<<12 | 1u<<8);
-	GFX_waitForEvent(GFX_EVENT_PPF, false);
-	fsQuickWrite("sdmc:/lgyfb_dbg_frame.bgr", (void*)0x18400000, 512 * 240 * 3);
-}*/
-#endif

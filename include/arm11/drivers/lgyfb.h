@@ -82,7 +82,7 @@ ALWAYS_INLINE LgyFb* getLgyFbRegs(bool top)
 #define LGYFB_DMA_EN             (1u<<15)
 #define LGYFB_IN_FMT             (1u<<16) // Use input format but this bit does nothing?
 
-// REG_LGYFB_SIZE width and hight
+// REG_LGYFB_SIZE width and height
 #define LGYFB_SIZE(w, h)     (((h) - 1)<<16 | ((w) - 1))
 
 // REG_LGYFB_STAT and REG_LGYFB_IRQ
@@ -93,12 +93,23 @@ ALWAYS_INLINE LgyFb* getLgyFbRegs(bool top)
 #define LGYFB_OUT_LINE(reg)  ((reg)>>16) // STAT only
 
 
+typedef struct
+{
+	u16 w;
+	u16 h;
+	u8 vLen;
+	u8 vPatt;
+	s16 vMatrix[8 * 6];
+	// TODO: DMA output address?
+	u8 hLen;
+	u8 hPatt;
+	s16 hMatrix[8 * 6];
+	// TODO: DMA output address?
+} ScalerCfg;
 
-void LGYFB_init(KHandle frameReadyEvent, u8 scaler);
-void LGYFB_deinit(void);
-void LGYFB_stop(void);
-void LGYFB_start(void);
 
-#ifndef NDEBUG
-void LGYFB_dbgDumpFrame(void);
-#endif
+
+KHandle LGYFB_init(/*const bool isTop,*/ const ScalerCfg *const cfg); // Returns frame ready KEvent.
+void LGYFB_deinit(/*const bool isTop*/ void);
+void LGYFB_stop(/*const bool isTop*/ void);
+void LGYFB_start(/*const bool isTop*/ void);
