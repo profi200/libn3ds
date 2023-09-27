@@ -101,3 +101,8 @@ static inline u8 bcd2dec(const u8 bcd)
 {
     return bcd - 6u * (bcd>>4);
 }
+
+static inline s32 clamp_s32(const s32 x, const s32 min, const s32 max)
+{
+	return (x < min ? min : (x > max ? max : x));
+}
