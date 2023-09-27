@@ -28,14 +28,11 @@ void CSND_init(void)
 	if(inited) return;
 	inited = true;
 
-
 	CODEC_init();
 
-	//static const u8 sliderBounds[2] = {0xE, 0xF6}; // Volume slider 0% and 100% offset
-	//I2C_writeRegBuf(I2C_DEV_CTR_MCU, 0x58, sliderBounds, 2);
 	Csnd *const csnd = getCsndRegs();
-	csnd->master_vol = 0x8000;
-	csnd->unk_cnt    = 1u<<15 | 1u<<14;
+	csnd->master_vol = 32768; // Full volume.
+	csnd->cnt        = CSND_CNT_EN | CSND_CNT_RS_FILTER_EN;
 
 	// Stop all channels.
 	CsndCh *const csndCh = csnd->ch;
@@ -47,7 +44,8 @@ void CSND_init(void)
 	csndCap[1].cnt = 0;
 }
 
-void CSND_setupCh(u8 ch, s16 srFreq, u32 vol, const u32 *const data, const u32 *const data2, u32 size, u16 flags)
+void CSND_setupCh(const u8 ch, const u16 srFreq, const u32 vol, const u32 *const data,
+                  const u32 *const data2, const u32 size, const u16 flags)
 {
 	CsndCh *const csndCh = getCsndChRegs(ch);
 	csndCh->sr       = srFreq;
@@ -62,7 +60,7 @@ void CSND_setupCh(u8 ch, s16 srFreq, u32 vol, const u32 *const data, const u32 *
 }
 
 
-void CSND_startCap(u8 ch, s16 sr, u32 *const data, u32 size, u16 flags)
+void CSND_startCap(const u8 ch, const u16 sr, u32 *const data, const u32 size, const u16 flags)
 {
 	CsndCap *const csndCap = getCsndCapRegs(ch);
 	csndCap->sr   = sr;

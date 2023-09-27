@@ -2,7 +2,7 @@
 
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 typedef struct
 {
 	vu16 cnt;              // 0x00
-	vs16 sr;               // 0x02 Samplerate.
+	vu16 sr;               // 0x02 Sample rate.
 	union
 	{
 		struct
@@ -59,7 +59,7 @@ typedef struct
 {
 	vu16 cnt;   // 0x0
 	u8 _0x2[2];
-	vs16 sr;    // 0x4 Samplerate.
+	vu16 sr;    // 0x4 Sample rate.
 	u8 _0x6[2];
 	vu32 size;  // 0x8 Capture length in bytes.
 	vu32 addr;  // 0xC Address.
@@ -68,14 +68,14 @@ static_assert(offsetof(CsndCap, addr) == 0xC, "Error: Member addr of CsndCap is 
 
 typedef struct
 {
-	vu16 master_vol; // 0x000 CSND master volume range 0-0x8000.
-	vu16 unk_cnt;    // 0x002
+	vu16 master_vol;    // 0x000 CSND master volume range 0-0x8000.
+	vu16 cnt;           // 0x002 Global control.
 	u8 _0x4[0xc];
-	vu32 unk010;     // 0x010 FIFO related?
-	vu8  unk014;     // 0x014 FIFO related?
+	vu32 ch_fifo_stat;  // 0x010 Channel FIFO status bits? Each bit write 1 to clear.
+	vu8  cap_fifo_stat; // 0x014 Capture FIFO status bits? Each bit write 1 to clear.
 	u8 _0x15[0x3eb];
-	CsndCh ch[32];   // 0x400 32 sound channels. PSG on channel 8-13 and noise 14-15.
-	CsndCap cap[2];  // 0x800 2 capture units for right and left side.
+	CsndCh ch[32];      // 0x400 32 sound channels. PSG on channel 8-13 and noise 14-15.
+	CsndCap cap[2];     // 0x800 2 capture units for right and left side.
 } Csnd;
 static_assert(offsetof(Csnd, cap[1].addr) == 0x81C, "Error: Member cap[1].addr of Csnd is not at offset 0x81C!");
 
@@ -94,6 +94,13 @@ ALWAYS_INLINE CsndCap* getCsndCapRegs(u8 ch)
 	return &getCsndRegs()->cap[ch];
 }
 
+
+// REG_CSND_CNT
+// Settings for all channels (including capture).
+#define CSND_CNT_MUTE          (1u)
+// Bits 1-13 unused.
+#define CSND_CNT_RS_FILTER_EN  (1u<<14) // Resample filter.
+#define CSND_CNT_EN            (1u<<15)
 
 // REG_CSND_CH_CNT
 #define CSND_CH_DUTY(d)        (d)      // For PSG (channel 8-13) only. In 12.5% units. 0 = high/12.5%.
@@ -118,9 +125,9 @@ ALWAYS_INLINE CsndCap* getCsndCapRegs(u8 ch)
 #define CSND_CAP_START         (1u<<15)
 
 
-// Samplerate helpers
-#define CSND_SAMPLERATE(s)  (-(s16)(67027964u / (s)))
-#define CSND_PSG_FREQ(f)    (CSND_SAMPLERATE(32u * (f)))
+// Sample rate/frequency helpers.
+#define CSND_SAMPLE_RATE(s)  (0x10000 - (67027964u / (s)))
+#define CSND_PSG_FREQ(f)     (CSND_SAMPLE_RATE(32u * (f)))
 
 
 
@@ -132,14 +139,16 @@ void CSND_init(void);
 /**
  * @brief      Calculates the left and right volumes.
  *
- * @param[in]  lvol  The left volume.
- * @param[in]  rvol  The right volume.
+ * @param[in]  vol  The volume. 0.0 - 1.0.
+ * @param[in]  pan  Left/right channel pan. -1.0 - 1.0. 0.0 is center.
  *
  * @return     The volume pair needed for CSND_setupCh().
  */
-static inline u32 CSND_calcVol(float lvol, float rvol)
+static inline u32 CSND_calcVol(const float vol, const float pan)
 {
-	return (u32)(lvol * 32768.f)<<16 | (u32)(rvol * 32768.f);
+	const u32 lvol = 32768 * vol * (1.f - pan > 1.f ? 1.f : 1.f - pan);
+	const u32 rvol = 32768 * vol * (1.f + pan > 1.f ? 1.f : 1.f + pan);
+	return lvol<<16 | rvol;
 }
 
 /**
@@ -153,7 +162,8 @@ static inline u32 CSND_calcVol(float lvol, float rvol)
  * @param[in]  size    The size.
  * @param[in]  flags   The flags.
  */
-void CSND_setupCh(u8 ch, s16 srFreq, u32 vol, const u32 *const data, const u32 *const data2, u32 size, u16 flags);
+void CSND_setupCh(const u8 ch, const u16 srFreq, const u32 vol, const u32 *const data,
+                  const u32 *const data2, const u32 size, const u16 flags);
 
 /**
  * @brief      Sets the sample rate/frequency of a channel.
@@ -161,7 +171,7 @@ void CSND_setupCh(u8 ch, s16 srFreq, u32 vol, const u32 *const data, const u32 *
  * @param[in]  ch      The sound channel. 0-31.
  * @param[in]  srFreq  The sample rate/frequency.
  */
-static inline void CSND_setSrFreq(u8 ch, s16 srFreq)
+static inline void CSND_setSrFreq(const u8 ch, const u16 srFreq)
 {
 	getCsndChRegs(ch)->sr = srFreq;
 }
@@ -172,7 +182,7 @@ static inline void CSND_setSrFreq(u8 ch, s16 srFreq)
  * @param[in]  ch       The sound channel. 0-31.
  * @param[in]  playing  The play state.
  */
-static inline void CSND_setChState(u8 ch, bool playing)
+static inline void CSND_setChState(const u8 ch, const bool playing)
 {
 	CsndCh *const csndCh = getCsndChRegs(ch);
 	csndCh->cnt = (csndCh->cnt & ~CSND_CH_PLAYING) | ((u16)playing<<14);
@@ -185,7 +195,7 @@ static inline void CSND_setChState(u8 ch, bool playing)
  *
  * @return     The playback position (address).
  */
-static inline u32 CSND_getChPos(u8 ch)
+static inline u32 CSND_getChPos(const u8 ch)
 {
 	return getCsndChRegs(ch)->st_addr;
 }
@@ -195,7 +205,7 @@ static inline u32 CSND_getChPos(u8 ch)
  *
  * @param[in]  ch    The sound channel. 0-31.
  */
-static inline void CSND_stopCh(u8 ch)
+static inline void CSND_stopCh(const u8 ch)
 {
 	getCsndChRegs(ch)->cnt = 0; // Stop.
 }
@@ -210,7 +220,7 @@ static inline void CSND_stopCh(u8 ch)
  * @param[in]  size   The size.
  * @param[in]  flags  The flags.
  */
-void CSND_startCap(u8 ch, s16 sr, u32 *const data, u32 size, u16 flags);
+void CSND_startCap(const u8 ch, const u16 sr, u32 *const data, const u32 size, const u16 flags);
 
 /**
  * @brief      Returns the current capture buffer position (address).
@@ -219,7 +229,7 @@ void CSND_startCap(u8 ch, s16 sr, u32 *const data, u32 size, u16 flags);
  *
  * @return     The capture position (address).
  */
-static inline u32 CSND_getCapPos(u8 ch)
+static inline u32 CSND_getCapPos(const u8 ch)
 {
 	return getCsndCapRegs(ch)->addr;
 }
@@ -229,7 +239,7 @@ static inline u32 CSND_getCapPos(u8 ch)
  *
  * @param[in]  ch    The capture side. 0 = right, 1 = left.
  */
-static inline void CSND_stopCap(u8 ch)
+static inline void CSND_stopCap(const u8 ch)
 {
 	getCsndCapRegs(ch)->cnt = 0;
 }

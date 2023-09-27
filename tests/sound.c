@@ -17,9 +17,9 @@ int main(void)
 	CSND_init();
 
 	ee_puts("Sound test");
-	s16 freq = 1000;
+	u16 freq = 500;
 	bool freqChanged = true;
-	CSND_setupCh(8, CSND_PSG_FREQ(freq), CSND_calcVol(1.0f, 1.0f), NULL, NULL, 0, CSND_CH_FMT_PSG_NOISE | CSND_CH_DUTY(3));
+	CSND_setupCh(8, CSND_PSG_FREQ(freq), CSND_calcVol(1.f, 0.f), NULL, NULL, 0, CSND_CH_FMT_PSG_NOISE | CSND_CH_DUTY(3));
 	CSND_setChState(8, true); // Unpause
 	while(1)
 	{
@@ -28,7 +28,7 @@ int main(void)
 		const u32 kHeld = hidKeysHeld();
 		if(kHeld & KEY_DUP) {freq++; freqChanged = true;}
 		else if(kHeld & KEY_DDOWN) {freq--; freqChanged = true;}
-		if(kHeld & KEY_START) break;
+		if(hidGetExtraKeys(0) & (KEY_POWER_HELD | KEY_POWER)) break;
 
 		if(freqChanged)
 		{
