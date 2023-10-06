@@ -28,7 +28,6 @@
 #include "arm11/drivers/gpio.h"
 
 
-#define LIBN3DS_LEGACY (1) // TODO: Pass this via makefile.
 #define SWAP_HALF(b0, b1, a1)          __builtin_bswap16(b0),__builtin_bswap16(b1),__builtin_bswap16(a1)
 #define SWAP_FULL(b0, b1, b2, a1, a2)  __builtin_bswap16(b0),__builtin_bswap16(b1),__builtin_bswap16(b2),__builtin_bswap16(a1),__builtin_bswap16(a2)
 
@@ -509,9 +508,11 @@ static void soundInit(const CodecCal *const cal)
 
 	// TODO: Function for setting sound filters.
 
+#ifndef LIBN3DS_LEGACY
 	{
 		// Missing in Twl-/AgbBg but present in codec module.
-		// Omiting these filters actually makes sound slightly worse for GBA mode.
+		// These phase altering filters will distort GBA sound.
+		// Square waves look more like triangle waves and the sound is "softer".
 		const bool dacMuted = isDacMuted(I2S_LINE_1);
 		muteUnmuteDac(I2S_LINE_1, true); // Mute.
 		writeRegBuf(9<<8 | 2, (u32*)&cal->filterFree.half, 6);
@@ -520,6 +521,7 @@ static void soundInit(const CodecCal *const cal)
 		writeRegBuf(8<<8 | 76, (u32*)cal->filterFree.biquads, 50);
 		if(!dacMuted) muteUnmuteDac(I2S_LINE_1, false); // Unmute.
 	}
+#endif
 	{
 		const bool dacMuted = isDacMuted(I2S_LINE_2);
 		muteUnmuteDac(I2S_LINE_2, true); // Mute.
