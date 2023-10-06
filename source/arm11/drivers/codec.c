@@ -129,22 +129,22 @@ alignas(4) static const CodecCal g_fallbackCal =
 	{ // filterHp32 I2S1.
 		{SWAP_FULL( 32767,      0,      0,      0,      0)},
 		{SWAP_FULL( 32767,      0,      0,      0,      0)},
-		{SWAP_FULL( 32736, -16368,      0,  16352,      0)}  // First order 10 Hz highpass at 32730 Hz.
+		{SWAP_FULL( 32736, -16368,      0,  16352,      0)}  // First order 10 Hz high-pass at 32730 Hz.
 	},
 	{ // filterHp47 I2S2.
 		{SWAP_FULL( 32767,      0,      0,      0,      0)},
 		{SWAP_FULL( 32767,      0,      0,      0,      0)},
-		{SWAP_FULL( 32745, -16372,      0,  16361,      0)}  // First order 10 Hz highpass at 47610 Hz.
+		{SWAP_FULL( 32745, -16372,      0,  16361,      0)}  // First order 10 Hz high-pass at 47610 Hz.
 	},
 	{ // filterSp32 I2S1.
 		{SWAP_FULL( 32767, -27535,  22413,  30870, -29096)}, // Customized peak filter with negative offset?
 		{SWAP_FULL(-14000,  30000, -14000,      0,      0)}, // Customized high shelf filter?
-		{SWAP_FULL( 32736, -16368,      0,  16352,      0)}  // First order 10 Hz highpass at 32730 Hz.
+		{SWAP_FULL( 32736, -16368,      0,  16352,      0)}  // First order 10 Hz high-pass at 32730 Hz.
 	},
 	{ // filterSp47 I2S2.
 		{SWAP_FULL( 32767, -28995,  25277,  31456, -30200)}, // Customized peak filter with negative offset?
 		{SWAP_FULL(-14402,  30000, -14402,      0,      0)}, // Customized high shelf filter?
-		{SWAP_FULL( 32745, -16372,      0,  16361,      0)}  // First order 10 Hz highpass at 47610 Hz.
+		{SWAP_FULL( 32745, -16372,      0,  16361,      0)}  // First order 10 Hz high-pass at 47610 Hz.
 	},
 	{ // filterMic32 I2S1?
 		{SWAP_HALF( 32767,      0,      0)},
@@ -169,9 +169,9 @@ alignas(4) static const CodecCal g_fallbackCal =
 	{ // filterFree all I2S lines.
 		{SWAP_HALF( 32767,      0,      0)},
 		{
-			{SWAP_FULL(-12959,  -8785,  32767,   8785,  12959)}, // Phase correction?
-			{SWAP_FULL(-12959,  -8785,  32767,   8785,  12959)}, // Phase correction?
-			{SWAP_FULL(-12959,  -8785,  32767,   8785,  12959)}, // Phase correction?
+			{SWAP_FULL(-12959,  -8785,  32767,   8785,  12959)}, // all-pass: Fc 2500 Hz, Q 0.1 at 32730(?) Hz.
+			{SWAP_FULL(-12959,  -8785,  32767,   8785,  12959)}, // all-pass: Fc 2500 Hz, Q 0.1 at 32730(?) Hz.
+			{SWAP_FULL(-12959,  -8785,  32767,   8785,  12959)}, // all-pass: Fc 2500 Hz, Q 0.1 at 32730(?) Hz.
 			{SWAP_FULL( 32767,      0,      0,      0,      0)},
 			{SWAP_FULL( 32767,      0,      0,      0,      0)},
 		}
