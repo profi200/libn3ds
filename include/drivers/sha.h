@@ -50,11 +50,11 @@ ALWAYS_INLINE Sha* getShaRegs(void)
 
 ALWAYS_INLINE volatile ShaFifo* getShaFifo(Sha *const regs)
 {
-#if (_3DS && ARM11)
+#ifdef ARM11
 	return (volatile ShaFifo*)((uintptr_t)regs + 0x200000);
 #else
 	return &regs->fifo;
-#endif // #if (_3DS && ARM11)
+#endif // #ifdef ARM11
 }
 
 
