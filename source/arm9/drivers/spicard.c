@@ -74,7 +74,7 @@ void SPICARD_init(void)
 	spic->int_stat = SPIC_INT_AP_TMOUT | SPIC_INT_AP_MATCH | SPIC_INT_TRAN_END; // Acknowledge.
 }
 
-bool SPICARD_autoPollBit(SpicClk clk, u32 apParams)
+bool SPICARD_autoPollBit(const SpicClk clk, const u32 apParams)
 {
 	Spic *const spic = getSpicRegs();
 	spic->cnt      = clk & 7u;
@@ -91,7 +91,7 @@ bool SPICARD_autoPollBit(SpicClk clk, u32 apParams)
 	return (res & SPIC_INT_AP_TMOUT) == 0; // Timeout error.
 }
 
-void SPICARD_writeRead(SpicClk clk, const u32 *in, u32 *out, u32 inSize, u32 outSize)
+void SPICARD_sendRecv(const SpicClk clk, const u32 *in, u32 *out, const u32 inSize, const u32 outSize)
 {
 	const u32 cntParams = SPIC_EN | SPIC_BUS_1BIT | (clk & 7u);
 
@@ -99,7 +99,7 @@ void SPICARD_writeRead(SpicClk clk, const u32 *in, u32 *out, u32 inSize, u32 out
 	if(in)
 	{
 		spic->blklen = inSize;
-		spic->cnt = cntParams | SPIC_DIR_W;
+		spic->cnt = cntParams | SPIC_DIR_S;
 
 		u32 counter = 0;
 		do

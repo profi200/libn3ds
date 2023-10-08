@@ -49,7 +49,7 @@ enum
 	SPI_BUS3 = 2u
 };
 
-ALWAYS_INLINE NspiBus* getNspiBusRegs(u8 busId)
+ALWAYS_INLINE NspiBus* getNspiBusRegs(const u8 busId)
 {
 	NspiBus *nspiBus;
 	switch(busId)
@@ -91,8 +91,8 @@ enum
 
 #define NSPI_BUS_1BIT        (0u)
 #define NSPI_BUS_4BIT        (1u<<12)
-#define NSPI_DIR_R           (0u)     // Direction read.
-#define NSPI_DIR_W           (1u<<13) // Direction write.
+#define NSPI_DIR_R           (0u)     // Direction receive.
+#define NSPI_DIR_S           (1u<<13) // Direction send.
 #define NSPI_EN              (1u<<15) // Enable.
 
 // REG_NSPI_CS
@@ -137,7 +137,7 @@ typedef enum
 	//NSPI_DEV_UNUSED6    = 5u, // Unused.
 	//NSPI_DEV_UNUSED7    = 6u, // Debugger?
 
-	// Not a real device. Or with device number
+	// Not a real device. Bitwise or (|) with device number
 	// to set chip select high after transfer.
 	NSPI_DEV_CS_HIGH    = 1u<<7
 } SpiDevice;
@@ -164,15 +164,15 @@ void NSPI_init(void);
  *
  * @return     Returns false on timeout and true on bit match.
  */
-bool NSPI_autoPollBit(SpiDevice dev, u32 apParams);
+bool NSPI_autoPollBit(SpiDevice dev, const u32 apParams);
 
 /**
- * @brief      Writes and/or reads data to/from a SPI device.
+ * @brief      Sends and/or receives data to/from a SPI device.
  *
- * @param[in]  dev      The device ID. See SpiDevice table.
- * @param[in]  in       Input data pointer for write.
- * @param      out      Output data pointer for read.
- * @param[in]  inSize   Input size. Must be <= 0x1FFFFF.
- * @param[in]  outSize  Output size. Must be <= 0x1FFFFF.
+ * @param[in]  dev      The device ID.
+ * @param[in]  in       Input data pointer for send.
+ * @param      out      Output data pointer for receive.
+ * @param[in]  inSize   Input buffer size. Must be <= 0x1FFFFF.
+ * @param[in]  outSize  Output buffer size. Must be <= 0x1FFFFF.
  */
-void NSPI_writeRead(SpiDevice dev, const u32 *in, u32 *out, u32 inSize, u32 outSize);
+void NSPI_sendRecv(const SpiDevice dev, const u32 *in, u32 *out, const u32 inSize, const u32 outSize);

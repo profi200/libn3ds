@@ -40,7 +40,7 @@ static const struct
 
 
 
-static NspiBus* getBusRegs(u8 busId)
+static NspiBus* getBusRegs(const u8 busId)
 {
 	// Don't force inline here.
 	return getNspiBusRegs(busId);
@@ -82,7 +82,7 @@ void NSPI_init(void)
 	IRQ_registerIsr(IRQ_SPI1, 14, 0, NULL);
 }
 
-bool NSPI_autoPollBit(SpiDevice dev, u32 apParams)
+bool NSPI_autoPollBit(SpiDevice dev, const u32 apParams)
 {
 	dev &= 0x7Fu;
 	NspiBus *const nspiBus = getBusRegs(g_spiDevTable[dev].busId);
@@ -102,7 +102,7 @@ bool NSPI_autoPollBit(SpiDevice dev, u32 apParams)
 }
 
 // Note: Removing the counter check very slightly reduces performance.
-void NSPI_writeRead(SpiDevice dev, const u32 *in, u32 *out, u32 inSize, u32 outSize)
+void NSPI_sendRecv(const SpiDevice dev, const u32 *in, u32 *out, const u32 inSize, const u32 outSize)
 {
 	NspiBus *const nspiBus = getBusRegs(g_spiDevTable[dev & 0x7Fu].busId);
 	const u32 cntParams = NSPI_EN | g_spiDevTable[dev & 0x7Fu].csClk;
@@ -110,7 +110,7 @@ void NSPI_writeRead(SpiDevice dev, const u32 *in, u32 *out, u32 inSize, u32 outS
 	if(in)
 	{
 		nspiBus->blklen = inSize;
-		nspiBus->cnt = cntParams | NSPI_DIR_W;
+		nspiBus->cnt = cntParams | NSPI_DIR_S;
 
 		u32 counter = 0;
 		do

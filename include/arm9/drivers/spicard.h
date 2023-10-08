@@ -56,15 +56,15 @@ typedef enum
 	SPIC_CLK_8MHz   = 4u,
 	SPIC_CLK_16MHz  = 5u,
 
-	// Not a real clock setting. Or with clock
+	// Not a real clock setting. Bitwise or (|) with clock
 	// to set chip select high after transfer.
 	SPIC_CLK_CS_HIGH = 1u<<3
 } SpicClk;
 
 #define SPIC_BUS_1BIT        (0u)
 #define SPIC_BUS_4BIT        (1u<<12)
-#define SPIC_DIR_R           (0u)     // Direction read.
-#define SPIC_DIR_W           (1u<<13) // Direction write.
+#define SPIC_DIR_R           (0u)     // Direction receive.
+#define SPIC_DIR_S           (1u<<13) // Direction send.
 #define SPIC_EN              (1u<<15) // Enable.
 
 // REG_SPIC_CS
@@ -109,15 +109,15 @@ void SPICARD_init(void);
  *
  * @return     Returns false on timeout and true on bit match.
  */
-bool SPICARD_autoPollBit(SpicClk clk, u32 apParams);
+bool SPICARD_autoPollBit(const SpicClk clk, const u32 apParams);
 
 /**
  * @brief      Writes and/or reads data to/from a SPI device.
  *
  * @param[in]  clk      The clock frequency to use.
- * @param[in]  in       Input data pointer for write.
- * @param      out      Output data pointer for read.
- * @param[in]  inSize   Input size. Must be <= 0x1FFFFF.
- * @param[in]  outSize  Output size. Must be <= 0x1FFFFF.
+ * @param[in]  in       Input data pointer for send.
+ * @param      out      Output data pointer for receive.
+ * @param[in]  inSize   Input buffer size. Must be <= 0x1FFFFF.
+ * @param[in]  outSize  Output buffer size. Must be <= 0x1FFFFF.
  */
-void SPICARD_writeRead(SpicClk clk, const u32 *in, u32 *out, u32 inSize, u32 outSize);
+void SPICARD_sendRecv(const SpicClk clk, const u32 *in, u32 *out, const u32 inSize, const u32 outSize);

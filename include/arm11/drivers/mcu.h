@@ -658,7 +658,7 @@ bool MCU_writeReg(McuReg reg, u8 data);
  *
  * @return     Returns true on success and false on failure.
  */
-bool MCU_readRegBuf(McuReg reg, u8 *out, u32 size);
+bool MCU_readRegArray(McuReg reg, u8 *out, u32 size);
 
 /**
  * @brief      Writes multiple MCU registers or buffers behind registers.
@@ -669,4 +669,4 @@ bool MCU_readRegBuf(McuReg reg, u8 *out, u32 size);
  *
  * @return     Returns true on success and false on failure.
  */
-bool MCU_writeRegBuf(McuReg reg, const u8 *const in, u32 size);
+bool MCU_writeRegArray(McuReg reg, const u8 *const in, u32 size);

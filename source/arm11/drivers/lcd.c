@@ -32,7 +32,7 @@ u8 LCDI2C_readReg(u8 lcd, LcdI2cReg reg)
 	const u8 dev = (lcd == 0 ? I2C_DEV_LCD0 : I2C_DEV_LCD1);
 
 	I2C_writeReg(dev, LCD_I2C_REG_READ_ADDR, reg);
-	I2C_readRegBuf(dev, LCD_I2C_REG_READ_ADDR, buf, 2);
+	I2C_readRegArray(dev, LCD_I2C_REG_READ_ADDR, buf, 2);
 
 	return buf[1];
 }
