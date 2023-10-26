@@ -2,7 +2,7 @@
 
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -61,12 +61,12 @@ ALWAYS_INLINE Timer* getTimerRegs(void)
 #define WD_DISABLE_MAGIC2  (0x87654321u)
 
 
-#define TIMER_BASE_FREQ  (268111856.f)
+#define TIMER_BASE_FREQ    (268111856u / 2)
 
 // p is the prescaler value and n the frequency.
 // Note: With highest prescaler and sub-microsecond frequency
 //       this may give wrong results due to overflows.
-#define TIMER_FREQ(p, f)  (TIMER_BASE_FREQ / (2 * (p) * (f)))
+#define TIMER_FREQ(p, f)   (TIMER_BASE_FREQ / ((p) * (f)))
 
 
 
@@ -83,7 +83,7 @@ void TIMER_init(void);
  *                        value in auto reload mode.
  * @param[in]  params     The parameters. See /regs/timer.h "REG_TIMER_CNT" defines.
  */
-void TIMER_start(u16 prescaler, u32 ticks, u8 params);
+void TIMER_start(const u16 prescaler, const u32 ticks, const u8 params);
 
 /**
  * @brief      Returns the current number of ticks of the timer.
@@ -100,17 +100,22 @@ u32 TIMER_getTicks(void);
 u32 TIMER_stop(void);
 
 /**
- * @brief      Halts the CPU for the given number of ticks.
- *             Use the function below for milliseconds.
+ * @brief      Halts the CPU for ms amount of milliseconds.
  *
- * @param[in]  ticks  The number of ticks to sleep.
+ * @param[in]  ms    Number of milliseconds to sleep. Up to 32038.
  */
-void TIMER_sleepTicks(u32 ticks);
+void TIMER_sleepMs(const u32 ms);
 
+/**
+ * @brief      Halts the CPU for us amount of microseconds.
+ *
+ * @param[in]  us    Number of microseconds to sleep. Up to 32038622.
+ */
+void TIMER_sleepUs(const u32 us);
 
-// Sleeps ms milliseconds. ms can be up to 32000.
-// TODO: Should this be inline? Generates a bunch of vfp code.
-ALWAYS_INLINE void TIMER_sleepMs(u32 ms)
-{
-	TIMER_sleepTicks(TIMER_FREQ(1, 1000) * ms);
-}
+/**
+ * @brief      Halts the CPU for ns amount of nanoseconds.
+ *
+ * @param[in]  ns    Number of nanoseconds to sleep. Up to 32038622678.
+ */
+void TIMER_sleepNs(const u64 ns);

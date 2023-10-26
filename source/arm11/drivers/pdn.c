@@ -197,3 +197,19 @@ void PDN_poweroffCore23(void)
 		PDN_setSocmode(SOCMODE_CTR_268MHZ);
 	}
 }
+
+// TODO: gcc generates very odd code for this function.
+void PDN_controlGpu(const bool enableClk, const bool resetPsc, const bool resetOther)
+{
+	u32 reg = (enableClk ? PDN_GPU_CNT_CLK_EN : 0);
+	reg |= (resetPsc ? 0 : PDN_GPU_CNT_NORST_REGS);
+	reg |= (resetOther ? 0 : (PDN_GPU_CNT_NORST_ALL & ~PDN_GPU_CNT_NORST_REGS));
+
+	Pdn *const pdn = getPdnRegs();
+	pdn->gpu_cnt = reg;
+	if(resetPsc || resetOther)
+	{
+		wait_cycles(12); // 4x the needed cycles in case we are in LGR2 mode.
+		pdn->gpu_cnt = reg | PDN_GPU_CNT_NORST_ALL;
+	}
+}

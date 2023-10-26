@@ -1,6 +1,6 @@
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ void TIMER_init(void)
 	IRQ_registerIsr(IRQ_WATCHDOG, 12, 0, NULL);
 }
 
-void TIMER_start(u16 prescaler, u32 ticks, u8 params)
+void TIMER_start(const u16 prescaler, const u32 ticks, const u8 params)
 {
 	fb_assert(prescaler > 0 && prescaler <= 256);
 
@@ -64,7 +64,7 @@ u32 TIMER_stop(void)
 	return timer->counter;
 }
 
-void TIMER_sleepTicks(u32 ticks)
+static void sleepTicks(const u32 ticks)
 {
 	Timer *const timer = getTimerRegs();
 	timer->wd_load = ticks;
@@ -77,4 +77,25 @@ void TIMER_sleepTicks(u32 ticks)
 	} while(timer->wd_counter); // Checking the cnt enable bit is broken.
 
 	timer->wd_int_stat = 1;
+}
+
+void TIMER_sleepMs(const u32 ms)
+{
+	//if(ms > 32038) __builtin_unreachable();
+	const u64 c = (((u64)TIMER_BASE_FREQ / 8)<<32) / (1000 / 8);
+	sleepTicks((c * ms)>>32);
+}
+
+void TIMER_sleepUs(const u32 us)
+{
+	//if(us > 32038622) __builtin_unreachable();
+	const u64 c = (((u64)TIMER_BASE_FREQ / 8)<<32) / (1000000 / 8);
+	sleepTicks((c * us)>>32);
+}
+
+void TIMER_sleepNs(const u64 ns)
+{
+	//if(ns > 32038622678ull) __builtin_unreachable();
+	const u64 c = (((u64)TIMER_BASE_FREQ / 8)<<32) / (1000000000 / 8);
+	sleepTicks((c * ns)>>32);
 }

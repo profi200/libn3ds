@@ -79,6 +79,7 @@
 #define VRAM_BANK0         (VRAM_BASE)
 #define VRAM_BANK1         (VRAM_BASE + VRAM_SIZE / 2)
 #define VRAM_SIZE          (0x00600000) // 6 MiB.
+#define VRAM_BANK_SIZE     (VRAM_SIZE / 2)
 
 // DSP RAM (DSP memory).
 #define DSP_RAM_BASE       (0x1FF00000)

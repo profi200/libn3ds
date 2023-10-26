@@ -88,7 +88,10 @@ ALWAYS_INLINE Pdn* getPdnRegs(void)
 #define PDN_GPU_CNT_NORST_PPF           (1u<<4)
 #define PDN_GPU_CNT_NORST_PDC           (1u<<5) // ?
 #define PDN_GPU_CNT_NORST_PDC2          (1u<<6) // Maybe pixel pipeline or so?
-#define PDN_GPU_CNT_NORST_ALL           ((PDN_GPU_CNT_NORST_PDC2<<1) - 1)
+#define PDN_GPU_CNT_NORST_ALL           (PDN_GPU_CNT_NORST_PDC2 | PDN_GPU_CNT_NORST_PDC | \
+                                         PDN_GPU_CNT_NORST_PPF | PDN_GPU_CNT_NORST_RASTERIZER | \
+                                         PDN_GPU_CNT_NORST_GEOSHADER | PDN_GPU_CNT_NORST_PSC | \
+                                         PDN_GPU_CNT_NORST_REGS)
 #define PDN_GPU_CNT_CLK_EN              (1u<<16)
 
 // REG_PDN_VRAM_CNT
@@ -149,3 +152,4 @@ typedef enum
 void PDN_core123Init(void);
 void PDN_setSocmode(PdnSocmode socmode);
 void PDN_poweroffCore23(void);
+void PDN_controlGpu(const bool enableClk, const bool resetPsc, const bool resetOther);
