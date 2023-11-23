@@ -75,9 +75,13 @@ ALWAYS_INLINE Pdn* getPdnRegs(void)
 #define PDN_WAKE_SDIO2                  (1u<<8)
 #define PDN_WAKE_SDIO3                  (1u<<16)
 // 17-28 maybe GPIO3 0-11?
+#define PDN_WAKE_GPIO_3_9               (1u<<26)
 #define PDN_WAKE_GAMECARD_INSERT        (1u<<29) // ?
 #define PDN_WAKE_TOUCHPEN_DOWN          (1u<<30)
 #define PDN_WAKE_UNK31                  (1u<<31) // Also shell related?
+
+// Aliases for above GPIO wake bits.
+#define PDN_WAKE_MCU                    (PDN_WAKE_GPIO_3_9)
 
 // REG_PDN_GPU_CNT
 // Note: The resets are active low.
