@@ -38,22 +38,22 @@ ALWAYS_INLINE Timer* getTimerRegs(u8 timer)
 }
 
 
-#define TIMER_BASE_FREQ       (67027964)
+#define TIMER_BASE_FREQ     (67027964)
 
 // REG_TIMER_CNT
-#define TIMER_PRESC_1     (0u)
-#define TIMER_PRESC_64    (1u)
-#define TIMER_PRESC_256   (2u)
-#define TIMER_PRESC_1024  (3u)
-#define TIMER_COUNT_UP    (1u<<2) // For cascading at least 2 timers.
-#define TIMER_IRQ_EN      (1u<<6)
-#define TIMER_EN          (1u<<7)
+#define TIMER_PRESC_1       (0u)
+#define TIMER_PRESC_64      (1u)
+#define TIMER_PRESC_256     (2u)
+#define TIMER_PRESC_1024    (3u)
+#define TIMER_COUNT_UP      (1u<<2) // For cascading at least 2 timers.
+#define TIMER_IRQ_EN        (1u<<6)
+#define TIMER_EN            (1u<<7)
 
 // Convenience macros for calculating the ticks. Based on libnds.
-#define TIMER_FREQ(n)         (-TIMER_BASE_FREQ / (n))
-#define TIMER_FREQ_64(n)      (-(TIMER_BASE_FREQ / 64) / (n))
-#define TIMER_FREQ_256(n)     (-(TIMER_BASE_FREQ / 256) / (n))
-#define TIMER_FREQ_1024(n)    (-(TIMER_BASE_FREQ / 1024) / (n))
+#define TIMER_FREQ(f)       (-TIMER_BASE_FREQ / (f))
+#define TIMER_FREQ_64(f)    TIMER_FREQ(64 * (f))
+#define TIMER_FREQ_256(f)   TIMER_FREQ(256 * (f))
+#define TIMER_FREQ_1024(f)  TIMER_FREQ(1024 * (f))
 
 
 
@@ -70,7 +70,7 @@ void TIMER_init(void);
  *                     value on overflow.
  * @param[in]  params  The parameters. See REG_TIMER_CNT defines above.
  */
-void TIMER_start(u8 tmr, u16 ticks, u8 params);
+void TIMER_start(const u8 tmr, const u16 ticks, const u8 params);
 
 /**
  * @brief      Returns the current number of ticks of the timer.
@@ -79,7 +79,7 @@ void TIMER_start(u8 tmr, u16 ticks, u8 params);
  *
  * @return     The number of ticks.
  */
-u16 TIMER_getTicks(u8 tmr);
+u16 TIMER_getTicks(const u8 tmr);
 
 /**
  * @brief      Stops a timer and returns the current number of ticks.
@@ -88,11 +88,11 @@ u16 TIMER_getTicks(u8 tmr);
  *
  * @return     The number of ticks.
  */
-u16 TIMER_stop(u8 tmr);
+u16 TIMER_stop(const u8 tmr);
 
 /**
  * @brief      Halts the CPU for the given number of milliseconds.
  *
  * @param[in]  ms    The number of milliseconds to sleep.
  */
-void TIMER_sleepMs(u32 ms);
+void TIMER_sleepMs(const u32 ms);

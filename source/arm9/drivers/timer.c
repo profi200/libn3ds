@@ -1,6 +1,6 @@
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -40,19 +40,19 @@ void TIMER_init(void)
 	IRQ_registerIsr(IRQ_TIMER_3, timerSleepHandler);
 }
 
-void TIMER_start(u8 tmr, u16 ticks, u8 params)
+void TIMER_start(const u8 tmr, const u16 ticks, const u8 params)
 {
 	Timer *const timer = getTimerRegs(tmr);
 	timer->val = ticks;
 	timer->cnt = TIMER_EN | params;
 }
 
-u16 TIMER_getTicks(u8 tmr)
+u16 TIMER_getTicks(const u8 tmr)
 {
 	return getTimerRegs(tmr)->val;
 }
 
-u16 TIMER_stop(u8 tmr)
+u16 TIMER_stop(const u8 tmr)
 {
 	Timer *const timer = getTimerRegs(tmr);
 	timer->cnt = 0;
@@ -60,7 +60,7 @@ u16 TIMER_stop(u8 tmr)
 	return timer->val;
 }
 
-void TIMER_sleepMs(u32 ms)
+void TIMER_sleepMs(const u32 ms)
 {
 	Timer *const timer = getTimerRegs(3);
 	timer->val = TIMER_FREQ_64(1000);
