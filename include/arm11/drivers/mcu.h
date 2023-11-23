@@ -74,6 +74,16 @@ typedef struct
 	// 336 bytes step counts.
 } PedometerHistory;*/
 
+typedef enum
+{
+	SYS_MODEL_3DS     = 0u, // Nintendo 3DS (CTR).
+	SYS_MODEL_3DS_XL  = 1u, // Nintendo 3DS LL/XL (SPR).
+	SYS_MODEL_N3DS    = 2u, // New Nintendo 3DS (KTR).
+	SYS_MODEL_2DS     = 3u, // Nintendo 2DS (FTR).
+	SYS_MODEL_N3DS_XL = 4u, // New Nintendo 3DS LL/XL (RED).
+	SYS_MODEL_N2DS_XL = 5u  // New Nintendo 2DS LL/XL (JAN).
+} McuSysModel;
+
 
 
 // TODO: For most functions check if the return value on error makes sense.
@@ -618,9 +628,9 @@ u8 MCU_getConsoleType(void);
 /**
  * @brief      { function_description }
  *
- * @return     { description_of_the_return_value }
+ * @return     The mcu system model.
  */
-u8 MCU_getSystemModel(void);
+McuSysModel MCU_getSystemModel(void);
 
 /**
  * @brief      { function_description }

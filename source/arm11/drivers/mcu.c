@@ -29,11 +29,11 @@ static bool g_mcuNeedsIrqRead = false;
 static u32 g_mcuIrqs = 0;
 static struct
 {
-	u16 version;         // MCU firmware version ((MCU_REG_VERS_MAJOR - 0x10)<<8 | MCU_REG_VERS_MINOR).
+	u16 version;             // MCU firmware version ((MCU_REG_VERS_MAJOR - 0x10)<<8 | MCU_REG_VERS_MINOR).
 	// TODO: Cache IRQ mask?
-	u8 conType;          // Console type (MCU_REG_RAW_STATE[0]).
-	u8 systemModel;      // System model (MCU_REG_RAW_STATE[9]).
-	u8 earlyButtonsHeld; // Early button state (MCU_REG_RAW_STATE[18]);
+	u8 conType;              // Console type (MCU_REG_RAW_STATE[0]).
+	McuSysModel systemModel; // System model (MCU_REG_RAW_STATE[9]).
+	u8 earlyButtonsHeld;     // Early button state (MCU_REG_RAW_STATE[18]);
 } g_mcuRegCache;
 
 
@@ -517,7 +517,7 @@ u8 MCU_getConsoleType(void)
 	return g_mcuRegCache.conType;
 }
 
-u8 MCU_getSystemModel(void)
+McuSysModel MCU_getSystemModel(void)
 {
 	return g_mcuRegCache.systemModel;
 }
