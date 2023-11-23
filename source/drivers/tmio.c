@@ -33,12 +33,11 @@
 #define SET_STATUS(ptr, val)  atomic_store_explicit((ptr), (val), memory_order_relaxed)
 
 #ifdef ARM9
-// TODO: Use a timer instead? The delay is only ~283 µs at ~261 kHz though.
+// TODO: Use a timer instead? The delay is only ~282.628 µs at ~261.827 kHz.
 // ARM9 timer clock = controller clock. CPU is x2 timer clock.
 #define INIT_DELAY_FUNC()  wait_cycles(2 * TMIO_CLK2DIV(400000u) * 74)
 #elif ARM11
-// ARM11 timer is x2 controller clock.
-#define INIT_DELAY_FUNC()  TIMER_sleepTicks(2 * TMIO_CLK2DIV(400000u) * 74)
+#define INIT_DELAY_FUNC()  TIMER_sleepNs((1000000000ull * TMIO_CLK2DIV(400000u) * 74) / TMIO_HCLK)
 #endif // #ifdef ARM9
 
 
@@ -204,7 +203,6 @@ static void doCpuTransfer(Tmio *const regs, const u16 cmd, u8 *buf, const u32 *c
 				{
 #ifdef ARM11
 					// ARM11 supports unaligned access.
-					// TODO: Adjust diskio to allow unaligned transfers.
 					*((u32*)buf) = *fifo;
 #else
 					if((uintptr_t)buf % 4 == 0)

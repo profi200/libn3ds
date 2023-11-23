@@ -14,6 +14,7 @@
 #include "drivers/mmc/sdmmc.h"
 #include "arm9/drivers/ndma.h"
 #include "drivers/cache.h"
+#include "arm9/drivers/timer.h"
 
 
 
@@ -42,7 +43,18 @@ DSTATUS disk_initialize (
 {
 	(void)pdrv;
 
-	return (SDMMC_init(SDMMC_DEV_CARD) == RES_OK ? 0 : STA_NOINIT);
+	// Workaround for card detect time.
+	unsigned timeout = 5;
+	while(!TMIO_cardDetected() && timeout > 0)
+	{
+		TIMER_sleepMs(2);
+		timeout--;
+	}
+
+	if(timeout == 0)
+		return STA_NODISK | STA_NOINIT;
+
+	return (SDMMC_init(SDMMC_DEV_CARD) == SDMMC_ERR_NONE ? 0 : STA_NOINIT);
 }
 
 
