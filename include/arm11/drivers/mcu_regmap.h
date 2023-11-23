@@ -2,7 +2,7 @@
 
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2022 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -134,6 +134,15 @@ typedef enum
 #define MCU_IRQ_BOT_BL_ON          (1u<<27) // Bottom LCD backlight has been powered on.
 #define MCU_IRQ_TOP_BL_OFF         (1u<<28) // Top LCD backlight has been powered off.
 #define MCU_IRQ_TOP_BL_ON          (1u<<29) // Top LCD backlight has been powered on.
+
+// MCU_REG_LCD_PWR
+#define MCU_LCD_PWR_OFF            (1u)           // Power off both LCDs. Also powers off backlights.
+#define MCU_LCD_PWR_ON             (1u<<1)        // Power on both LCDs.
+#define MCU_LCD_PWR_BOT_BL_OFF     (1u<<2)        // Turn bottom LCD backlight off.
+#define MCU_LCD_PWR_BOT_BL_ON      (1u<<3)        // Turn bottom LCD backlight on.
+#define MCU_LCD_PWR_TOP_BL_OFF     (1u<<4)        // Turn top LCD backlight off.
+#define MCU_LCD_PWR_TOP_BL_ON      (1u<<5)        // Turn top LCD backlight on.
+#define MCU_LCD_PWR_2_IRQ(p)       ((u32)(p)<<24) // Converts LCD power bits to MCU IRQ format.
 
 // MCU_REG_ACC_CFG
 typedef enum
