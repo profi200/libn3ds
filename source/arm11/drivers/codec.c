@@ -18,18 +18,14 @@
 
 // Based on code from https://github.com/xerpi/linux_3ds/blob/master/drivers/input/misc/nintendo3ds_codec_hid.c
 
-#include <assert.h>
 #include "types.h"
 #include "arm11/drivers/codec.h"
 #include "arm11/drivers/codec_regmap.h"
+#include "arm11/drivers/hw_cal.h"
 #include "arm11/drivers/spi.h"
 #include "arm11/drivers/pdn.h"
 #include "arm11/drivers/timer.h"
 #include "arm11/drivers/gpio.h"
-
-
-#define SWAP_HALF(b0, b1, a1)          __builtin_bswap16(b0),__builtin_bswap16(b1),__builtin_bswap16(a1)
-#define SWAP_FULL(b0, b1, b2, a1, a2)  __builtin_bswap16(b0),__builtin_bswap16(b1),__builtin_bswap16(b2),__builtin_bswap16(a1),__builtin_bswap16(a2)
 
 
 typedef enum
@@ -51,139 +47,6 @@ typedef enum
 	MIC_FILTER_47KHZ = 2u  // I2S2?
 } MicFilter;
 
-
-// All coefficients are 16 bit fixed-point numbers.
-// 1 sign bit (bit 15) and 15 fraction bits. Big endian.
-typedef struct
-{
-	s16 b0;
-	s16 b1;
-	// a0 always 1.0.
-	s16 a1; // Inverted.
-} IirBiquadHalf;
-
-typedef struct
-{
-	s16 b0;
-	s16 b1; // Halved.
-	s16 b2;
-	// a0 always 1.0.
-	s16 a1; // Halved and inverted.
-	s16 a2; // Inverted.
-} IirBiquad; // Second order biquad.
-
-typedef struct
-{
-	IirBiquadHalf half;
-	IirBiquad biquads[5];
-} IirBiquadHalfAnd5Full;
-
-// Caution:
-// Don't change the struct layout without
-// adjusting swapCalibrationData().
-typedef struct
-{
-	u8 driverGainHp;
-	u8 driverGainSp;
-	u8 analogVolumeHp;
-	u8 analogVolumeSp;
-	s8 shutterVolume[2];
-	u8 microphoneBias;
-	u8 quickCharge; // Microphone related.
-	u8 pgaGain;     // Microphone gain.
-	u8 reserved[3];
-	IirBiquad filterHp32[3];
-	IirBiquad filterHp47[3];
-	IirBiquad filterSp32[3];
-	IirBiquad filterSp47[3];
-	IirBiquadHalfAnd5Full filterMic32;
-	IirBiquadHalfAnd5Full filterMic47;
-	IirBiquadHalfAnd5Full filterFree;
-	u8 analogInterval;
-	u8 analogStabilize;
-	u8 analogPrecharge;
-	u8 analogSense;
-	u8 analogDebounce;
-	u8 analogXpPullup;
-	u8 ymDriver;
-	u8 reserved2;
-} CodecCal;
-static_assert(offsetof(CodecCal, analogInterval) - offsetof(CodecCal, filterHp32) == 288, "Error: Filters not contiguous in CodecCal!");
-
-
-alignas(4) static const CodecCal g_fallbackCal =
-{
-	0u, // 0 dB
-	1u, // 12 dB
-	0u, // 0 dB
-	7u, // -3.5 dB
-	{-3, -20},
-	3u,
-	2u,
-	0u,
-	{0, 0, 0},
-	// Note:
-	// The sample rate used for all filters
-	// is the word clock of the I2S line.
-	{ // filterHp32 I2S1.
-		{SWAP_FULL( 32767,      0,      0,      0,      0)},
-		{SWAP_FULL( 32767,      0,      0,      0,      0)},
-		{SWAP_FULL( 32736, -16368,      0,  16352,      0)}  // First order 10 Hz high-pass at 32730 Hz.
-	},
-	{ // filterHp47 I2S2.
-		{SWAP_FULL( 32767,      0,      0,      0,      0)},
-		{SWAP_FULL( 32767,      0,      0,      0,      0)},
-		{SWAP_FULL( 32745, -16372,      0,  16361,      0)}  // First order 10 Hz high-pass at 47610 Hz.
-	},
-	{ // filterSp32 I2S1.
-		{SWAP_FULL( 32767, -27535,  22413,  30870, -29096)}, // Customized peak filter with negative offset?
-		{SWAP_FULL(-14000,  30000, -14000,      0,      0)}, // Customized high shelf filter?
-		{SWAP_FULL( 32736, -16368,      0,  16352,      0)}  // First order 10 Hz high-pass at 32730 Hz.
-	},
-	{ // filterSp47 I2S2.
-		{SWAP_FULL( 32767, -28995,  25277,  31456, -30200)}, // Customized peak filter with negative offset?
-		{SWAP_FULL(-14402,  30000, -14402,      0,      0)}, // Customized high shelf filter?
-		{SWAP_FULL( 32745, -16372,      0,  16361,      0)}  // First order 10 Hz high-pass at 47610 Hz.
-	},
-	{ // filterMic32 I2S1?
-		{SWAP_HALF( 32767,      0,      0)},
-		{
-			{SWAP_FULL( 32767,      0,      0,      0,      0)},
-			{SWAP_FULL( 32767,      0,      0,      0,      0)},
-			{SWAP_FULL( 32767,      0,      0,      0,      0)},
-			{SWAP_FULL( 32767,      0,      0,      0,      0)},
-			{SWAP_FULL( 32767,      0,      0,      0,      0)}
-		}
-	},
-	{ // filterMic47 I2S2?
-		{SWAP_HALF( 32767,      0,      0)},
-		{
-			{SWAP_FULL( 32767,       0,      0,      0,      0)},
-			{SWAP_FULL( 32767,       0,      0,      0,      0)},
-			{SWAP_FULL( 32767,       0,      0,      0,      0)},
-			{SWAP_FULL( 32767,       0,      0,      0,      0)},
-			{SWAP_FULL( 32767,       0,      0,      0,      0)}
-		}
-	},
-	{ // filterFree all I2S lines.
-		{SWAP_HALF( 32767,      0,      0)},
-		{
-			{SWAP_FULL(-12959,  -8785,  32767,   8785,  12959)}, // all-pass: Fc 2500 Hz, Q 0.1 at 32730(?) Hz.
-			{SWAP_FULL(-12959,  -8785,  32767,   8785,  12959)}, // all-pass: Fc 2500 Hz, Q 0.1 at 32730(?) Hz.
-			{SWAP_FULL(-12959,  -8785,  32767,   8785,  12959)}, // all-pass: Fc 2500 Hz, Q 0.1 at 32730(?) Hz.
-			{SWAP_FULL( 32767,      0,      0,      0,      0)},
-			{SWAP_FULL( 32767,      0,      0,      0,      0)},
-		}
-	},
-	1u,
-	9u,
-	4u,
-	3u,
-	0u,
-	6u,
-	1u,
-	0u
-};
 
 static bool g_forceOutput = false;
 
@@ -269,18 +132,7 @@ static void maskWaitReg(u16 pageReg, u8 val, u8 mask)
 }
 
 
-// Helpers
-/*static void swapCalibrationData(CodecCal *cal)
-{
-	// Caution: This relies on struct layout.
-	const u32 size = (sizeof(IirBiquad) * 3 * 4 + sizeof(IirBiquadHalfAnd5Full) * 3) / 2;
-	u16 *tmp = (u16*)cal->filterHp32;
-	for(u32 i = 0; i < size; i++)
-	{
-		tmp[i] = __builtin_bswap16(tmp[i]);
-	}
-}*/
-
+// Helpers.
 static inline void pdnControlMclk(bool enable)
 {
 	// CODEC MCLK output enable(s).
@@ -325,19 +177,19 @@ static void setIirFilterMic(MicFilter filter, const void *const coeff)
 		case MIC_FILTER_HALF:
 		{
 			pageReg = 4<<8 | 8;
-			size = sizeof(IirBiquadHalf);
+			size = sizeof(CdcIir);
 			break;
 		}
 		case MIC_FILTER_32KHZ:
 		{
 			pageReg = 5<<8 | 8;
-			size = sizeof(IirBiquadHalfAnd5Full);
+			size = sizeof(CdcPrbP25Filters);
 			break;
 		}
 		case MIC_FILTER_47KHZ:
 		{
 			pageReg = 5<<8 | 72;
-			size = sizeof(IirBiquadHalfAnd5Full);
+			size = sizeof(CdcPrbP25Filters);
 			break;
 		}
 		default:
@@ -437,13 +289,13 @@ static void headsetInit(void)
 	maskReg(CDC_REG_100_67, 0x80, 0x80);
 }
 
-static void microphoneInit(const CodecCal *const cal)
+static void microphoneInit(const CodecCalBase *const cal)
 {
 	// Microphone ADC output select stuff.
 	maskReg(CDC_REG_100_34, 0, 4);
 
 	// 10 Hz highpass for 32730 Hz.
-	alignas(4) static const IirBiquadHalf highPass10Hz = {SWAP_HALF(32737, -32737, 32705)};
+	alignas(4) static const CdcIir highPass10Hz = {CDC_SWAP_IIR(32737, -32737, 32705)};
 	setIirFilterMic(MIC_FILTER_HALF, &highPass10Hz);
 
 	setIirFilterMic(MIC_FILTER_32KHZ, &cal->filterMic32);
@@ -466,20 +318,20 @@ static void microphoneInit(const CodecCal *const cal)
 	writeReg(CDC_REG_MIC_PGA, 43u & 0x7Fu); // TODO: Should be a global function?
 }
 
-static void shutterSoundInit(const CodecCal *const cal)
+static void shutterSoundInit(const CodecCalBase *const cal)
 {
 	// I2S mute and volume settings on shutter sound playback.
 	maskReg(CDC_REG_100_49, 0x44, 0x44); // TODO: TwlBg/AgbBg uses val = 0 here.
 
 	// I2S1 volumes.
-	writeReg(CDC_REG_DAC_L_VOLUME_CTRL, cal->shutterVolume[0]);
-	writeReg(CDC_REG_DAC_R_VOLUME_CTRL, cal->shutterVolume[0]);
+	writeReg(CDC_REG_DAC_L_VOLUME_CTRL, cal->shutterVolumeI2s1);
+	writeReg(CDC_REG_DAC_R_VOLUME_CTRL, cal->shutterVolumeI2s1);
 
 	// I2S2 volume.
-	writeReg(CDC_REG_100_123, cal->shutterVolume[1]);
+	writeReg(CDC_REG_100_123, cal->shutterVolumeI2s2);
 }
 
-static void soundInit(const CodecCal *const cal)
+static void soundInit(const CodecCalBase *const cal)
 {
 	// TODO: Depop circuit stuff is CTR only.
 	// Speaker depop. Probably to suppress the noise when the driver turns on.
@@ -515,29 +367,29 @@ static void soundInit(const CodecCal *const cal)
 		// Square waves look more like triangle waves and the sound is "softer".
 		const bool dacMuted = isDacMuted(I2S_LINE_1);
 		muteUnmuteDac(I2S_LINE_1, true); // Mute.
-		writeRegArray(9<<8 | 2, (u32*)&cal->filterFree.half, 6);
-		writeRegArray(8<<8 | 12, (u32*)cal->filterFree.biquads, 50);
-		writeRegArray(9<<8 | 8, (u32*)&cal->filterFree.half, 6);
-		writeRegArray(8<<8 | 76, (u32*)cal->filterFree.biquads, 50);
+		writeRegArray(9<<8 | 2, (u32*)&cal->filterFree.iir, 6);
+		writeRegArray(8<<8 | 12, (u32*)&cal->filterFree.b, 50);
+		writeRegArray(9<<8 | 8, (u32*)&cal->filterFree.iir, 6);
+		writeRegArray(8<<8 | 76, (u32*)&cal->filterFree.b, 50);
 		if(!dacMuted) muteUnmuteDac(I2S_LINE_1, false); // Unmute.
 	}
 #endif
 	{
 		const bool dacMuted = isDacMuted(I2S_LINE_2);
 		muteUnmuteDac(I2S_LINE_2, true); // Mute.
-		writeRegArray(10<<8 | 2, (u32*)&cal->filterFree.half, 6);
-		writeRegArray(10<<8 | 12, (u32*)cal->filterFree.biquads, 50);
+		writeRegArray(10<<8 | 2, (u32*)&cal->filterFree.iir, 6);
+		writeRegArray(10<<8 | 12, (u32*)&cal->filterFree.b, 50);
 		if(!dacMuted) muteUnmuteDac(I2S_LINE_2, true); // Unmute.
 	}
 
-	writeRegArray(12<<8 | 2, (u32*)cal->filterSp32, 30);
-	writeRegArray(12<<8 | 66, (u32*)cal->filterSp32, 30);
-	writeRegArray(12<<8 | 32, (u32*)cal->filterSp47, 30);
-	writeRegArray(12<<8 | 96, (u32*)cal->filterSp47, 30);
-	writeRegArray(11<<8 | 2, (u32*)cal->filterHp32, 30);
-	writeRegArray(11<<8 | 66, (u32*)cal->filterHp32, 30);
-	writeRegArray(11<<8 | 32, (u32*)cal->filterHp47, 30);
-	writeRegArray(11<<8 | 96, (u32*)cal->filterHp47, 30);
+	writeRegArray(12<<8 | 2, (u32*)&cal->filterSp32, 30);
+	writeRegArray(12<<8 | 66, (u32*)&cal->filterSp32, 30);
+	writeRegArray(12<<8 | 32, (u32*)&cal->filterSp47, 30);
+	writeRegArray(12<<8 | 96, (u32*)&cal->filterSp47, 30);
+	writeRegArray(11<<8 | 2, (u32*)&cal->filterHp32, 30);
+	writeRegArray(11<<8 | 66, (u32*)&cal->filterHp32, 30);
+	writeRegArray(11<<8 | 32, (u32*)&cal->filterHp47, 30);
+	writeRegArray(11<<8 | 96, (u32*)&cal->filterHp47, 30);
 
 	// Power on DAC?
 	powerOnDac();
@@ -594,7 +446,7 @@ static void soundInit(const CodecCal *const cal)
 	TIMER_sleepMs(18); // Fixed 18 ms delay when unsetting this GPIO.
 }
 
-static void touchAndCirclePadInit(const CodecCal *const cal)
+static void touchAndCirclePadInit(const CodecCalBase *const cal)
 {
 	// Stop conversion/sampling?
 	writeReg(CDC_REG_103_36, 0x98);
@@ -640,8 +492,7 @@ void CODEC_init(void)
 
 	NSPI_init();
 
-	// TODO: Load calibration from HWCAL files on eMMC.
-	const CodecCal *const cal = &g_fallbackCal;
+	const CodecCalBase *const cal = &g_cdcCal;
 
 	// Turn on CODEC MCLK and reset it.
 	pdnControlMclk(true); // Enable MCLK.

@@ -26,7 +26,9 @@
 #include "arm11/drivers/i2c.h"
 #include "arm11/drivers/mcu.h"
 #include "arm11/drivers/hid.h"
+#include "arm11/drivers/hw_cal.h"
 #include "arm.h"
+#include "fs.h"
 
 
 
@@ -40,10 +42,17 @@ void WEAK __systemInit(void)
 	{
 		kernelInit(2);
 		DMA330_init();
+		PXI_init();
+
+		// Load hardware calibration.
+		if(fMount(FS_DRIVE_SDMC) == RES_OK)
+		{
+			HWCAL_load(); // TODO: Checks?
+		}
+
 		I2C_init();
 		hidInit();
 		MCU_init();
-		PXI_init();
 	}
 	else // Any other core
 	{
@@ -56,6 +65,8 @@ void WEAK __systemInit(void)
 
 void WEAK __systemDeinit(void)
 {
+	fUnmount(FS_DRIVE_SDMC); // TODO: Checks?
+
 	DMA330_init();
 	__cpsid(if);
 	IRQ_init();
