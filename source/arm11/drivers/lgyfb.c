@@ -3,7 +3,7 @@
 #include "arm11/drivers/interrupt.h"
 #include "drivers/cache.h"
 #include "drivers/corelink_dma-330.h"
-#include "arm11/drivers/lcd.h"
+#include "arm11/drivers/gx.h"
 #include "kevent.h"
 
 
@@ -42,10 +42,16 @@ static void gbaDmaIrqHandler(UNUSED u32 intSource)
 	// We can't match the GBA refreshrate exactly so keep the LCDs around 90%
 	// ahead of the GBA output which gives us a time window of around 1.6 ms to
 	// render the frame and hopefully reduces output lag as much as possible.
+	Pdc *const pdc0 = &getGxRegs()->pdc0;
 	u32 vtotal;
-	if(REG_LCD_PDC0_VPOS > 414 - 41) vtotal = 415; // Slower than GBA.
-	else                             vtotal = 414; // Faster than GBA.
-	REG_LCD_PDC0_VTOTAL = vtotal;
+	if(pdc0->v_count > 414 - 41) vtotal = 415; // Slower than GBA.
+	else                         vtotal = 414; // Faster than GBA.
+	pdc0->v_total = vtotal;
+	// Wide mode:
+	/*u32 vtotal;
+	if(pdc0->v_count > 828 - 82) vtotal = 830; // Slower than GBA.
+	else                         vtotal = 829; // Faster than GBA.
+	pdc0->v_total = vtotal;*/
 
 	signalEvent(g_frameReadyEvent, false);
 }

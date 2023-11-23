@@ -16,32 +16,32 @@
 
 //set up the palette for color printing
 static u16 colorTable[] = {
-	RGB8_to_565(  0,  0,  0),	// faint black
-	RGB8_to_565(255,  0,  0),	// bright red
-	RGB8_to_565(  0,255,  0),	// bright green
-	RGB8_to_565(255,255,  0),	// bright yellow
-	RGB8_to_565(  0,  0,255),	// bright blue
-	RGB8_to_565(255,  0,255),	// bright magenta
-	RGB8_to_565(  0,255,255),	// bright cyan
-	RGB8_to_565(255,255,255),	// bright white
+	RGB8_2_565(  0,  0,  0),	// faint black
+	RGB8_2_565(255,  0,  0),	// bright red
+	RGB8_2_565(  0,255,  0),	// bright green
+	RGB8_2_565(255,255,  0),	// bright yellow
+	RGB8_2_565(  0,  0,255),	// bright blue
+	RGB8_2_565(255,  0,255),	// bright magenta
+	RGB8_2_565(  0,255,255),	// bright cyan
+	RGB8_2_565(255,255,255),	// bright white
 
-	RGB8_to_565( 64, 64, 64),	// almost black
-	RGB8_to_565(224,  0,  0),	// accent red
-	RGB8_to_565( 64,255, 64),	// accent green
-	RGB8_to_565(255,255, 32),	// accent yellow
-	RGB8_to_565( 64, 64,255),	// accent blue
-	RGB8_to_565(255,  0,255),	// bright magenta
-	RGB8_to_565(  0,255,255),	// bright cyan
-	RGB8_to_565(192,192,192),	// almost white
+	RGB8_2_565( 64, 64, 64),	// almost black
+	RGB8_2_565(224,  0,  0),	// accent red
+	RGB8_2_565( 64,255, 64),	// accent green
+	RGB8_2_565(255,255, 32),	// accent yellow
+	RGB8_2_565( 64, 64,255),	// accent blue
+	RGB8_2_565(255,  0,255),	// bright magenta
+	RGB8_2_565(  0,255,255),	// bright cyan
+	RGB8_2_565(192,192,192),	// almost white
 
-	RGB8_to_565(128,128,128),	// bright black
-	RGB8_to_565( 64,  0,  0),	// faint red
-	RGB8_to_565(  0, 64,  0),	// faint green
-	RGB8_to_565( 64, 64,  0),	// faint yellow
-	RGB8_to_565(  0,  0, 64),	// faint blue
-	RGB8_to_565( 64,  0, 64),	// faint magenta
-	RGB8_to_565(  0, 64, 64),	// faint cyan
-	RGB8_to_565( 96, 96, 96),	// faint white
+	RGB8_2_565(128,128,128),	// bright black
+	RGB8_2_565( 64,  0,  0),	// faint red
+	RGB8_2_565(  0, 64,  0),	// faint green
+	RGB8_2_565( 64, 64,  0),	// faint yellow
+	RGB8_2_565(  0,  0, 64),	// faint blue
+	RGB8_2_565( 64,  0, 64),	// faint magenta
+	RGB8_2_565(  0, 64, 64),	// faint cyan
+	RGB8_2_565( 96, 96, 96),	// faint white
 };
 
 PrintConsole defaultConsole =
@@ -513,7 +513,7 @@ ssize_t con_write(UNUSED struct _reent *r,UNUSED void *fd,const char *ptr, size_
 }
 
 //---------------------------------------------------------------------------------
-PrintConsole* consoleInit(u8 screen, PrintConsole* console) {
+PrintConsole* consoleInit(GfxLcd lcd, PrintConsole* console) {
 //---------------------------------------------------------------------------------
 
 	if(console) {
@@ -526,12 +526,12 @@ PrintConsole* consoleInit(u8 screen, PrintConsole* console) {
 
 	console->consoleInitialised = 1;
 
-	//gfxSetScreenFormat(screen,GSP_RGB565_OES);
-	GFX_setDoubleBuffering(screen, false);
+	//gfxSetScreenFormat(lcd,GSP_RGB565_OES);
+	GFX_setDoubleBuffering(lcd, false);
 
-	console->frameBuffer = (u16*)GFX_getFramebuffer(screen);
+	console->frameBuffer = (u16*)GFX_getBuffer(lcd, GFX_SIDE_LEFT);
 
-	if(screen==SCREEN_TOP) {
+	if(lcd == GFX_LCD_TOP) {
 		console->consoleWidth = 66;
 		console->windowWidth = 66;
 	}

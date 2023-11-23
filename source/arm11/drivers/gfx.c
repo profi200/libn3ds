@@ -23,8 +23,9 @@
 #include "drivers/gfx.h"
 #include "arm11/drivers/cfg11.h"
 #include "arm11/drivers/pdn.h"
-#include "arm11/drivers/lcd.h"
 #include "arm11/drivers/gx.h"
+#include "arm11/drivers/pdc_presets.h"
+#include "arm11/drivers/lcd.h"
 #include "arm11/drivers/gpu_regs.h"
 #include "mem_map.h"
 #include "mmio.h"
@@ -37,497 +38,596 @@
 #include "util.h"
 #include "arm11/allocator/vram.h"
 #include "kevent.h"
+#include "drivers/cache.h"
 
 
-#define MCU_LCD_IRQ_MASK  (MCU_IRQ_TOP_BL_ON | MCU_IRQ_TOP_BL_OFF | \
-                           MCU_IRQ_BOT_BL_ON | MCU_IRQ_BOT_BL_OFF | \
-                           MCU_IRQ_LCD_POWER_ON | MCU_IRQ_LCD_POWER_OFF)
+#ifndef LIBN3DS_LEGACY
+#define GFX_PDC0_IRQS     (PDC_CNT_NO_IRQ_ERR | PDC_CNT_NO_IRQ_H)
+#define GFX_PDC1_IRQS     (GFX_PDC0_IRQS)
+#else
+#define GFX_PDC0_IRQS     (PDC_CNT_NO_IRQ_ERR | PDC_CNT_NO_IRQ_H)
+#define GFX_PDC1_IRQS     (PDC_CNT_NO_IRQ_ALL)
+#endif // #ifndef LIBN3DS_LEGACY
 
 
-static struct
+typedef struct
 {
-	u32 swap;              // Currently active framebuffer.
-	void *framebufs[2][4]; // For each screen A1, A2, B1, B2
-	KHandle events[6];
-	u8 doubleBuf[2];       // Top, bottom, 1 = enable.
-	u8 lcdPower;           // 1 = on. Bit 4 top light, bit 2 bottom light, bit 0 LCDs.
-	u8 lcdLights[2];       // LCD backlight brightness. Top, bottom.
-	u32 formats[2];        // Top, bottom
-	u16 strides[2];        // Top, bottom
-} g_gfxState = {0};
+	u8 *bufs[4];   // PDC frame buffer pointers in order: A0, B0, A1, B1.
+	u32 fb_fmt;    // PDC frame buffer format.
+	u32 fb_stride; // PDC frame buffer stride.
+} LcdState;
 
-
-
-static u8 fmt2PixSize(GfxFbFmt fmt);
-static void setupFramebufs(GfxFbFmt fmtTop, GfxFbFmt fmtBot);
-static void deallocFramebufs(void);
-static void setupDislayController(u8 lcd);
-
-void GFX_init(GfxFbFmt fmtTop, GfxFbFmt fmtBot)
+typedef struct
 {
-	g_gfxState.lcdPower = 0x15; // All on.
-	setupFramebufs(fmtTop, fmtBot);
-	g_gfxState.doubleBuf[0] = 1;
-	g_gfxState.doubleBuf[1] = 1;
+	KHandle events[6]; // Eevents in order: PSC0, PSC1, PDC0, PDC1, PPF, P3D.
+	u8 swapMask;       // Double buffering masks for top and bottom. Bit 0 top, 1 bottom.
+	u8 swap;           // Currently active frame buffer. Bit 0 top, 1 bottom.
+	u8 mcuLcdState;    // Note: We use the power off bits to track power on.
+	//GfxTopMode mode;   // Current topscreen mode. TODO
+	LcdState lcds[2];  // 0 top, 1 bottom.
+	u32 lcdLum;        // Current LCD luminance for both LCDs.
+} GfxState;
 
-	// FIXME: Temporary workaround for screen init compatibility (Luma/fb3DS 1.2).
-	TIMER_sleepMs(50);
-	(void)MCU_getIrqs(MCU_LCD_IRQ_MASK); // Discard any screen init events.
+static GfxState g_gfxState = {0};
 
-	getCfg11Regs()->gpuprot = GPUPROT_NO_PROT;
 
-	// Reset the whole GX block.
-	Pdn *const pdn = getPdnRegs();
-	pdn->gpu_cnt = PDN_GPU_CNT_CLK_EN;
-	wait_cycles(12);
-	pdn->gpu_cnt = PDN_GPU_CNT_CLK_EN | PDN_GPU_CNT_NORST_ALL;
-	REG_GX_GPU_CLK = 0x100; // P3D
-	REG_GX_PSC_VRAM = 0;    // All VRAM banks enabled.
 
-	// These 3 reg writes are normally done way later in the
-	// init but we will be fine doing it early.
-	REG_GX_PSC_FILL0_CNT = 0;
-	REG_GX_PSC_FILL1_CNT = 0;
-	REG_GX_PPF_CNT = 0;
+static void allocateFramebufs(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode)
+{
+	GfxState *const state = &g_gfxState;
+	const u8 topPixelSize = GFX_getPixelSize(fmtTop);
+	const u8 botPixelSize = GFX_getPixelSize(fmtBot);
+	state->lcds[GFX_LCD_TOP].fb_stride = LCD_WIDTH_TOP * topPixelSize;
+	state->lcds[GFX_LCD_BOT].fb_stride = LCD_WIDTH_BOT * botPixelSize;
 
-	// PDC/framebuffer setup. This must be done before LCD init.
-	setupDislayController(0);
-	setupDislayController(1);
-	REG_LCD_PDC0_SWAP = 0; // Select framebuf 0.
-	REG_LCD_PDC1_SWAP = 0; // Select framebuf 0.
-	REG_LCD_PDC0_CNT = PDC_CNT_OUT_E | PDC_CNT_I_MASK_ERR | PDC_CNT_I_MASK_H | PDC_CNT_E; // Start
-	REG_LCD_PDC1_CNT = PDC_CNT_OUT_E | PDC_CNT_I_MASK_ALL | PDC_CNT_E;                    // Start
+	const u32 topSize = LCD_WIDTH_TOP * LCD_WIDE_HEIGHT_TOP * topPixelSize; // TODO: Smaller allocation in 2D mode (240x400)?
+	const u32 botSize = LCD_WIDTH_BOT * LCD_HEIGHT_BOT * botPixelSize;
 
-	// LCD reg setup.
-	REG_LCD_ABL0_FILL = 1u<<24;       // Force blackscreen.
-	REG_LCD_ABL1_FILL = 1u<<24;       // Force blackscreen.
-	REG_LCD_PARALLAX_CNT = 0;
-	REG_LCD_PARALLAX_PWM = 0xA390A39;
-	REG_LCD_RST = 0;                  // Reset LCD drivers. Unknown for how long this must be low.
-	                                  // GSP seems to rely on boot11/previous FIRM having set it to 0 already.
-	REG_LCD_UNK00C = 0x10001;         // Stops H-/V-sync control signals?
+	// Frame buffer layout in memory unless the allocator puts them elsewhere:
+	// [top A0 (3D left)] [top B0 (3D right)] [bot A0] [top A1 (3D left)] [top B1 (3D right)] [bot A1]
+	// The left/right buffers are always allocated at once to allow easy 2D/3D mode switching.
 
-	// Create IRQ events.
-	// PSC0, PSC1, PDC0, PDC1, PPF, P3D
-	for(u8 i = 0; i < 6; i++)
+	// First top left/right frame buffers.
+	u8 *topBuf = vramAlloc(topSize);
+	u8 *topRightBuf = topBuf + (topSize / 2);
+	state->lcds[GFX_LCD_TOP].bufs[0] = topBuf;
+	state->lcds[GFX_LCD_TOP].bufs[1] = topRightBuf;
+
+	// First bottom frame buffer.
+	u8 *botBuf = vramAlloc(botSize);
+	state->lcds[GFX_LCD_BOT].bufs[0] = botBuf;
+	state->lcds[GFX_LCD_BOT].bufs[1] = botBuf;
+
+	// Second top left/right frame buffers.
+	topBuf = vramAlloc(topSize);
+	topRightBuf = topBuf + (topSize / 2);
+	state->lcds[GFX_LCD_TOP].bufs[2] = topBuf;
+	state->lcds[GFX_LCD_TOP].bufs[3] = topRightBuf;
+
+	// Second bottom frame buffer.
+	botBuf = vramAlloc(botSize);
+	state->lcds[GFX_LCD_BOT].bufs[2] = botBuf;
+	state->lcds[GFX_LCD_BOT].bufs[3] = botBuf;
+
+	u32 outModeTop;
+	switch(mode)
 	{
-		KHandle tmp = createEvent(false);
-		bindInterruptToEvent(tmp, IRQ_PSC0 + i, 14);
-		g_gfxState.events[i] = tmp;
+		case GFX_TOP_2D:
+			outModeTop = PDC_FB_DOUBLE_V | PDC_FB_OUT_A;
+			break;
+		case GFX_TOP_WIDE:
+			outModeTop = PDC_FB_OUT_A;
+			break;
+		default: // 3D mode.
+			outModeTop = PDC_FB_OUT_AB;
 	}
 
-	// Clear entire VRAM.
-	GX_memoryFill((u32*)VRAM_BANK0, 1u<<9, VRAM_SIZE / 2, 0,
-	              (u32*)VRAM_BANK1, 1u<<9, VRAM_SIZE / 2, 0);
+	// TODO: For FCRAM buffers we need burst size 6/8?
+	state->lcds[GFX_LCD_TOP].fb_fmt = PDC_FB_DMA_INT(8u) | PDC_FB_BURST_24_32 |
+	                                  outModeTop | PDC_FB_FMT(fmtTop);
+	state->lcds[GFX_LCD_BOT].fb_fmt = PDC_FB_DMA_INT(8u) | PDC_FB_BURST_24_32 |
+	                                  PDC_FB_OUT_A | PDC_FB_FMT(fmtBot);
+}
 
-	// Backlight and other stuff.
-	REG_LCD_ABL0_LIGHT = 0;
-	REG_LCD_ABL0_CNT = 0;
-	REG_LCD_ABL0_LIGHT_PWM = 0;
-	REG_LCD_ABL1_LIGHT = 0;
-	REG_LCD_ABL1_CNT = 0;
-	REG_LCD_ABL1_LIGHT_PWM = 0;
+static void freeFramebufs(void)
+{
+	GfxState *const state = &g_gfxState;
+	vramFree(state->lcds[GFX_LCD_BOT].bufs[2]);
+	vramFree(state->lcds[GFX_LCD_TOP].bufs[2]);
+	vramFree(state->lcds[GFX_LCD_BOT].bufs[0]);
+	vramFree(state->lcds[GFX_LCD_TOP].bufs[0]);
 
-	// Timing critical part start.
-	// This must be done within 4 frames.
-	REG_LCD_RST = 1;         // Take LCD drivers out of reset.
-	// At this point the output must be forced black or
-	// the LCD drivers will not sync. Already done above.
-	REG_LCD_UNK00C = 0;      // Starts H-/V-sync control signals?
-	TIMER_sleepMs(10);       // Wait for power supply (which?) to stabilize and LCD drivers to finish resetting.
-	LCDI2C_init();           // Initialize LCD drivers.
-	MCU_setLcdPower(2u);     // Power on LCDs (MCU --> PMIC).
-	// Timing critical part end.
-	// Wait 50 us for LCD sync. The MCU event wait will cover this.
-	if(MCU_waitIrqs(MCU_LCD_IRQ_MASK) != MCU_IRQ_LCD_POWER_ON) panic();
+	//memset(state->lcds[GFX_LCD_TOP].bufs, 0, sizeof(state->lcds[GFX_LCD_TOP].bufs));
+	//memset(state->lcds[GFX_LCD_BOT].bufs, 0, sizeof(state->lcds[GFX_LCD_BOT].bufs));
+}
 
-	// The transfer engine is (sometimes) borked on screen init.
-	// Doing a dummy texture copy fixes it.
-	// TODO: Proper fix.
-	//GX_textureCopy((u32*)RENDERBUF_TOP, 0, (u32*)RENDERBUF_BOT, 0, 16);
+static void hardwareReset(void)
+{
+	// Give the GPU access to all memory.
+	// TODO: This should be configurable depending on what libn3ds is used for.
+	getCfg11Regs()->gpuprot = GPUPROT_NO_PROT;
 
-	LCDI2C_waitBacklightsOn();
-	REG_LCD_ABL0_LIGHT_PWM = 0x1023E; // TODO: Figure out how this works.
-	REG_LCD_ABL0_LIGHT = 1;
-	REG_LCD_ABL1_LIGHT_PWM = 0x1023E; // TODO: Figure out how this works.
-	REG_LCD_ABL1_LIGHT = 1;
-	MCU_setLcdPower(0x28u); // Power on backlights.
-	if(MCU_waitIrqs(MCU_LCD_IRQ_MASK) != (MCU_IRQ_TOP_BL_ON | MCU_IRQ_BOT_BL_ON)) panic();
+	// Reset all blocks including PSC, PDC, PPF and GPU.
+	PDN_controlGpu(true, true, true);
 
-	// Make sure the fills finished.
+	// Setup clock related stuff, stop and acknowledge PSC fill and set some priorities.
+	GxRegs *const gx = getGxRegs();
+	gx->gpu_clk  = 0x70100;                 // TwlBg seems to | 0x300 but bit 9 is never set??
+	gx->psc_vram &= ~PSC_VRAM_BANK_DIS_ALL; // All VRAM banks enabled.
+	gx->psc_fill0.cnt = 0;                  // Stop PSC fill engine and clear its IRQ bit.
+	gx->psc_fill1.cnt = 0;                  // Stop PSC fill engine and clear its IRQ bit.
+	gx->psc_dma_prio0 = PSC_DMA_PRIO0(2, 2, 2, 2, 1, 2, 0, 0);
+	gx->psc_dma_prio1 = PSC_DMA_PRIO1(15, 15, 2);
+
+	// Stop PPF DMA engine and clear its IRQ bit.
+	gx->ppf.cnt = 0;
+
+	// Initialize P3D (GPU).
+	gx->p3d[GPUREG_IRQ_ACK] = 0;
+	gx->p3d[GPUREG_IRQ_CMP] = 0x12345678;
+	gx->p3d[GPUREG_IRQ_MASK] = 0xFFFFFFF0;
+	gx->p3d[GPUREG_IRQ_AUTOSTOP] = 1;
+
+	// Not in gsp. We need to start off in configuration mode.
+	// If not set the first command list will hang the GPU.
+	gx->p3d[GPUREG_START_DRAW_FUNC0] = 1;
+}
+
+static void setPdcPresetAndBufs(const GfxLcd lcd, const GfxTopMode mode)
+{
+	const u32 presetIdx = (lcd == GFX_LCD_TOP ? mode : PDC_PRESET_IDX_BOT);
+	const PdcPreset *const preset = &g_pdcPresets[presetIdx];
+	Pdc *const pdc = (lcd == GFX_LCD_TOP ? &getGxRegs()->pdc0 : &getGxRegs()->pdc1);
+
+	// Set LCD timings.
+	LcdState *const state = &g_gfxState.lcds[lcd];
+	iomemcpy(&pdc->h_total, &preset->h_total, offsetof(PdcPreset, pic_dim) - offsetof(PdcPreset, h_total));
+	pdc->pic_dim      = preset->pic_dim;
+	pdc->pic_border_h = preset->pic_border_h;
+	pdc->pic_border_v = preset->pic_border_v;
+	pdc->fb_stride    = state->fb_stride;
+	pdc->latch_pos    = preset->latch_pos;
+
+	// Set frame buffer addresses and format.
+	pdc->fb_a0  = (u32)state->bufs[0];
+	pdc->fb_a1  = (u32)state->bufs[2];
+	pdc->fb_b0  = (u32)state->bufs[1];
+	pdc->fb_b1  = (u32)state->bufs[3];
+	pdc->fb_fmt = state->fb_fmt;
+}
+
+static void setupDisplayController(const GfxLcd lcd, const GfxTopMode mode)
+{
+	// Display timing and frame buffer setup.
+	setPdcPresetAndBufs(lcd, mode);
+
+	// Setup 1:1 color mapping for all channels.
+	Pdc *const pdc = (lcd == GFX_LCD_TOP ? &getGxRegs()->pdc0 : &getGxRegs()->pdc1);
+	pdc->color_lut_idx = 0;
+	for(u32 i = 0; i < 256; i++)
+	{
+		pdc->color_lut_data = PDC_COLOR_RGB(1, 1, 1) * i;
+	}
+}
+
+static void displayControllerInit(const GfxTopMode mode)
+{
+	// Setup display controller timings.
+	// This must be done before LCD init.
+	setupDisplayController(GFX_LCD_TOP, mode);
+	setupDisplayController(GFX_LCD_BOT, (GfxTopMode)0);
+
+	// Set PDC frame buffer index and start both controllers.
+	const u8 swap = g_gfxState.swap;
+	GxRegs *const gx = getGxRegs();
+	gx->pdc0.swap = swap;    // Bit 1 is not writable.
+	gx->pdc1.swap = swap>>1;
+	gx->pdc0.cnt  = PDC_CNT_OUT_EN | GFX_PDC0_IRQS | PDC_CNT_EN;
+	gx->pdc1.cnt  = PDC_CNT_OUT_EN | GFX_PDC1_IRQS | PDC_CNT_EN;
+}
+
+static void stopDisplayControllersSafe(void)
+{
+	// Hardware bug:
+	// If we stop PDC in the middle of DMA it may hang the bus.
+	// This has not been observed with VRAM but it frequently
+	// happens with FCRAM frame buffers.
+	// For this reason we need to wait until vertical border/blanking.
+	// In legacy modes we only use VRAM frame buffers so we don't need this workaround.
+	// TODO: If we start using threading here we have to try until
+	//       we land within the border/blanking area.
+	GxRegs *const gx = getGxRegs();
+#ifndef LIBN3DS_LEGACY
+	u32 v_total = gx->pdc0.v_total;
+	u32 v_count = gx->pdc0.v_count;
+	u32 bot_border = gx->pdc0.pic_border_v>>16;
+	if(v_count < bot_border)
+	{
+		// vMul = (fb_fmt & PDC_FB_DOUBLE_V ? 1 : 2);
+		// ((1000000ull / 8) * 24 * (h_total + 1) * (v_total + 1)) / (268111856u / 8 * vMul)
+		// Unless the timing has been altered result is 16713.680875044929009032708 µs.
+		const u32 frameDurationUs = 16713;
+		TIMER_sleepUs((bot_border - v_count) * frameDurationUs / v_total);
+	}
+#endif // #ifndef LIBN3DS_LEGACY
+	gx->pdc0.cnt  = PDC_CNT_NO_IRQ_ALL; // Stop.
+	gx->pdc0.swap = PDC_SWAP_IRQ_ACK_ALL | PDC_SWAP_RST_FIFO;
+
+#ifndef LIBN3DS_LEGACY
+	v_total = gx->pdc1.v_total;
+	v_count = gx->pdc1.v_count;
+	bot_border = gx->pdc1.pic_border_v>>16;
+	if(v_count < bot_border)
+	{
+		// ((1000000ull / 8) * 24 * (h_total + 1) * (v_total + 1)) / (268111856u / 8)
+		// Unless the timing has been altered result is 16713.680875044929009032708 µs.
+		const u32 frameDurationUs = 16713;
+		TIMER_sleepUs((bot_border - v_count) * frameDurationUs / v_total);
+	}
+#endif // #ifndef LIBN3DS_LEGACY
+	gx->pdc1.cnt  = PDC_CNT_NO_IRQ_ALL; // Stop.
+	gx->pdc1.swap = PDC_SWAP_IRQ_ACK_ALL | PDC_SWAP_RST_FIFO;
+}
+
+static void oldBootloaderWorkaround(void)
+{
+	// Thanks to Sono for figuring this out.
+	// If this code path is not taken ~163 µs.
+	// Otherwise varies. ~454 to ~519 µs measured with screen init flag on Luma3DS bootloader.
+	if(MCU_readReg(MCU_REG_LCD_PWR) != 0 && (MCU_readReg(MCU_REG_EX_HW_STAT) & 0x60u) == 0)
+	{
+		// Wait for backlight on events. Backlight always fires after LCD on.
+		while((MCU_waitIrqs(MCU_LCD_IRQ_MASK) & (MCU_IRQ_TOP_BL_ON | MCU_IRQ_BOT_BL_ON)) == 0);
+
+		// Reset LCDs in preparation for init.
+		LcdRegs *const lcd = getLcdRegs();
+		lcd->rst        = LCD_RST_RST;
+		lcd->signal_cnt = SIGNAL_CNT_BOTH_DIS; // Stop H-/V-sync control signals.
+
+		// Make sure the state is as expected.
+		if((MCU_readReg(MCU_REG_EX_HW_STAT) & 0xE0u) != 0xE0) panic();
+
+		// Power off LCDs. Also powers off backlights.
+		MCU_setLcdPower(MCU_LCD_PWR_OFF);
+		if(MCU_waitIrqs(MCU_LCD_IRQ_MASK) != MCU_IRQ_LCD_POWER_OFF) panic();
+
+		// Disable backlight PWM.
+		lcd->abl0.bl_pwm_cnt = 0;
+		lcd->abl1.bl_pwm_cnt = 0;
+	}
+
+	// If LCD MCU events arrive before the above wait
+	// we will just discard them.
+	(void)MCU_getIrqs(MCU_LCD_IRQ_MASK);
+}
+
+void GFX_init(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode)
+{
+	// Initialize GFX state.
+	GfxState *const state = &g_gfxState;
+	const u8 mcuLcdState = MCU_LCD_PWR_TOP_BL_OFF | MCU_LCD_PWR_BOT_BL_OFF | MCU_LCD_PWR_OFF;
+	const u32 lcdLum = 1; // TODO: Better default.
+	state->swap = 0;
+	state->swapMask = 3; // Double buffering enabled for both.
+	state->mcuLcdState = mcuLcdState;
+	state->lcdLum = lcdLum;
+
+	// If the previous FIRM does not wait for LCD MCU events
+	// we will get them unexpectedly and this will most likely trigger a panic().
+	// TODO: If Luma3DS/fastboot3DS eventually fix this remove this workaround.
+	oldBootloaderWorkaround();
+
+	// Do a full hardware reset.
+	hardwareReset();
+
+	// Create IRQ events.
+	// PSC0, PSC1, PDC0, PDC1, PPF, P3D.
+	static_assert(IRQ_P3D - IRQ_PSC0 == 5);
+	for(unsigned i = 0; i < 6; i++)
+	{
+		KHandle kevent = createEvent(false);
+		bindInterruptToEvent(kevent, IRQ_PSC0 + i, 14);
+		state->events[i] = kevent;
+	}
+
+	// Not in gsp. Clear entire VRAM.
+	GX_memoryFill((u32*)VRAM_BANK0, PSC_FILL_32_BITS, VRAM_BANK_SIZE, 0,
+	              (u32*)VRAM_BANK1, PSC_FILL_32_BITS, VRAM_BANK_SIZE, 0);
+
+	// Hardware bug:
+	// Not in gsp but HOS apps do this(?).
+	// PPF is (sometimes) glitchy if the first transfer after reset is a texture copy.
+	// A single dummy texture copy/display transfer fixes it.
+	// For display transfer 64x64 is the minimum or display transfers will be permanently glitchy.
+	// Note: Nintendos code does a 128x128 display transfer.
+	// Note: 32x32 display transfer with same flags/format will always hang.
+	//GX_displayTransfer((u32*)VRAM_BASE, PPF_DIM(128, 128), (u32*)(VRAM_BASE + 0x8000), PPF_DIM(128, 128),
+	//                   PPF_O_FMT(GX_RGBA4) | PPF_I_FMT(GX_RGBA4) | PPF_NO_TILED_2_LINEAR);
+	GX_textureCopy((u32*)VRAM_BASE, 0, (u32*)(VRAM_BASE + 16), 0, 16);
+
+	// Allocate our frame buffers.
+	allocateFramebufs(fmtTop, fmtBot, mode);
+
+	// Get the display controllers up and running.
+	// This needs to happen before LCD init (LCDs need some clock pulses to reset?).
+	displayControllerInit(mode);
+
+	// Initialize/power on the LCDs.
+	// Note: This will also enable forced black output.
+	LCD_init(mcuLcdState<<1, lcdLum);
+
+	// Not in gsp. Ensure VRAM is cleared.
+	// Also wait for the dummy display transfer/texture copy.
 	GFX_waitForPSC0();
 	GFX_waitForPSC1();
-	REG_LCD_ABL0_FILL = 0;
-	REG_LCD_ABL1_FILL = 0;
+	GFX_waitForPPF();
 
-	// GPU stuff.
-	REG_GX_GPU_CLK = 0x70100;
-	*((vu32*)0x10400050) = 0x22221200;
-	*((vu32*)0x10400054) = 0xFF2;
-
-	REG_GX_P3D(GPUREG_IRQ_ACK) = 0;
-	REG_GX_P3D(GPUREG_IRQ_CMP) = 0x12345678;
-	REG_GX_P3D(GPUREG_IRQ_MASK) = 0xFFFFFFF0;
-	REG_GX_P3D(GPUREG_IRQ_AUTOSTOP) = 1;
-
-	// This reg needs to be set to 1 (configuration)
-	// before running the first cmd list.
-	REG_GX_P3D(GPUREG_START_DRAW_FUNC0) = 1;
+	// Enable frame buffer output.
+	GFX_setForceBlack(false, false);
 }
 
 void GFX_deinit(void)
 {
-	// Power off backlights if on.
-	const u8 power = g_gfxState.lcdPower;
-	if(power & ~1u)
-	{
-		MCU_setLcdPower(power & ~1u);
-		if(MCU_waitIrqs(MCU_LCD_IRQ_MASK) != (u32)(power & ~1u)<<24) panic();
-	}
-	GFX_setBrightness(0, 0);
-	REG_LCD_ABL0_LIGHT_PWM = 0;
-	REG_LCD_ABL1_LIGHT_PWM = 0;
+	// Power off backlights and LCDs if on.
+	GfxState *const state = &g_gfxState;
+	LCD_deinit(state->mcuLcdState);
+	state->mcuLcdState = 0;
 
-	// Make sure the LCDs are completely black.
-	REG_LCD_ABL0_FILL = 1u<<24; // Force blackscreen.
-	REG_LCD_ABL1_FILL = 1u<<24; // Force blackscreen.
-	GFX_waitForVBlank0();
-	GFX_waitForVBlank0();
+	// Wait for PSC, PPF, P3D busy.
+	// TODO
 
-	// Reset the LCD drivers.
-	// And stop the H-/V-sync control signals?
-	REG_LCD_RST = 0;
-	REG_LCD_UNK00C = 0x10001;
+	// Stop the display controllers.
+	TIMER_sleepMs(17); // ?? gsp: Only on deinitialize. Not just on stop.
+	stopDisplayControllersSafe();
+	TIMER_sleepMs(2); // ?? gsp: Only on deinitialize. Not just on stop.
 
-	// Power off LCDs if on.
-	if(power & 1u)
-	{
-		MCU_setLcdPower(1u);
-		if(MCU_waitIrqs(MCU_LCD_IRQ_MASK) != MCU_IRQ_LCD_POWER_OFF) panic();
-	}
-
-	// TODO: Wait until PDC is not reading any data from mem.
-	REG_LCD_PDC0_CNT = PDC_CNT_I_MASK_ALL;                  // Stop
-	REG_LCD_PDC0_SWAP = PDC_SWAP_RST_FIFO | PDC_SWAP_I_ALL; // Reset FIFO and clear IRQs.
-	REG_LCD_PDC1_CNT = PDC_CNT_I_MASK_ALL;                  // Start
-	REG_LCD_PDC1_SWAP = PDC_SWAP_RST_FIFO | PDC_SWAP_I_ALL; // Reset FIFO and clear IRQs.
-
-	REG_GX_PSC_VRAM = 0xF00;
-	REG_GX_GPU_CLK = 0;
-	getPdnRegs()->gpu_cnt = PDN_GPU_CNT_CLK_EN | PDN_GPU_CNT_NORST_REGS;
-
-	deallocFramebufs();
-
-	// PSC0, PSC1, PDC0, PDC1, PPF, P3D
-	for(u8 i = 0; i < 6; i++)
+	// Delete IRQ events.
+	// PSC0, PSC1, PDC0, PDC1, PPF, P3D.
+	for(unsigned i = 0; i < 6; i++)
 	{
 		unbindInterruptEvent(IRQ_PSC0 + i);
-		deleteEvent(g_gfxState.events[i]);
-		g_gfxState.events[i] = 0;
+		deleteEvent(state->events[i]);
+		state->events[i] = 0;
 	}
+
+	// Deallocate our frame buffers.
+	freeFramebufs();
+
+	// Some Homebrew FIRMs detect screen init by poking at this PDN reg.
+	// To preserve compatibility we will set it to cold boot state.
+	// Also keep VRAM enabled for bootloaders.
+	getPdnRegs()->gpu_cnt = PDN_GPU_CNT_CLK_EN | PDN_GPU_CNT_NORST_REGS;
 }
 
-void GFX_setFramebufFmt(GfxFbFmt fmtTop, GfxFbFmt fmtBot)
+// TODO: Don't reallocate if the buffer sizes stay the same. Also always keep left/right pair.
+void GFX_setFormat(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode)
 {
-	REG_LCD_ABL0_FILL = 1u<<24; // Force blackscreen
-	REG_LCD_ABL1_FILL = 1u<<24; // Force blackscreen
+	// Avoid glitches while we change the frame buffer format.
+	GFX_setForceBlack(true, true);
 
-	if(fmtTop < (g_gfxState.formats[0] & 7u) || fmtBot < (g_gfxState.formats[1] & 7u))
-	{
-		deallocFramebufs();
-		setupFramebufs(fmtTop, fmtBot);
-	}
+	// Reallocate frame buffers to free up a little space.
+	freeFramebufs();
+	allocateFramebufs(fmtTop, fmtBot, mode);
 
 	// Update PDC regs.
-	REG_LCD_PDC0_FB_A1  = (u32)g_gfxState.framebufs[0][0];
-	REG_LCD_PDC0_FB_A2  = (u32)g_gfxState.framebufs[0][1];
-	REG_LCD_PDC0_FB_B1  = (u32)g_gfxState.framebufs[0][2];
-	REG_LCD_PDC0_FB_B2  = (u32)g_gfxState.framebufs[0][3];
-	REG_LCD_PDC0_STRIDE = g_gfxState.strides[0];
-	REG_LCD_PDC0_FMT    = g_gfxState.formats[0];
+	setPdcPresetAndBufs(GFX_LCD_TOP, mode);
+	setPdcPresetAndBufs(GFX_LCD_BOT, (GfxTopMode)0);
 
-	REG_LCD_PDC1_FB_A1  = (u32)g_gfxState.framebufs[1][0];
-	REG_LCD_PDC1_FB_A2  = (u32)g_gfxState.framebufs[1][1];
-	REG_LCD_PDC1_FB_B1  = (u32)g_gfxState.framebufs[1][2];
-	REG_LCD_PDC1_FB_B2  = (u32)g_gfxState.framebufs[1][3];
-	REG_LCD_PDC1_STRIDE = g_gfxState.strides[1];
-	REG_LCD_PDC1_FMT    = g_gfxState.formats[1];
-
-	REG_LCD_ABL0_FILL = 0;
-	REG_LCD_ABL1_FILL = 0;
+	// TODO: Should we leave disabling fill to the caller to avoid glitches?
+	GFX_setForceBlack(false, false);
 }
 
-static u8 fmt2PixSize(GfxFbFmt fmt)
+void GFX_powerOnBacklight(const GfxBl mask)
 {
-	u8 size;
+	g_gfxState.mcuLcdState |= mask;
 
-	switch(fmt)
-	{
-		case GFX_RGBA8:
-			size = 4;
-			break;
-		case GFX_BGR8:
-			size = 3;
-			break;
-		default: // 2 = RGB565, 3 = RGB5A1, 4 = RGBA4
-			size = 2;
-	}
-
-	return size;
+	LCD_setBacklightPower(mask<<1);
 }
 
-static void setupFramebufs(GfxFbFmt fmtTop, GfxFbFmt fmtBot)
+void GFX_powerOffBacklight(const GfxBl mask)
 {
-	const u8 topPixSize = fmt2PixSize(fmtTop);
-	const u8 botPixSize = fmt2PixSize(fmtBot);
-	g_gfxState.strides[0] = 240u * topPixSize; // No gap.
-	g_gfxState.strides[1] = 240u * botPixSize; // No gap.
+	g_gfxState.mcuLcdState &= ~mask;
 
-	const u32 topSize = 400u * 240 * topPixSize;
-	const u32 botSize = 320u * 240 * botPixSize;
-	g_gfxState.framebufs[0][0] = vramAlloc(topSize); // Top A1 (3D left eye)
-	void *botPtr = vramAlloc(botSize);
-	g_gfxState.framebufs[1][0] = botPtr;             // Bottom A1
-	g_gfxState.framebufs[1][2] = botPtr;             // Bottom B1 (unused)
-	g_gfxState.framebufs[0][2] = vramAlloc(topSize); // Top B1 (3D right eye)
-
-	g_gfxState.framebufs[0][1] = vramAlloc(topSize); // Top A2 (3D left eye)
-	botPtr = vramAlloc(botSize);
-	g_gfxState.framebufs[1][1] = botPtr;             // Bottom A2
-	g_gfxState.framebufs[1][3] = botPtr;             // Bottom B2 (unused)
-	g_gfxState.framebufs[0][3] = vramAlloc(topSize); // Top B2 (3D right eye)
-
-	g_gfxState.formats[0] = 0u<<16 | 3u<<8 | 1u<<6 | 0u<<4 | fmtTop;
-	g_gfxState.formats[1] = 0u<<16 | 3u<<8 | 0u<<6 | 0u<<4 | fmtBot;
+	LCD_setBacklightPower(mask);
 }
 
-static void deallocFramebufs(void)
+void GFX_setLcdLuminance(const u32 lum)
 {
-	vramFree(g_gfxState.framebufs[0][3]);
-	vramFree(g_gfxState.framebufs[1][1]);
-	vramFree(g_gfxState.framebufs[0][1]);
-	vramFree(g_gfxState.framebufs[0][2]);
-	vramFree(g_gfxState.framebufs[1][0]);
-	vramFree(g_gfxState.framebufs[0][0]);
+	GfxState *const state = &g_gfxState;
+	state->lcdLum = lum;
+
+	LCD_setLuminance(lum);
 }
 
-static void setupDislayController(u8 lcd)
+void GFX_setForceBlack(const bool top, const bool bot)
 {
-	if(lcd > 1) return;
-
-	static const u32 displayCfgs[2][24] =
-	{
-		{
-			// PDC0 regs 0-0x4C.
-			450, 209, 449, 449, 0, 207, 209, 453<<16 | 449,
-			1<<16 | 0, 413, 2, 402, 402, 402, 1, 2,
-			406<<16 | 402, 0, 0<<4 | 0, 0<<16 | 0xFF<<8 | 0,
-			// PDC0 regs 0x5C-0x64.
-			400<<16 | 240, // Width and height.
-			449<<16 | 209,
-			402<<16 | 2,
-			// PDC0 reg 0x9C.
-			0<<16 | 0
-		},
-		{
-			// PDC1 regs 0-0x4C.
-			450, 209, 449, 449, 205, 207, 209, 453<<16 | 449,
-			1<<16 | 0, 413, 82, 402, 402, 79, 80, 82,
-			408<<16 | 404, 0, 1<<4 | 1, 0<<16 | 0<<8 | 0xFF,
-			// PDC1 regs 0x5C-0x64.
-			320<<16 | 240, // Width and height.
-			449<<16 | 209,
-			402<<16 | 82,
-			// PDC1 reg 0x9C.
-			0<<16 | 0
-		}
-	};
-
-	const u32 *const cfg = displayCfgs[lcd];
-	vu32 *const regs = (vu32*)(GX_REGS_BASE + 0x400 + (0x100u * lcd));
-
-	iomemcpy(regs, cfg, 0x50);          // PDC regs 0-0x4C.
-	iomemcpy(regs + 23, &cfg[20], 0xC); // PDC regs 0x5C-0x64.
-	regs[36] = g_gfxState.strides[lcd]; // PDC reg 0x90 stride.
-	regs[39] = cfg[23];                 // PDC reg 0x9C.
-
-
-	// PDC regs 0x68, 0x6C, 0x94, 0x98 and 0x70.
-	regs[26] = (u32)g_gfxState.framebufs[lcd][0]; // Framebuffer A first address.
-	regs[27] = (u32)g_gfxState.framebufs[lcd][1]; // Framebuffer A second address.
-	regs[37] = (u32)g_gfxState.framebufs[lcd][2]; // Framebuffer B first address.
-	regs[38] = (u32)g_gfxState.framebufs[lcd][3]; // Framebuffer B second address.
-	regs[28] = g_gfxState.formats[lcd];           // Format
-
-
-	regs[32] = 0; // Gamma table index 0.
-	for(u32 i = 0; i < 256; i++) regs[33] = 0x10101u * i;
+	LCD_setForceBlack(top, bot);
 }
 
-void GFX_powerOnBacklights(GfxBlight mask)
+void GFX_setDoubleBuffering(const GfxLcd lcd, const bool dBuf)
 {
-	fb_assert((mask & ~GFX_BLIGHT_BOTH) == 0u);
-	g_gfxState.lcdPower |= mask;
-
-	mask <<= 1;
-	MCU_setLcdPower(mask); // Power on backlights.
-	if(MCU_waitIrqs(MCU_LCD_IRQ_MASK) != (u32)mask<<24) panic();
+	// TODO: We may have to set PDC swap here too so exception printing works.
+	GfxState *const state = &g_gfxState;
+	state->swapMask = (state->swapMask & ~(1u<<lcd)) | dBuf<<lcd;
 }
 
-void GFX_powerOffBacklights(GfxBlight mask)
+void* GFX_getBuffer(const GfxLcd lcd, const GfxSide side)
 {
-	fb_assert((mask & ~GFX_BLIGHT_BOTH) == 0u);
-	g_gfxState.lcdPower &= ~mask;
+	GfxState *const state = &g_gfxState;
+	u32 idx = (state->swap ^ state->swapMask)>>lcd & 1u;
+	idx = idx * 2 + side;
 
-	MCU_setLcdPower(mask); // Power off backlights.
-	if(MCU_waitIrqs(MCU_LCD_IRQ_MASK) != (u32)mask<<24) panic();
+	return state->lcds[lcd].bufs[idx];
 }
 
-void GFX_setBrightness(u8 top, u8 bot)
+void GFX_swapBuffers(void)
 {
-	g_gfxState.lcdLights[0] = top;
-	g_gfxState.lcdLights[1] = bot;
-	REG_LCD_ABL0_LIGHT = top;
-	REG_LCD_ABL1_LIGHT = bot;
+	GfxState *const state = &g_gfxState;
+	u8 swap = state->swap;
+	swap ^= state->swapMask;
+	state->swap = swap;
+
+	// Set next buffer index and acknowledge IRQs.
+	GxRegs *const gx = getGxRegs();
+	gx->pdc0.swap = PDC_SWAP_IRQ_ACK_ALL | swap;    // Bit 1 is not writable.
+	gx->pdc1.swap = PDC_SWAP_IRQ_ACK_ALL | swap>>1;
 }
 
-void GFX_setForceBlack(bool top, bool bot)
-{
-	REG_LCD_ABL0_FILL = (u32)top<<24; // Force blackscreen
-	REG_LCD_ABL1_FILL = (u32)bot<<24; // Force blackscreen
-}
-
-void GFX_setDoubleBuffering(u8 screen, bool dBuf)
-{
-	g_gfxState.doubleBuf[screen] = dBuf;
-
-	if(!dBuf)
-	{
-		if(screen == SCREEN_TOP) REG_LCD_PDC0_SWAP = 0;
-		else                     REG_LCD_PDC1_SWAP = 0;
-	}
-}
-
-void* GFX_getFramebuffer(u8 screen)
-{
-	const u32 idx = (g_gfxState.swap ^ 1u) & g_gfxState.doubleBuf[screen];
-	return g_gfxState.framebufs[screen][idx];
-}
-
-void GFX_swapFramebufs(void)
-{
-	u32 swap = g_gfxState.swap;
-	swap ^= 1u;
-	g_gfxState.swap = swap;
-
-	swap |= PDC_SWAP_I_ALL; // Acknowledge IRQs.
-	if(g_gfxState.doubleBuf[0]) REG_LCD_PDC0_SWAP = swap;
-	if(g_gfxState.doubleBuf[1]) REG_LCD_PDC1_SWAP = swap;
-}
-
-void GFX_waitForEvent(GfxEvent event, bool discard)
+void GFX_waitForEvent(const GfxEvent event)
 {
 	KHandle kevent = g_gfxState.events[event];
 
-	if(discard) clearEvent(kevent);
+	if(event == GFX_EVENT_PDC0 || event == GFX_EVENT_PDC1)
+	{
+		clearEvent(kevent);
+	}
 	waitForEvent(kevent);
 	clearEvent(kevent);
 }
 
 void GX_memoryFill(u32 *buf0a, u32 buf0v, u32 buf0Sz, u32 val0, u32 *buf1a, u32 buf1v, u32 buf1Sz, u32 val1)
 {
-	if(buf0a)
+	GxRegs *const gx = getGxRegs();
+	if(buf0a != NULL)
 	{
-		REG_GX_PSC_FILL0_S_ADDR = (u32)buf0a>>3;
-		REG_GX_PSC_FILL0_E_ADDR = ((u32)buf0a + buf0Sz)>>3;
-		REG_GX_PSC_FILL0_VAL    = val0;
-		REG_GX_PSC_FILL0_CNT    = buf0v | 1u; // Pattern + start
+		gx->psc_fill0.s_addr = (u32)buf0a>>3;
+		gx->psc_fill0.e_addr = ((u32)buf0a + buf0Sz)>>3;
+		gx->psc_fill0.val    = val0;
+		gx->psc_fill0.cnt    = buf0v | PSC_FILL_EN; // Pattern + start.
 	}
 
-	if(buf1a)
+	if(buf1a != NULL)
 	{
-		REG_GX_PSC_FILL1_S_ADDR = (u32)buf1a>>3;
-		REG_GX_PSC_FILL1_E_ADDR = ((u32)buf1a + buf1Sz)>>3;
-		REG_GX_PSC_FILL1_VAL    = val1;
-		REG_GX_PSC_FILL1_CNT    = buf1v | 1u; // Pattern + start
+		gx->psc_fill1.s_addr = (u32)buf1a>>3;
+		gx->psc_fill1.e_addr = ((u32)buf1a + buf1Sz)>>3;
+		gx->psc_fill1.val    = val1;
+		gx->psc_fill1.cnt    = buf1v | PSC_FILL_EN; // Pattern + start.
 	}
 }
 
 // Example: GX_displayTransfer(in, 160u<<16 | 240u, out, 160u<<16 | 240u, 2u<<12 | 2u<<8);
 // Copy and unswizzle GBA sized frame in RGB565.
-void GX_displayTransfer(const u32 *const in, u32 indim, u32 *out, u32 outdim, u32 flags)
+void GX_displayTransfer(const u32 *const src, const u32 inDim, u32 *const dst, const u32 outDim, const u32 flags)
 {
-	if(!in || !out) return;
+	if(src == NULL || dst == NULL) return;
 
-	REG_GX_PPF_IN_ADDR = (u32)in>>3;
-	REG_GX_PPF_OUT_ADDR = (u32)out>>3;
-	REG_GX_PPF_DT_INDIM = indim;
-	REG_GX_PPF_DT_OUTDIM = outdim;
-	REG_GX_PPF_FlAGS = flags;
-	REG_GX_PPF_UNK14 = 0;
-	REG_GX_PPF_CNT = 1;
+	GxRegs *const gx = getGxRegs();
+	gx->ppf.in_addr = (u32)src>>3;
+	gx->ppf.out_addr = (u32)dst>>3;
+	gx->ppf.dt_indim = inDim;
+	gx->ppf.dt_outdim = outDim;
+	gx->ppf.flags = flags; // TODO: Do we need to set the crop bit?
+	gx->ppf.unk14 = 0;
+	gx->ppf.cnt = PPF_EN;
 }
 
 // Example: GX_textureCopy(in, (240 * 2)<<12 | (240 * 2)>>4, out, (240 * 2)<<12 | (240 * 2)>>4, 240 * 400);
 // Copies every second line of a 240x400 framebuffer.
-void GX_textureCopy(const u32 *const in, u32 indim, u32 *out, u32 outdim, u32 size)
+void GX_textureCopy(const u32 *const src, const u32 inDim, u32 *const dst, const u32 outDim, const u32 size)
 {
-	if(!in || !out) return;
+	if(src == NULL || dst == NULL) return;
 
-	REG_GX_PPF_IN_ADDR = (u32)in>>3;
-	REG_GX_PPF_OUT_ADDR = (u32)out>>3;
-	REG_GX_PPF_FlAGS = 1u<<3;
-	REG_GX_PPF_LEN = size;
-	REG_GX_PPF_TC_INDIM = indim;
-	REG_GX_PPF_TC_OUTDIM = outdim;
-	REG_GX_PPF_CNT = 1;
+	GxRegs *const gx = getGxRegs();
+	gx->ppf.in_addr = (u32)src>>3;
+	gx->ppf.out_addr = (u32)dst>>3;
+	gx->ppf.flags = PPF_TEXCOPY; // TODO: Do we need to set the crop bit?
+	gx->ppf.len = size;
+	gx->ppf.tc_indim = inDim;
+	gx->ppf.tc_outdim = outDim;
+	gx->ppf.cnt = PPF_EN;
 }
 
-void GX_processCommandList(u32 size, const u32 *const cmdList)
+void GX_processCommandList(const u32 size, const u32 *const cmdList)
 {
-	REG_GX_P3D(GPUREG_IRQ_ACK) = 0; // Acknowledge last P3D.
-	while(REG_GX_PSC_STAT & 1u<<31) wait_cycles(0x30);
+	// Acknowledge last P3D IRQ and wait for the IRQ flag to clear.
+	GxRegs *const gx = getGxRegs();
+	gx->p3d[GPUREG_IRQ_ACK] = 0;
+	while(gx->psc_irq_stat & IRQ_STAT_P3D)
+		wait_cycles(0x30);
 
-	REG_GX_P3D(GPUREG_CMDBUF_SIZE0) = size>>3;
-	REG_GX_P3D(GPUREG_CMDBUF_ADDR0) = (u32)cmdList>>3;
-	REG_GX_P3D(GPUREG_CMDBUF_JUMP0) = 1;
+	// Start command list processing.
+	gx->p3d[GPUREG_CMDBUF_SIZE0] = size>>3;
+	gx->p3d[GPUREG_CMDBUF_ADDR0] = (u32)cmdList>>3;
+	gx->p3d[GPUREG_CMDBUF_JUMP0] = 1;
 }
 
-// TODO: Sleep mode stuff needs some work.
-/*void GFX_enterLowPowerState(void)
+void GFX_sleep(void)
 {
-	REG_LCD_ABL0_FILL = 1u<<24; // Force blackscreen
-	REG_LCD_ABL1_FILL = 1u<<24; // Force blackscreen
-	GFX_waitForEvent(GFX_EVENT_PDC0, true);
+	const GfxState *const state = &g_gfxState;
+	LCD_deinit(state->mcuLcdState);
 
-	// Stop PDCs.
-	REG_LCD_PDC0_CNT = 0x700; // Stop
-	REG_LCD_PDC1_CNT = 0x700; // Stop
-	REG_LCD_PDC0_SWAP = 0x70100;
-	REG_LCD_PDC1_SWAP = 0x70100;
+	// Wait for PSC, PPF, P3D busy.
+	// TODO
 
-	REG_GX_PSC_VRAM = 0xF00;
-	getPdnRegs()->gpu_cnt = PDN_GPU_CNT_NORST_ALL;
+	// Backup VRAM areas.
+	// TODO: Is this worth implementing? Does not work in legacy modes (FCRAM inaccessible).
+
+	// [Asynchronous] Wait for backlights off.
+	// In our case this is not needed.
+
+	// Stop display controllers.
+	stopDisplayControllersSafe();
+
+	// Wait for at least 1 horizontal line. 40 µs in this case.
+	// 16713.680875044929009032708 / 413 = 40.468960956525251837852 µs.
+	// TODO: 40 µs may not be enough in legacy mode?
+	TIMER_sleepUs(40);
+
+	// Flush caches to VRAM.
+	flushDCacheRange((void*)VRAM_BASE, VRAM_SIZE);
+
+	// Disable VRAM banks. This is needed for PDN sleep mode.
+	GxRegs *const gx = getGxRegs();
+	gx->psc_vram |= PSC_VRAM_BANK_DIS_ALL;
+
+	// Stop clock.
+	PDN_controlGpu(false, false, false);
 }
 
-void GFX_returnFromLowPowerState(void)
+void GFX_sleepAwake(void)
 {
-	getPdnRegs()->gpu_cnt = PDN_GPU_CNT_CLK_EN | PDN_GPU_CNT_NORST_ALL;
-	REG_GX_PSC_VRAM = 0;
-	//REG_GX_GPU_CLK = 0x70100;
-	REG_GX_PSC_FILL0_CNT = 0;
-	REG_GX_PSC_FILL1_CNT = 0;
-	// *((vu32*)0x10400050) = 0x22221200;
-	// *((vu32*)0x10400054) = 0xFF2;
+	// Resume clock and reset PSC.
+	PDN_controlGpu(true, true, false);
 
-	setupDislayController(0);
-	setupDislayController(1);
-	const u32 swap = 0x70100 | g_gfxState.swap;
-	REG_LCD_PDC0_SWAP = swap;
-	REG_LCD_PDC1_SWAP = swap;
-	REG_LCD_PDC0_CNT = 0x10501; // Start
-	REG_LCD_PDC1_CNT = 0x10501; // Start
+	// Restore PSC settings.
+	GxRegs *const gx = getGxRegs();
+	gx->psc_vram &= ~PSC_VRAM_BANK_DIS_ALL;
+	gx->gpu_clk  = 0x70100;
+	gx->psc_fill0.cnt = 0;
+	gx->psc_fill1.cnt = 0;
+	gx->psc_dma_prio0 = PSC_DMA_PRIO0(2, 2, 2, 2, 1, 2, 0, 0);
+	gx->psc_dma_prio1 = PSC_DMA_PRIO1(15, 15, 2);
+	// -------------------------------------------------------
 
-	REG_LCD_ABL0_FILL = 0;
-	REG_LCD_ABL1_FILL = 0;
-}*/
+	// Not from gsp. Clear VRAM.
+	GX_memoryFill((u32*)VRAM_BANK0, PSC_FILL_32_BITS, VRAM_BANK_SIZE, 0,
+	              (u32*)VRAM_BANK1, PSC_FILL_32_BITS, VRAM_BANK_SIZE, 0);
+
+	// TODO: Do we need the PPF hardware bug workaround here too?
+	//       Since PPF is not being reset i don't think so?
+
+	// Initialize display controllers.
+	// gsp does completely reinitialize both display controllers here.
+	// Since both PDCs are not reset in sleep mode this is not strictly necessary.
+	// Warning: If we decide to change this to a full reinit restore the mode!
+	const GfxState *const state = &g_gfxState;
+	gx->pdc0.swap = state->swap;    // Bit 1 is not writable.
+	gx->pdc1.swap = state->swap>>1;
+	gx->pdc0.cnt  = PDC_CNT_OUT_EN | GFX_PDC0_IRQS | PDC_CNT_EN;
+	gx->pdc1.cnt  = PDC_CNT_OUT_EN | GFX_PDC1_IRQS | PDC_CNT_EN;
+
+	// TODO: Enable 3D LED if needed.
+
+	// Power on LCDs and backlights.
+	LCD_init(state->mcuLcdState<<1, state->lcdLum);
+
+	// Active backlight and luminance stuff.
+	// TODO
+
+	// Not from gsp. Wait for VRAM clear finish.
+	GFX_waitForPSC0();
+	GFX_waitForPSC1();
+
+	// Enable frame buffer output.
+	GFX_setForceBlack(false, false);
+}

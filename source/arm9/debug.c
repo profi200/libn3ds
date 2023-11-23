@@ -36,9 +36,9 @@ NOINLINE noreturn void panic(void)
 
 	while(1)
 	{
-		const u32 color = RGB8_to_565(0, 255, 0)<<16 | RGB8_to_565(0, 255, 0);
-		NDMA_fill((u32*)FRAMEBUF_BOT_A_1, color, SCREEN_SIZE_BOT);
-		NDMA_fill((u32*)FRAMEBUF_BOT_A_2, color, SCREEN_SIZE_BOT);
+		const u32 color = RGB8_2_565(0, 255, 0)<<16 | RGB8_2_565(0, 255, 0);
+		NDMA_fill((u32*)FRAMEBUF_BOT_A0, color, LCD_SIZE_BOT);
+		NDMA_fill((u32*)FRAMEBUF_BOT_A1, color, LCD_SIZE_BOT);
 	}
 }
 
@@ -50,9 +50,9 @@ NOINLINE noreturn void panicMsg(UNUSED const char *msg)
 
 	while(1)
 	{
-		const u32 color = RGB8_to_565(0, 255, 0)<<16 | RGB8_to_565(0, 255, 0);
-		NDMA_fill((u32*)FRAMEBUF_BOT_A_1, color, SCREEN_SIZE_BOT);
-		NDMA_fill((u32*)FRAMEBUF_BOT_A_2, color, SCREEN_SIZE_BOT);
+		const u32 color = RGB8_2_565(0, 255, 0)<<16 | RGB8_2_565(0, 255, 0);
+		NDMA_fill((u32*)FRAMEBUF_BOT_A0, color, LCD_SIZE_BOT);
+		NDMA_fill((u32*)FRAMEBUF_BOT_A1, color, LCD_SIZE_BOT);
 	}
 }
 
@@ -66,9 +66,9 @@ NOINLINE noreturn void guruMeditation(UNUSED u8 type, UNUSED const u32 *excStack
 
 	while(1)
 	{
-		const u32 color = RGB8_to_565(255, 0, 0)<<16 | RGB8_to_565(255, 0, 0);
-		NDMA_fill((u32*)FRAMEBUF_BOT_A_1, color, SCREEN_SIZE_BOT);
-		NDMA_fill((u32*)FRAMEBUF_BOT_A_2, color, SCREEN_SIZE_BOT);
+		const u32 color = RGB8_2_565(255, 0, 0)<<16 | RGB8_2_565(255, 0, 0);
+		NDMA_fill((u32*)FRAMEBUF_BOT_A0, color, LCD_SIZE_BOT);
+		NDMA_fill((u32*)FRAMEBUF_BOT_A1, color, LCD_SIZE_BOT);
 	}
 }
 

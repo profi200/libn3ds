@@ -170,11 +170,11 @@ u16 consoleGetFgColor(void);
 
 /**
  * @brief Initialise the console.
- * @param screen The screen to use for the console.
+ * @param lcd     The screen/lcd to use for the console.
  * @param console A pointer to the console data to initialize (if it's NULL, the default console will be used).
  * @return A pointer to the current console.
  */
-PrintConsole* consoleInit(u8 screen, PrintConsole* console);
+PrintConsole* consoleInit(GfxLcd lcd, PrintConsole* console);
 
 /// Clears the screan by using iprintf("\x1b[2J");
 void consoleClear(void);

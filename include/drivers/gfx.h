@@ -2,7 +2,7 @@
 
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -18,45 +18,75 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "mem_map.h"
 #include "types.h"
 
 
-#define SCREEN_TOP          (0u)
-#define SCREEN_BOT          (1u)
+// Note: The LCDs are physically rotated 90° CCW.
+#define LCD_WIDTH_TOP        (240u)
+#define LCD_HEIGHT_TOP       (400u)
+#define LCD_WIDE_HEIGHT_TOP  (800u) // In wide mode.
+#define LCD_WIDTH_BOT        (240u)
+#define LCD_HEIGHT_BOT       (320u)
 
-#define SCREEN_WIDTH_TOP    (400u)
-#define SCREEN_HEIGHT_TOP   (240u)
-#define SCREEN_SIZE_TOP     (SCREEN_WIDTH_TOP * SCREEN_HEIGHT_TOP * 2)
-#define SCREEN_WIDTH_BOT    (320u)
-#define SCREEN_HEIGHT_BOT   (240u)
-#define SCREEN_SIZE_BOT     (SCREEN_WIDTH_BOT * SCREEN_HEIGHT_BOT * 2)
+// TODO: Get rid of the buf defines. This is pretty broken now. Instead let the ARM11 print ARM9 errors.
+#define LCD_SIZE_TOP         (LCD_WIDTH_TOP * LCD_HEIGHT_TOP * 3)
+#define LCD_SIZE_BOT         (LCD_WIDTH_BOT * LCD_HEIGHT_BOT * 2)
+#define FRAMEBUF_TOP_A0      (VRAM_BASE)
+#define FRAMEBUF_TOP_B0      (FRAMEBUF_TOP_A0 + LCD_SIZE_TOP)
+#define FRAMEBUF_BOT_A0      (FRAMEBUF_TOP_B0 + LCD_SIZE_TOP)
+#define FRAMEBUF_TOP_A1      (FRAMEBUF_BOT_A0 + LCD_SIZE_BOT)
+#define FRAMEBUF_TOP_B1      (FRAMEBUF_TOP_A1 + LCD_SIZE_TOP)
+#define FRAMEBUF_BOT_A1      (FRAMEBUF_TOP_B1 + LCD_SIZE_TOP)
 
-// TODO:
-// Because we are using a VRAM allocator this may break any time.
-#define FRAMEBUF_TOP_A_1    ((void*)VRAM_BASE)
-#define FRAMEBUF_BOT_A_1    (FRAMEBUF_TOP_A_1 + SCREEN_SIZE_TOP)
-#define FRAMEBUF_TOP_A_2    (FRAMEBUF_BOT_A_1 + SCREEN_SIZE_BOT + SCREEN_SIZE_TOP) // Skip B1
-#define FRAMEBUF_BOT_A_2    (FRAMEBUF_TOP_A_2 + SCREEN_SIZE_TOP)
-
-#define DEFAULT_BRIGHTNESS  (0x30)
-
-/// Converts packed RGB8 to packed RGB565.
-#define RGB8_to_565(r,g,b)  (((((r)>>3) & 0x1f)<<11) | ((((g)>>2) & 0x3f)<<5) | (((b)>>3) & 0x1f))
+#define RGB8_2_565(r, g, b)  (((((r)>>3) & 0x1F)<<11) | ((((g)>>2) & 0x3F)<<5) | (((b)>>3) & 0x1F))
 
 
-/// Framebuffer format.
+// Pixel formats.
 typedef enum
 {
-	GFX_RGBA8  = 0,  ///< RGBA8. (4 bytes)
-	GFX_BGR8   = 1,  ///< BGR8. (3 bytes)
-	GFX_RGB565 = 2,  ///< RGB565. (2 bytes)
-	GFX_RGB5A1 = 3,  ///< RGB5A1. (2 bytes)
-	GFX_RGBA4  = 4   ///< RGBA4. (2 bytes)
-} GfxFbFmt;
+	GFX_RGBA8  = 0u,
+	GFX_BGR8   = 1u,
+	GFX_R5G6B5 = 2u,
+	GFX_RGB5A1 = 3u,
+	GFX_RGBA4  = 4u
+} GfxFmt;
+
+typedef enum
+{
+	GFX_LCD_TOP = 0u,
+	GFX_LCD_BOT = 1u
+} GfxLcd;
+
+typedef enum
+{
+	GFX_SIDE_LEFT  = 0u,
+	GFX_SIDE_RIGHT = 1u
+} GfxSide;
+
+static inline u8 GFX_getPixelSize(const GfxFmt fmt)
+{
+	if(fmt == GFX_RGBA8)
+	{
+		return 4;
+	}
+	else if(fmt == GFX_BGR8)
+	{
+		return 3;
+	}
+
+	return 2; // R5G6B5, RGB5A1, RGBA4.
+}
+
 
 
 #ifdef ARM11
+typedef enum
+{
+	GFX_TOP_2D   = 0u, // 240x400.
+	GFX_TOP_WIDE = 1u, // 240x800.
+	GFX_TOP_3D   = 2u  // Stereo 240x400 (left + right eye).
+} GfxTopMode;
+
 typedef enum
 {
 	GFX_EVENT_PSC0   = 0u,
@@ -67,60 +97,168 @@ typedef enum
 	GFX_EVENT_P3D    = 5u
 } GfxEvent;
 
+// Note: Keep this synchronized with MCU backlight bits.
 typedef enum
 {
-	GFX_BLIGHT_BOT   = 1u<<2,
-	GFX_BLIGHT_TOP   = 1u<<4,
-	GFX_BLIGHT_BOTH  = GFX_BLIGHT_TOP | GFX_BLIGHT_BOT
-} GfxBlight;
+	GFX_BL_BOT   = 1u<<2,
+	GFX_BL_TOP   = 1u<<4,
+	GFX_BL_BOTH  = GFX_BL_TOP | GFX_BL_BOT
+} GfxBl;
 
 
 
-void GFX_init(GfxFbFmt fmtTop, GfxFbFmt fmtBot);
+/**
+ * @brief      Turns on the LCDs and initializes graphics.
+ *
+ * @param[in]  fmtTop   Top LCD pixel format.
+ * @param[in]  fmtBot   Bottom LCD pixel format.
+ * @param[in]  topMode  Top LCD mode.
+ */
+void GFX_init(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode);
 
+/**
+ * @brief      Equal to GFX_init(GFX_BGR8, GFX_BGR8, GFX_TOP_2D).
+ */
 static inline void GFX_initDefault(void)
 {
-	GFX_init(GFX_BGR8, GFX_BGR8);
+	GFX_init(GFX_BGR8, GFX_BGR8, GFX_TOP_2D);
 }
 
+/**
+ * @brief      Turns LCDs off and deinitializes graphics.
+ */
 void GFX_deinit(void);
 
-void GFX_setFramebufFmt(GfxFbFmt fmtTop, GfxFbFmt fmtBot);
+/**
+ * @brief      Sets the frame buffer format.
+ *
+ * @param[in]  fmtTop  The top frame buffer format.
+ * @param[in]  fmtBot  The bottom frame buffer format.
+ * @param[in]  mode    Top LCD mode.
+ */
+void GFX_setFormat(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode);
 
-void GFX_powerOnBacklights(GfxBlight mask);
+/**
+ * @brief      Powers on LCD backlights.
+ *
+ * @param[in]  mask  The backlights to power on.
+ */
+void GFX_powerOnBacklight(const GfxBl mask);
 
-void GFX_powerOffBacklights(GfxBlight mask);
+/**
+ * @brief      Powers off LCD backlights.
+ *
+ * @param[in]  mask  The backlights to power off.
+ */
+void GFX_powerOffBacklight(const GfxBl mask);
 
-void GFX_setBrightness(u8 top, u8 bot);
+/**
+ * @brief      Sets the LCD luminance for both LCDs.
+ *
+ * @param[in]  lum   The luminance.
+ */
+void GFX_setLcdLuminance(const u32 lum);
 
-void GFX_setForceBlack(bool top, bool bot);
+/**
+ * @brief      Forces black output to the LCDs.
+ *
+ * @param[in]  top   Set to true for black top LCD.
+ * @param[in]  bot   Set to true for black bottom LCD.
+ */
+void GFX_setForceBlack(const bool top, const bool bot);
 
-void GFX_setDoubleBuffering(u8 screen, bool dBuf);
+/**
+ * @brief      Enables or disables double buffering for a LCD.
+ *
+ * @param[in]  lcd   The lcd.
+ * @param[in]  dBuf  Set to true to enable double buffering.
+ */
+void GFX_setDoubleBuffering(const GfxLcd lcd, const bool dBuf);
 
-void* GFX_getFramebuffer(u8 screen);
+/**
+ * @brief      Returns the currently inactive frame buffer for drawing.
+ *             Always the same buffer in single buffer mode.
+ *
+ * @param[in]  lcd   The lcd to return the buffer pointer for.
+ * @param[in]  side  The side in 3D mode. Otherwise always use GFX_SIDE_LEFT.
+ *
+ * @return     Returns the frame buffer pointer.
+ */
+void* GFX_getBuffer(const GfxLcd lcd, const GfxSide side);
 
-void GFX_swapFramebufs(void);
+/**
+ * @brief      Swaps the buffers for all LCDs with double buffering enabled.
+ */
+void GFX_swapBuffers(void);
 
-void GFX_waitForEvent(GfxEvent event, bool discard);
+/**
+ * @brief      Waits for a GPU hardware event.
+ *
+ * @param[in]  event    The event to wait for.
+ * @param[in]  discard  Set to true to clear the event before waiting.
+ */
+void GFX_waitForEvent(const GfxEvent event);
 
 // Helpers
-#define GFX_waitForPSC0()     GFX_waitForEvent(GFX_EVENT_PSC0, false)
-#define GFX_waitForPSC1()     GFX_waitForEvent(GFX_EVENT_PSC1, false)
-#define GFX_waitForVBlank0()  GFX_waitForEvent(GFX_EVENT_PDC0, true)
-//#define GFX_waitForVBlank1()  GFX_waitForEvent(GFX_EVENT_PDC1, true) // Disabled
-#define GFX_waitForPPF()      GFX_waitForEvent(GFX_EVENT_PPF, false)
-#define GFX_waitForP3D()      GFX_waitForEvent(GFX_EVENT_P3D, false)
+#define GFX_waitForPSC0()     GFX_waitForEvent(GFX_EVENT_PSC0)
+#define GFX_waitForPSC1()     GFX_waitForEvent(GFX_EVENT_PSC1)
+#define GFX_waitForVBlank0()  GFX_waitForEvent(GFX_EVENT_PDC0)
+#define GFX_waitForVBlank1()  GFX_waitForEvent(GFX_EVENT_PDC1)
+#define GFX_waitForPPF()      GFX_waitForEvent(GFX_EVENT_PPF)
+#define GFX_waitForP3D()      GFX_waitForEvent(GFX_EVENT_P3D)
 
+/**
+ * @brief      Fill memory with a pattern via DMA. 2 fill engines.
+ *
+ * @param      buf0a   Buffer 0 pointer. Must be 8 bytes aligned. Set to NULL disable.
+ * @param[in]  buf0v   Fill 0 pattern size flags.
+ * @param[in]  buf0Sz  Fill 0 buffer size in bytes. Must be 8 bytes aligned.
+ * @param[in]  val0    Fill 0 value.
+ * @param      buf1a   Buffer 1 pointer. Must be 8 bytes aligned. Set to NULL disable.
+ * @param[in]  buf1v   Fill 1 pattern size flags.
+ * @param[in]  buf1Sz  Fill 1 buffer size in bytes. Must be 8 bytes aligned.
+ * @param[in]  val1    Fill 1 value.
+ */
 void GX_memoryFill(u32 *buf0a, u32 buf0v, u32 buf0Sz, u32 val0, u32 *buf1a, u32 buf1v, u32 buf1Sz, u32 val1);
 
-void GX_displayTransfer(const u32 *const in, u32 indim, u32 *out, u32 outdim, u32 flags);
+/**
+ * @brief      Transfers a pixel buffer from A to B with optional (de)swizzling.
+ *
+ * @param[in]  src     Source pointer. Must be 8 bytes aligned.
+ * @param[in]  inDim   Input dimensions.
+ * @param      dst     Destination pointer. Must be 8 bytes aligned.
+ * @param[in]  outDim  Output dimensions.
+ * @param[in]  flags   Transfer control flags. Swizzling, flip, anti-aliasing ect.
+ */
+void GX_displayTransfer(const u32 *const src, const u32 inDim, u32 *const dst, const u32 outDim, const u32 flags);
 
-void GX_textureCopy(const u32 *const in, u32 indim, u32 *out, u32 outdim, u32 size);
+/**
+ * @brief      Raw DMA copy without conversion.
+ *
+ * @param[in]  src     Source pointer. Must be 8 bytes aligned.
+ * @param[in]  inDim   Input dimensions.
+ * @param      dst     Destination pointer. Must be 8 bytes aligned.
+ * @param[in]  outDim  Output dimensions.
+ * @param[in]  size    Total transfer size in bytes.
+ */
+void GX_textureCopy(const u32 *const src, const u32 inDim, u32 *const dst, const u32 outDim, const u32 size);
 
-void GX_processCommandList(u32 size, const u32 *const cmdList);
+/**
+ * @brief      Starts GPU command buffer execution.
+ *
+ * @param[in]  size     Buffer size in bytes. Must be 8 bytes aligned.
+ * @param[in]  cmdList  Command list buffer pointer. Must be 8 bytes aligned.
+ */
+void GX_processCommandList(const u32 size, const u32 *const cmdList);
 
-//void GFX_enterLowPowerState(void);
+/**
+ * @brief      Power down and prepare graphics hardware for sleep mode.
+ */
+void GFX_sleep(void);
 
-//void GFX_returnFromLowPowerState(void);
+/**
+ * @brief      Wake up/initialize graphics hardware after sleep mode.
+ */
+void GFX_sleepAwake(void);
 
 #endif

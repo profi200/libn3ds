@@ -48,9 +48,9 @@ noreturn void __fb_assert(const char *const str, u32 line)
 	while(1)
 	{
 #ifdef ARM9
-		const u32 color = RGB8_to_565(0, 0, 255)<<16 | RGB8_to_565(0, 0, 255);
-		NDMA_fill((u32*)FRAMEBUF_BOT_A_1, color, SCREEN_SIZE_BOT);
-		NDMA_fill((u32*)FRAMEBUF_BOT_A_2, color, SCREEN_SIZE_BOT);
+		const u32 color = RGB8_2_565(0, 0, 255)<<16 | RGB8_2_565(0, 0, 255);
+		NDMA_fill((u32*)FRAMEBUF_BOT_A0, color, LCD_SIZE_BOT);
+		NDMA_fill((u32*)FRAMEBUF_BOT_A1, color, LCD_SIZE_BOT);
 #elif ARM11
 		__wfi();
 #endif

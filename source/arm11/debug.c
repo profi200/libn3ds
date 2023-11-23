@@ -36,7 +36,7 @@ NOINLINE noreturn void panic(void)
 {
 	enterCriticalSection();
 
-	consoleInit(SCREEN_BOT, NULL);
+	consoleInit(GFX_LCD_BOT, NULL);
 	ee_printf("\x1b[41m\x1b[0J\x1b[15C****PANIC!!!****\n");
 
 	PXI_sendPanicCmd(IPC_CMD9_PREPARE_POWER);
@@ -52,7 +52,7 @@ NOINLINE noreturn void panicMsg(const char *msg)
 {
 	enterCriticalSection();
 
-	consoleInit(SCREEN_BOT, NULL);
+	consoleInit(GFX_LCD_BOT, NULL);
 	ee_printf("\x1b[41m\x1b[0J\x1b[15C****PANIC!!!****\n\n");
 	ee_printf("\nERROR MESSAGE:\n%s\n", msg);
 
@@ -72,7 +72,7 @@ NOINLINE noreturn void guruMeditation(u8 type, const u32 *excStack)
 	const char *const typeStr[3] = {"Undefined instruction", "Prefetch abort", "Data abort"};
 	u32 realPc, instSize = 4;
 
-	consoleInit(SCREEN_BOT, NULL);
+	consoleInit(GFX_LCD_BOT, NULL);
 
 	if(excStack[16] & 0x20) instSize = 2;                 // Processor was in Thumb mode?
 	if(type == 2) realPc = excStack[15] - (instSize * 2); // Data abort

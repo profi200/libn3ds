@@ -2,7 +2,7 @@
 
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -18,86 +18,177 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include "types.h"
+#include "arm11/drivers/mcu.h"
 #include "mem_map.h"
-#include "arm11/drivers/gx.h"
+
+
+#define LCD_REGS_BASE     (IO_AXI_BASE + 0x2000)
+
+#define MCU_LCD_IRQ_MASK  (MCU_IRQ_TOP_BL_ON | MCU_IRQ_TOP_BL_OFF | \
+                           MCU_IRQ_BOT_BL_ON | MCU_IRQ_BOT_BL_OFF | \
+                           MCU_IRQ_LCD_POWER_ON | MCU_IRQ_LCD_POWER_OFF)
+
+// Adaptive/Active backlight registers.
+typedef struct
+{
+	vu32 cnt;            // 0x000 Control.
+	vu32 fill;           // 0x004 Fill color. Works if ABL is disabled.
+	u8 _0x08[8];
+	vu32 win_sx;         // 0x010 Histogram start X.
+	vu32 win_ex;         // 0x014 Histogram end X (inclusive).
+	vu32 win_sy;         // 0x018 Histogram start Y.
+	vu32 win_ey;         // 0x01C Histogram end Y (inclusive).
+	vu32 gth_ratio;      // 0x020
+	vu32 gth_min;        // 0x024
+	vu32 gth_max;        // 0x028
+	vu32 gth_max_ex;     // 0x02C
+	vu32 inertia;        // 0x030
+	u8 _0x34[4];
+	vu32 rs_min;         // 0x038
+	vu32 rs_max;         // 0x03C
+	vu32 bl_pwm_duty;    // 0x040 Backlight PWM duty (on time). Works if ABL is disabled.
+	vu32 bl_pwm_cnt;     // 0x044 Backlight PWM control. Works if ABL is disabled.
+	u8 _0x48[8];
+	vu32 unk50;          // 0x050 Histogram RGB?
+	vu32 unk54;          // 0x054 Histogram RGB too?
+	u8 _0x58[8];
+	vu32 dither_patt[8]; // 0x060 ? Mask 0xCCCC for each entry. Every second reg is a filler and read-only.
+	vu32 rs_lut[9];      // 0x080
+	u8 _0xa4[0x4c];
+	const vu32 unkF0;    // 0x0F0 ?
+	const vu32 unkF4;    // 0x0F4 ?
+	const vu32 unkF8;    // 0x0F8 ?
+	u8 _0xfc[0x204];
+	vu32 unk_coef[64];   // 0x300 ? New 3DS only. RGB coefficients?
+	vu32 unk_coef2[100]; // 0x400 ? Each entry has 10 writable bits. Is this supposed to be read-only?
+} Abl;
+static_assert(offsetof(Abl, unk_coef2[99]) == 0x58C, "Error: Member unk_coef2[99] of Abl is not at offset 0x58C!");
+
+typedef struct
+{
+	vu32 parallax_cnt; // 0x000 Parallax PWM control.
+	vu32 parallax_pwm; // 0x004 Parallax PWM timings.
+	const vu32 status; // 0x008 ?
+	vu32 signal_cnt;   // 0x00C LCD signal control.
+	vu32 unk_lvds;     // 0x010 LVDS related? Bits 0-3 (LCD0?) and 8-12 (LCD1?) writable. Usually 0x900.
+	vu32 rst;          // 0x014 Active low reset for external LCD controllers.
+	vu32 unk18;        // 0x018 ?
+	u8 _0x1c[0x1e4];
+	Abl abl0;          // 0x200 LCD0 adaptive/active backlight control.
+	u8 _0x790[0x270];
+	Abl abl1;          // 0xA00 LCD1 adaptive/active backlight control.
+} LcdRegs;
+static_assert(offsetof(LcdRegs, abl1) == 0xA00, "Error: Member abl1 of LcdRegs is not at offset 0xA00!");
+
+ALWAYS_INLINE LcdRegs* getLcdRegs(void)
+{
+	return (LcdRegs*)LCD_REGS_BASE;
+}
+
+
+// REG_LCD_PARALLAX_CNT
+#define PARALLAX_CNT_PWM0_EN    (1u)     // PWM0 enable.
+#define PARALLAX_CNT_PWM0_UNK   (1u<<1)  // Turns PWM0 automatically on and off?
+#define PARALLAX_CNT_PWM0_INV   (1u<<2)  // Swaps PWM0 on/off timings.
+#define PARALLAX_CNT_PWM1_EN    (1u<<16) // PWM1 enable. TODO: Or is this rather a selection bit (1 PWM out at a time)?
+#define PARALLAX_CNT_PWM1_UNK   (1u<<17) // Turns PWM1 automatically on and off?
+#define PARALLAX_CNT_PWM1_INV   (1u<<18) // Swaps PWM1 on/off timings.
+
+// REG_LCD_PARALLAX_PWM
+#define PARALLAX_PWM_TIMING(on, off)  ((on)<<16 | (off)) // PWM on/off time. For each "(N+1)*0.9µs".
+
+// REG_LCD_STATUS
+
+// REG_LCD_SIGNAL_CNT
+#define SIGNAL_CNT_LCD0_DIS     (1u)     // Disables top LCD control signals.
+#define SIGNAL_CNT_LCD1_DIS     (1u<<16) // Disables bottom LCD control signals.
+#define SIGNAL_CNT_BOTH_DIS     (SIGNAL_CNT_LCD1_DIS | SIGNAL_CNT_LCD0_DIS)
+
+// REG_LCD_RST
+#define LCD_RST_RST             (0u) // LCD controllers under eset.
+#define LCD_RST_NORST           (1u) // LCD controllers out of reset.
+
+// REG_LCD_ABL_CNT
+#define ABL_EN                  (1u)
+#define ABL_SPATIAL_DITHER_EN   (1u<<8)
+#define ABL_TEMPORAL_DITHER_EN  (1u<<9)
+
+// REG_LCD_ABL_FILL
+#define ABL_FILL_RGB(r, g, b)   ((b)<<16 | (g)<<8 | (r))
+#define ABL_FILL_EN             (1u<<24)
+
+// REG_LCD_ABL_BL_PWM_CNT
+#define BL_PWM_DENOMINATOR(d)    ((d) & 0x3FFu)
+#define BL_PWM_DENOMINATOR_MASK  (0x3FFu)
+#define BL_PWM_PRESCALER(p)      (((p) & 15u)<<12)
+#define BL_PWM_PRESCALER_MASK    (15u<<12)
+#define BL_PWM_EN                (1u<<16)
+// TODO: Bits 16-18 belong together. Find out their purpose. PWM counter maybe?
+#define BL_PWM_UNK19             (1u<<19)            // N3DS only.
+#define BL_PWM_UNK20(x)          (((x) & 15u)<<20)   // N3DS only.
+#define BL_PWM_UNK24(x)          (((x) & 0x7Fu)<<24) // N3DS only.
+#define BL_PWM_UNK31             (1u<<31)            // N3DS only. Doubles PWM frequency?
 
 
 
-// LCD/ABL regs.
-#define LCD_REGS_BASE            (IO_AXI_BASE + 0x2000)
-#define REG_LCD_PARALLAX_CNT     *((vu32*)(LCD_REGS_BASE + 0x000)) // Controls PWM for the parallax barrier?
-#define REG_LCD_PARALLAX_PWM     *((vu32*)(LCD_REGS_BASE + 0x004)) // Frequency/other PWM stuff maybe?
-#define REG_LCD_UNK00C           *((vu32*)(LCD_REGS_BASE + 0x00C)) // Wtf is "FIX"?
-#define REG_LCD_RST              *((vu32*)(LCD_REGS_BASE + 0x014)) // Reset active low.
+/**
+ * @brief      Forces black output instead of the frame buffer.
+ *
+ * @param[in]  top   Top screen output disable. true = disabled.
+ * @param[in]  bot   Bottom screen output disable. true = disabled.
+ */
+static inline void LCD_setForceBlack(const bool top, const bool bot)
+{
+	LcdRegs *const lcd = getLcdRegs();
+	lcd->abl0.fill = (top ? ABL_FILL_EN | ABL_FILL_RGB(0, 0, 0) : 0);
+	lcd->abl1.fill = (bot ? ABL_FILL_EN | ABL_FILL_RGB(0, 0, 0) : 0);
+}
 
-#define REG_LCD_ABL0_CNT         *((vu32*)(LCD_REGS_BASE + 0x200)) // Bit 0 enables ABL aka power saving mode.
-#define REG_LCD_ABL0_FILL        *((vu32*)(LCD_REGS_BASE + 0x204))
-#define REG_LCD_ABL0_LIGHT       *((vu32*)(LCD_REGS_BASE + 0x240))
-#define REG_LCD_ABL0_LIGHT_PWM   *((vu32*)(LCD_REGS_BASE + 0x244))
+/**
+ * @brief      Initializes LCDs and backlights.
+ *
+ * @param[in]  mcuLcdOnMask  LCD/backlight on mask. See mcu driver.
+ * @param[in]  lcdLum        The initial luminance for both LCDs.
+ */
+void LCD_init(u8 mcuLcdOnMask, const u32 lcdLum);
 
-#define REG_LCD_ABL1_CNT         *((vu32*)(LCD_REGS_BASE + 0xA00)) // Bit 0 enables ABL aka power saving mode.
-#define REG_LCD_ABL1_FILL        *((vu32*)(LCD_REGS_BASE + 0xA04))
-#define REG_LCD_ABL1_LIGHT       *((vu32*)(LCD_REGS_BASE + 0xA40))
-#define REG_LCD_ABL1_LIGHT_PWM   *((vu32*)(LCD_REGS_BASE + 0xA44))
+/**
+ * @brief      Deinitializes LCDs and backlights.
+ *
+ * @param[in]  mcuLcdOffMask  LCD/backlight off mask. See mcu driver.
+ */
+void LCD_deinit(const u8 mcuLcdOffMask);
 
+/**
+ * @brief      Powers LCD backlights on or off.
+ *
+ * @param[in]  mcuBlMask  Backlight on/off mask. See mcu driver.
+ */
+void LCD_setBacklightPower(u8 mcuBlMask);
 
-// Technically these regs belong in gx.h but they are used for LCD configuration so...
-// Pitfall warning: The 3DS LCDs are physically rotated 90° CCW.
+/**
+ * @brief      Sets the luminance (cd/m²) for both LCDs.
+ *
+ * @param[in]  lum   The luminance.
+ */
+void LCD_setLuminance(u32 lum);
 
-// PDC0 (top screen display controller) regs.
-#define REG_LCD_PDC0_HTOTAL      *((vu32*)(GX_REGS_BASE + 0x400))
-#define REG_LCD_PDC0_VTOTAL      *((vu32*)(GX_REGS_BASE + 0x424))
-#define REG_LCD_PDC0_HPOS        *((const vu32*)(GX_REGS_BASE + 0x450))
-#define REG_LCD_PDC0_VPOS        *((const vu32*)(GX_REGS_BASE + 0x454))
-#define REG_LCD_PDC0_FB_A1       *((vu32*)(GX_REGS_BASE + 0x468))
-#define REG_LCD_PDC0_FB_A2       *((vu32*)(GX_REGS_BASE + 0x46C))
-#define REG_LCD_PDC0_FMT         *((vu32*)(GX_REGS_BASE + 0x470))
-#define REG_LCD_PDC0_CNT         *((vu32*)(GX_REGS_BASE + 0x474))
-#define REG_LCD_PDC0_SWAP        *((vu32*)(GX_REGS_BASE + 0x478))
-#define REG_LCD_PDC0_STAT        *((const vu32*)(GX_REGS_BASE + 0x47C))
-#define REG_LCD_PDC0_GTBL_IDX    *((vu32*)(GX_REGS_BASE + 0x480)) // Gamma table index.
-#define REG_LCD_PDC0_GTBL_FIFO   *((vu32*)(GX_REGS_BASE + 0x484)) // Gamma table FIFO.
-#define REG_LCD_PDC0_STRIDE      *((vu32*)(GX_REGS_BASE + 0x490))
-#define REG_LCD_PDC0_FB_B1       *((vu32*)(GX_REGS_BASE + 0x494))
-#define REG_LCD_PDC0_FB_B2       *((vu32*)(GX_REGS_BASE + 0x498))
+/**
+ * @brief      Sets the luminance level for both LCDs. Same as backlight levels in HOME menu.
+ *
+ * @param[in]  level  The luminance level. 1-5.
+ */
+void LCD_setLuminanceLevel(u8 level);
 
-// PDC1 (bottom screen display controller) regs.
-#define REG_LCD_PDC1_HTOTAL      *((vu32*)(GX_REGS_BASE + 0x500))
-#define REG_LCD_PDC1_VTOTAL      *((vu32*)(GX_REGS_BASE + 0x524))
-#define REG_LCD_PDC1_HPOS        *((const vu32*)(GX_REGS_BASE + 0x550))
-#define REG_LCD_PDC1_VPOS        *((const vu32*)(GX_REGS_BASE + 0x554))
-#define REG_LCD_PDC1_FB_A1       *((vu32*)(GX_REGS_BASE + 0x568))
-#define REG_LCD_PDC1_FB_A2       *((vu32*)(GX_REGS_BASE + 0x56C))
-#define REG_LCD_PDC1_FMT         *((vu32*)(GX_REGS_BASE + 0x570))
-#define REG_LCD_PDC1_CNT         *((vu32*)(GX_REGS_BASE + 0x574))
-#define REG_LCD_PDC1_SWAP        *((vu32*)(GX_REGS_BASE + 0x578))
-#define REG_LCD_PDC1_STAT        *((const vu32*)(GX_REGS_BASE + 0x57C))
-#define REG_LCD_PDC1_GTBL_IDX    *((vu32*)(GX_REGS_BASE + 0x580)) // Gamma table index.
-#define REG_LCD_PDC1_GTBL_FIFO   *((vu32*)(GX_REGS_BASE + 0x584)) // Gamma table FIFO.
-#define REG_LCD_PDC1_STRIDE      *((vu32*)(GX_REGS_BASE + 0x590))
-#define REG_LCD_PDC1_FB_B1       *((vu32*)(GX_REGS_BASE + 0x594))
-#define REG_LCD_PDC1_FB_B2       *((vu32*)(GX_REGS_BASE + 0x598))
-
-
-// REG_LCD_PDC_CNT
-#define PDC_CNT_E           (1u)
-#define PDC_CNT_I_MASK_H    (1u<<8)  // Disables H(Blank?) IRQs.
-#define PDC_CNT_I_MASK_V    (1u<<9)  // Disables VBlank IRQs.
-#define PDC_CNT_I_MASK_ERR  (1u<<10) // Disables error IRQs. What kind of errors?
-#define PDC_CNT_I_MASK_ALL  (PDC_CNT_I_MASK_ERR | PDC_CNT_I_MASK_V | PDC_CNT_I_MASK_H)
-#define PDC_CNT_OUT_E       (1u<<16) // Output enable?
-
-// REG_LCD_PDC_SWAP
-// Masks
-#define PDC_SWAP_NEXT       (1u)     // Next framebuffer.
-#define PDC_SWAP_CUR        (1u<<4)  // Currently displaying framebuffer?
-// Bits
-#define PDC_SWAP_RST_FIFO   (1u<<8)  // Which FIFO?
-#define PDC_SWAP_I_H        (1u<<16) // H(Blank?) IRQ bit.
-#define PDC_SWAP_I_V        (1u<<17) // VBlank IRQ bit.
-#define PDC_SWAP_I_ERR      (1u<<18) // Error IRQ bit?
-#define PDC_SWAP_I_ALL      (PDC_SWAP_I_ERR | PDC_SWAP_I_V | PDC_SWAP_I_H)
+/**
+ * @brief      Turns on or off 3D mode for the top LCD.
+ *
+ * @param[in]  on    Set to true for on and false for off.
+ */
+//void LCD_setParallaxBarrier(const bool on);
+// ------------------------------------------------------------------------------------------ //
 
 
 // LCD I2C regs.
@@ -144,8 +235,8 @@ typedef enum
 
 
 
-u8 LCDI2C_readReg(u8 lcd, LcdI2cReg reg);
-void LCDI2C_writeReg(u8 lcd, LcdI2cReg reg, u8 data);
+u8 LCDI2C_readReg(const u8 lcd, const LcdI2cReg reg);
+bool LCDI2C_writeReg(const u8 lcd, const LcdI2cReg reg, const u8 data);
 void LCDI2C_init(void);
 void LCDI2C_waitBacklightsOn(void);
 u16 LCDI2C_getRevisions(void);
