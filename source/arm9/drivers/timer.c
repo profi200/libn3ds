@@ -23,7 +23,7 @@
 
 
 // For TIMER_sleepMs().
-static u32 g_overflows;
+static au32 g_overflows;
 
 
 
@@ -63,8 +63,12 @@ void TIMER_sleepMs(const u32 ms)
 {
 	Timer *const timer = getTimerRegs(3);
 	timer->val = TIMER_FREQ_64(1000);
-	g_overflows = ms;
-	atomic_signal_fence(memory_order_release); // Don't move the write to g_overflows.
+
+	// With LTO enabled gcc may move the write to g_overflows after
+	// the write to TIMER_CNT.
+	// We have to use signal fence to avoid calls to the atomic lib.
+	atomic_store_explicit(&g_overflows, ms, memory_order_relaxed);
+	atomic_signal_fence(memory_order_release);
 
 	timer->cnt = TIMER_EN | TIMER_IRQ_EN | TIMER_PRESC_64;
 
@@ -76,11 +80,11 @@ void TIMER_sleepMs(const u32 ms)
 
 static void timerSleepHandler(UNUSED u32 id)
 {
-	u32 tmp = g_overflows;
+	u32 tmp = atomic_load_explicit(&g_overflows, memory_order_relaxed);
 	if(--tmp == 0)
 	{
 		getTimerRegs(3)->cnt = 0;
 		return;
 	}
-	g_overflows = tmp;
+	atomic_store_explicit(&g_overflows, tmp, memory_order_relaxed);
 }
