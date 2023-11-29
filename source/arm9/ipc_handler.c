@@ -95,6 +95,7 @@ u32 IPC_handleCmd(u8 cmdId, u32 sendBufs, u32 recvBufs, const u32 *const buf)
 			result = fUnlink((const char *const)buf[0]);
 			break;
 
+#ifdef LIBN3DS_LEGACY
 		// open_agb_firm specific API.
 		case IPC_CMD_ID_MASK(IPC_CMD9_PREPARE_GBA):
 			result = LGY_prepareGbaMode(buf[2], buf[3], (const char *const)buf[0]);
@@ -108,13 +109,14 @@ u32 IPC_handleCmd(u8 cmdId, u32 sendBufs, u32 recvBufs, const u32 *const buf)
 		case IPC_CMD_ID_MASK(IPC_CMD9_BACKUP_GBA_SAVE):
 			result = LGY_backupGbaSave();
 			break;
+#endif
+
+		// Miscellaneous API.
 		/*case IPC_CMD_ID_MASK(IPC_CMD9_TEST):
 			{
 				// Test code goes here.
 			}
 			break;*/
-
-		// Miscellaneous API.
 		case IPC_CMD_ID_MASK(IPC_CMD9_PREPARE_POWER):
 			fsDeinit();
 			break;
