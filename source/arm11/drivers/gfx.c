@@ -17,7 +17,6 @@
  */
 
 #include <string.h>
-#include <stdatomic.h>
 #include "types.h"
 #include "fb_assert.h"
 #include "drivers/gfx.h"

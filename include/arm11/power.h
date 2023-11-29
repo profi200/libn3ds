@@ -20,5 +20,5 @@
 
 
 
-noreturn void power_off(void);
-noreturn void power_reboot(void);
+[[noreturn]] void power_off(void);
+[[noreturn]] void power_reboot(void);

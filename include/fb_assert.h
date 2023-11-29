@@ -29,4 +29,4 @@
 
 
 
-noreturn void __fb_assert(const char *const str, u32 line);
+[[noreturn]] void __fb_assert(const char *const str, u32 line);

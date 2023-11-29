@@ -1,6 +1,6 @@
+#include "types.h"
 extern "C"
 {
-	#include "types.h"
 	#include "mem_map.h"
 	#include "arm11/allocator/vram.h"
 	#include "arm11/util/rbtree.h"

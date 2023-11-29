@@ -28,7 +28,7 @@
 
 
 
-NOINLINE noreturn void panic(void)
+[[noreturn]] NOINLINE void panic(void)
 {
 	enterCriticalSection();
 	//fsDeinit();
@@ -42,7 +42,7 @@ NOINLINE noreturn void panic(void)
 	}
 }
 
-NOINLINE noreturn void panicMsg(UNUSED const char *msg)
+[[noreturn]] NOINLINE void panicMsg(UNUSED const char *msg)
 {
 	enterCriticalSection();
 	//fsDeinit();
@@ -58,7 +58,7 @@ NOINLINE noreturn void panicMsg(UNUSED const char *msg)
 
 // Expects the registers in the exception stack to be in the following order:
 // r0-r14, pc (unmodified), cpsr
-NOINLINE noreturn void guruMeditation(UNUSED u8 type, UNUSED const u32 *excStack)
+[[noreturn]] NOINLINE void guruMeditation(UNUSED u8 type, UNUSED const u32 *excStack)
 {
 	// avoid fs corruptions
 	//fsDeinit();
@@ -81,7 +81,7 @@ __attribute__((used)) uintptr_t __stack_chk_guard = 0xC724B66D;
 // Needs to be marked as noinline and used to work with LTO.
 // The used attribute also overrides the newlib symbol.
 // Combine -fstack-protector-all with -fno-inline to get the most effective detection.
-__attribute__((noinline, used)) noreturn void __stack_chk_fail(void)
+[[noreturn]] __attribute__((noinline, used)) void __stack_chk_fail(void)
 {
 	panicMsg("Stack smash!");
 }

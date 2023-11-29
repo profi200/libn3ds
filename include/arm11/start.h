@@ -22,5 +22,5 @@
 
 
 
-noreturn void _start(void);
+[[noreturn]] void _start(void);
 void deinitCpu(void);

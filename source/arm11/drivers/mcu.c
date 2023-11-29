@@ -17,7 +17,7 @@
  */
 
 #include <math.h>
-#include <stdatomic.h>
+#include <string.h>
 #include "arm11/drivers/mcu.h"
 #include "arm11/drivers/i2c.h"
 #include "arm11/debug.h"
@@ -25,7 +25,7 @@
 #include "arm11/drivers/gpio.h"
 
 
-static bool g_mcuNeedsIrqRead = false;
+static atomic_bool g_mcuNeedsIrqRead = false;
 static u32 g_mcuIrqs = 0;
 static struct
 {

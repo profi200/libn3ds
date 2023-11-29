@@ -16,7 +16,6 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdatomic.h>
 #include "types.h"
 #include "arm9/drivers/timer.h"
 #include "arm9/drivers/interrupt.h"

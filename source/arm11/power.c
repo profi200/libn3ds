@@ -34,7 +34,7 @@ static void power_safe_halt(void)
 	cleanDCache();
 }
 
-noreturn void power_off(void)
+[[noreturn]] void power_off(void)
 {
 	power_safe_halt();
 
@@ -44,7 +44,7 @@ noreturn void power_off(void)
 	while(1) __wfi();
 }
 
-noreturn void power_reboot(void)
+[[noreturn]] void power_reboot(void)
 {
 	power_safe_halt();
 

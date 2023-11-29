@@ -27,7 +27,6 @@
  * performance significantly.
  */
 
-#include <assert.h>
 #include "types.h"
 #include "mem_map.h"
 #include "util.h"

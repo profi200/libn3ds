@@ -22,8 +22,8 @@
 
 
 
-noreturn void panic(void);
-noreturn void panicMsg(const char *msg);
+[[noreturn]] void panic(void);
+[[noreturn]] void panicMsg(const char *msg);
 
 // Exception tests
 /*static inline regTest(void)

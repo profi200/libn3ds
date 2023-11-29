@@ -2,8 +2,6 @@
 
 // Based on https://github.com/torvalds/linux/blob/master/include/linux/list.h
 
-#include <assert.h>
-#include <stdbool.h>
 #include <stddef.h>
 
 

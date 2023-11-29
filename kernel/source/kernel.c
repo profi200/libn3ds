@@ -17,7 +17,6 @@
  */
 
 #include <stdlib.h>
-#include <stdnoreturn.h>
 #include <string.h>
 #include "types.h"
 #include "kernel.h"
@@ -41,7 +40,7 @@ static TaskCb *g_curDeadTask = NULL; // TODO: Improve dead task handling.
 
 
 static KRes scheduler(TaskState curTaskState);
-noreturn static void kernelIdleTask(void);
+[[noreturn]] static void kernelIdleTask(void);
 
 static void initKernelState(void)
 {
@@ -261,7 +260,7 @@ static KRes scheduler(TaskState curTaskState)
 }
 
 // TODO: Cleanup deleted tasks in here? Or create a worker task?
-noreturn static void kernelIdleTask(void)
+[[noreturn]] static void kernelIdleTask(void)
 {
 	do
 	{

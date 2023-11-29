@@ -16,7 +16,6 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdatomic.h>
 #include "types.h"
 #include "drivers/tmio.h"
 #include "drivers/tmio_config.h"
@@ -41,7 +40,7 @@
 #endif // #ifdef ARM9
 
 
-static u32 g_status[2] = {0};
+static au32 g_status[2] = {0};
 
 
 
@@ -55,7 +54,7 @@ static void tmioIsr(const u32 id)
 	const u8 controller = (id == TMIO_IRQ_ID_CONTROLLER1 ? 0 : 1);
 	Tmio *const regs = getTmioRegs(controller);
 
-	g_status[controller] |= regs->sd_status;
+	SET_STATUS(&g_status[controller], GET_STATUS(&g_status[controller]) | regs->sd_status);
 	regs->sd_status = STATUS_CMD_BUSY; // Never acknowledge STATUS_CMD_BUSY.
 
 	// TODO: Some kind of event to notify the main loop for remove/insert.
@@ -187,7 +186,7 @@ static void getResponse(const Tmio *const regs, TmioPort *const port, const u16 
 // Note: Using STATUS_DATA_END to detect transfer end doesn't work reliably
 //       because STATUS_DATA_END fires before we even read anything from FIFO
 //       on single block read transfer.
-static void doCpuTransfer(Tmio *const regs, const u16 cmd, u8 *buf, const u32 *const statusPtr)
+static void doCpuTransfer(Tmio *const regs, const u16 cmd, u8 *buf, const au32 *const statusPtr)
 {
 	const u32 blockLen = regs->sd_blocklen;
 	u32 blockCount     = regs->sd_blockcount;
@@ -270,7 +269,7 @@ u32 TMIO_sendCommand(TmioPort *const port, const u16 cmd, const u32 arg)
 	Tmio *const regs = getTmioRegs(controller);
 
 	// Clear status before sending another command.
-	u32 *const statusPtr = &g_status[controller];
+	au32 *const statusPtr = &g_status[controller];
 	SET_STATUS(statusPtr, 0);
 
 	setPort(regs, port);

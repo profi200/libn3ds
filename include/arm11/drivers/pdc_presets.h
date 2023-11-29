@@ -18,7 +18,6 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <assert.h>
 #include "types.h"
 #include "arm11/drivers/gx.h"
 
@@ -58,7 +57,7 @@ typedef struct
 	//u32 fb_stride;     // 0x90
 	u32 latch_pos;     // 0x9C
 } PdcPreset;
-static_assert(offsetof(PdcPreset, latch_pos) == 0x5C, "Error: Member latch_pos of PdcPreset is not at offset 0x!");
+static_assert(offsetof(PdcPreset, latch_pos) == 0x5C, "Error: Member latch_pos of PdcPreset is not at offset 0x5C!");
 
 static const PdcPreset g_pdcPresets[NUM_PDC_PRESETS] =
 {

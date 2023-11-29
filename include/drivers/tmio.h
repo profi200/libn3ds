@@ -1,6 +1,5 @@
 #pragma once
 
-#include <assert.h>
 #include "types.h"
 #include "mem_map.h"
 

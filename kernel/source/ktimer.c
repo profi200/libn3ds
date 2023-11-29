@@ -16,8 +16,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*#include <stdbool.h>
-#include <stdlib.h>
+/*#include <stdlib.h>
 #include "types.h"
 #include "ktimer.h"
 #include "internal/list.h"
