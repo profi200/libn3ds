@@ -24,7 +24,7 @@
 #include "mem_map.h"
 #include "mmio.h"
 #include "drivers/cache.h"
-#include "arm9/arm7_stub.h"
+#include "arm9/lgy7_code.h"
 #include "fsutil.h"
 #include "arm9/debug.h"
 #include "drivers/sha.h"
@@ -39,14 +39,14 @@ static char g_savePath[512] = {0};
 
 static void setupBiosOverlay(bool directBoot)
 {
-	iomemcpy(getLgy9Regs()->a7_vector, (u32*)_a7_overlay_stub, (u32)_a7_overlay_stub_size);
+	iomemcpy(getLgy9Regs()->a7_vector, (u32*)_gba_vector_overlay, (u32)_gba_vector_overlay_size);
 	//static const u32 biosVectors[8] = {0xEA000018, 0xEA000004, 0xEA00004C, 0xEA000002,
 	//                                   0xEA000001, 0xEA000000, 0xEA000042, 0xE59FD1A0};
 	//iomemcpy(getLgy9Regs()->a7_vector, biosVectors, 32);
 
-	iomemcpy((u32*)LGY9_ARM7_STUB_LOC9, (u32*)_a7_stub_start, (u32)_a7_stub_size);
-	if(!directBoot) *((vu8*)_a7_stub9_swi) = 0x26; // Patch swi 0x01 (RegisterRamReset) to swi 0x26 (HardReset).
-	flushDCacheRange((void*)LGY9_ARM7_STUB_LOC9, (u32)_a7_stub_size);
+	iomemcpy((u32*)LGY9_ARM7_STUB_LOC9, (u32*)_gba_boot, (u32)_gba_boot_size);
+	if(!directBoot) *_gba_boot_swi_a9_addr = 0x26; // Patch swi 0x01 (RegisterRamReset) to swi 0x26 (HardReset).
+	flushDCacheRange((void*)LGY9_ARM7_STUB_LOC9, (u32)_gba_boot_size);
 }
 
 static u32 setupSaveType(u16 saveType)

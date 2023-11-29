@@ -1,6 +1,6 @@
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -25,20 +25,20 @@
 
 
 
-BEGIN_ASM_FUNC _a7_overlay_stub
+BEGIN_ASM_FUNC _gba_vector_overlay
 	mov  r0, #1
 	mov  r1, #0x4000000
 	strb r0, [r1, #0x300]  @ "POSTFLG"
 	ldr  pc, =0x3007E00
 
 .pool
-.global _a7_overlay_stub_size
-_a7_overlay_stub_size = . - _a7_overlay_stub
+.global _gba_vector_overlay_size
+_gba_vector_overlay_size = . - _gba_vector_overlay
 END_ASM_FUNC
 
 @ Must be located at 0x3007E00.
-BEGIN_ASM_FUNC _a7_stub_start
-	adr  r1, _a7_stub_thumb + 1  @ 0x3007E1D
+BEGIN_ASM_FUNC _gba_boot
+	adr  r1, _gba_boot_thumb + 1  @ 0x3007E1D
 	msr  CPSR_fsxc, #PSR_INT_OFF | PSR_SVC_MODE  @ Already set on reset.
 	add  sp, r1, #0x6B  @ 0x3007E88
 	msr  CPSR_fsxc, #PSR_INT_OFF | PSR_SYS_MODE
@@ -47,7 +47,7 @@ BEGIN_ASM_FUNC _a7_stub_start
 	bx   r1
 
 .thumb
-_a7_stub_thumb:
+_gba_boot_thumb:
 	movs r0, #1
 	str  r0, [r3]  @ Disable BIOS overlay.
 	@ The original ARM7 stub waits 256 cycles here (for the BIOS overlay disable?).
@@ -58,8 +58,8 @@ _a7_stub_thumb:
 	movs r0, #0xFF    @ Clear WRAM, iWRAM, palette RAM, VRAM, OAM
 	                  @ + reset SIO, sound and all other registers.
 
-.global _a7_stub9_swi
-_a7_stub9_swi = . - _a7_stub_start + 0x80BFE00 @ Final ARM9 mem location.
+.global _gba_boot_swi_a9_addr
+_gba_boot_swi_a9_addr = . - _gba_boot + 0x80BFE00 @ location in ARM9 address space.
 	swi  0x01       @ RegisterRamReset
 	@ After BIOS intro REG_TM0CNT_L is set to 0xFF8C instead of 0.
 	@ No other differences between direct boot and BIOS.
@@ -68,14 +68,14 @@ _a7_stub9_swi = . - _a7_stub_start + 0x80BFE00 @ Final ARM9 mem location.
 	movs r2, #0
 
 	@ REG_VCOUNT should be 126 at ROM entry like after BIOS intro.
-_a7_stub_vcount_lp:
+_gba_boot_vcount_lp:
 	ldrb r1, [r4, #6]  @ REG_VCOUNT
 	cmp  r1, #126      @ Loop until REG_VCOUNT == 126.
-	bne  _a7_stub_vcount_lp
+	bne  _gba_boot_vcount_lp
 
 	bx   r0
 
 .align 2
-.global _a7_stub_size
-_a7_stub_size = . - _a7_stub_start
+.global _gba_boot_size
+_gba_boot_size = . - _gba_boot
 END_ASM_FUNC

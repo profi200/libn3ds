@@ -2,7 +2,7 @@
 
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,9 +22,11 @@
 
 
 
-[[noreturn]] void _a7_overlay_stub(void);
-extern const u32 _a7_overlay_stub_size[];
+// ARM7 vector overlay for GBA mode.
+[[noreturn]] void _gba_vector_overlay(void);
+extern const u32 _gba_vector_overlay_size[];
 
-[[noreturn]] void _a7_stub_start(void);
-extern u16 _a7_stub9_swi[]; // Final ARM9 mem location.
-extern const u32 _a7_stub_size[];
+// ARM7 boot code for GBA mode.
+[[noreturn]] void _gba_boot(void);
+extern u8 _gba_boot_swi_a9_addr[]; // "swi 0x01" location in ARM9 address space.
+extern const u32 _gba_boot_size[];
