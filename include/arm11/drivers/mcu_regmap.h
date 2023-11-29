@@ -18,6 +18,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "types.h"
 
 
 typedef enum
@@ -143,6 +144,44 @@ typedef enum
 #define MCU_LCD_PWR_TOP_BL_OFF     (1u<<4)        // Turn top LCD backlight off.
 #define MCU_LCD_PWR_TOP_BL_ON      (1u<<5)        // Turn top LCD backlight on.
 #define MCU_LCD_PWR_2_IRQ(p)       ((u32)(p)<<24) // Converts LCD power bits to MCU IRQ format.
+
+// MCU_REG_PWR_LED
+typedef enum
+{
+	MCU_PWR_LED_AUTO      = 0u,
+	MCU_PWR_LED_BLUE      = 1u, // Fade to blue.
+	MCU_PWR_LED_SLEEP     = 2u, // Breathing animation for sleep mode.
+	MCU_PWR_LED_OFF       = 3u, // Fades power LED to 0%. Instantly turns off from red.
+	MCU_PWR_LED_FAST_RED  = 4u, // Instantly turns the LED red.
+	MCU_PWR_LED_FAST_BLUE = 5u, // Instantly turns the LED blue.
+	MCU_PWR_LED_LOW_BAT   = 6u, // Low battery animation. Also enables low battery info LED pattern.
+
+	MCU_PWR_LED_INVALID   = 0xFFu
+} PwrLedPattern;
+
+// MCU_REG_INFO_LED
+typedef struct
+{
+	u8 frameTime;  // Total time for each pattern array element (frame) in 512 Hz units. 0 maps to 256.
+	u8 rampTime;   // Color change time. Usually set to the same (or lower) value as frameTime.
+	               // If higher than frameTime the total frame time may be longer than expected.
+	               // 0 = instant, 255 = slow.
+	u8 lastRepeat; // Number of times to repeat the last frame.
+	               // 0 = no repeat (restart pattern immediately), 255 = forever (whole pattern plays once).
+	u8 unused;
+	union
+	{
+		// MCU firmware bug: Frame 0 is skipped/unused.
+		struct
+		{
+			u8 r[32]; // Red frames. Each 0-255 (0-100%).
+			u8 g[32]; // Green frames. Each 0-255 (0-100%).
+			u8 b[32]; // Blue frames. Each 0-255 (0-100%).
+		};
+		u8 rgb[96];
+	};
+} InfoLedPattern;
+static_assert(sizeof(InfoLedPattern) == 100);
 
 // MCU_REG_ACC_CFG
 typedef enum

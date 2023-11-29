@@ -1,6 +1,6 @@
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ static bool updateRegisterCache(void)
 {
 	// Read major and minor version at once.
 	u16 version;
-	if(!MCU_readRegArray(MCU_REG_VERS_MAJOR, (u8*)&version, sizeof(version))) return false;
+	if(!MCU_readRegArray(MCU_REG_VERS_MAJOR, &version, sizeof(version))) return false;
 	g_mcuRegCache.version = __builtin_bswap16(version - 0x10);
 
 	u8 tmp[19];
@@ -91,7 +91,7 @@ void MCU_init(void)
 
 	// Enters MCU update mode but since no firmware data
 	// is incoming it will just reboot.
-	if(!MCU_writeRegArray(MCU_REG_FW_UPDATE, (const u8*)"jhl", 3)) return false;
+	if(!MCU_writeRegArray(MCU_REG_FW_UPDATE, "jhl", 3)) return false;
 
 	// We need to wait 1 second for the MCU to reboot.
 	TIMER_sleepMs(1000);
@@ -116,7 +116,7 @@ u32 MCU_getIrqs(u32 mask)
 		atomic_store_explicit(&g_mcuNeedsIrqRead, false, memory_order_relaxed);
 
 		u32 newIrqs;
-		if(!MCU_readRegArray(MCU_REG_IRQ, (u8*)&newIrqs, sizeof(newIrqs))) return 0;
+		if(!MCU_readRegArray(MCU_REG_IRQ, &newIrqs, sizeof(newIrqs))) return 0;
 
 		irqs |= newIrqs;
 	}
@@ -207,7 +207,7 @@ u16 MCU_getExternalHardwareStatus(void)
 	u16 status;
 
 	// Read both status regs at once.
-	if(!MCU_readRegArray(MCU_REG_EX_HW_STAT2, (u8*)&status, sizeof(status))) status = 0;
+	if(!MCU_readRegArray(MCU_REG_EX_HW_STAT2, &status, sizeof(status))) status = 0;
 
 	return __builtin_bswap16(status);
 }
@@ -216,14 +216,14 @@ u32 MCU_getIrqMask(void)
 {
 	u32 mask;
 
-	if(!MCU_readRegArray(MCU_REG_IRQ_MASK, (u8*)&mask, sizeof(mask))) mask = 0;
+	if(!MCU_readRegArray(MCU_REG_IRQ_MASK, &mask, sizeof(mask))) mask = 0;
 
 	return mask;
 }
 
 bool MCU_setIrqMask(u32 mask)
 {
-	return MCU_writeRegArray(MCU_REG_IRQ_MASK, (const u8*)&mask, sizeof(mask));
+	return MCU_writeRegArray(MCU_REG_IRQ_MASK, &mask, sizeof(mask));
 }
 
 // TODO: Possibly combine power off and reboot?
@@ -297,14 +297,24 @@ bool MCU_setLedMasterBrightness(u8 brightness)
 	return MCU_writeReg(MCU_REG_LED_BRIGHTNESS, brightness);
 }
 
-bool MCU_getPowerLedPattern(u8 pattern[5])
+PwrLedPattern MCU_getPowerLedPattern(void)
 {
-	return MCU_readRegArray(MCU_REG_PWR_LED, pattern, 5);
+	return MCU_readReg(MCU_REG_PWR_LED);
 }
 
-bool MCU_setPowerLedPattern(const u8 pattern[5])
+bool MCU_setPowerLedPattern(const PwrLedPattern patt)
 {
-	return MCU_writeRegArray(MCU_REG_PWR_LED, pattern, 5);
+	return MCU_writeReg(MCU_REG_PWR_LED, patt);
+}
+
+bool MCU_setLowPowerLedPattern(const u32 patt)
+{
+	u8 tmp[5];
+	tmp[0] = MCU_getPowerLedPattern();
+	if(tmp[0] == MCU_PWR_LED_INVALID) return false;
+
+	memcpy(&tmp[1], &patt, sizeof(patt));
+	return MCU_writeRegArray(MCU_REG_PWR_LED, tmp, sizeof(tmp));
 }
 
 u8 MCU_getWifiLedState(void)
@@ -337,9 +347,9 @@ bool MCU_set3dLedState(u8 state)
 	return MCU_writeReg(MCU_REG_3D_LED, state);
 }
 
-bool MCU_setInfoLedPattern(const u8 pattern[100])
+bool MCU_setInfoLedPattern(const InfoLedPattern *const patt)
 {
-	return MCU_writeRegArray(MCU_REG_INFO_LED, pattern, 100);
+	return MCU_writeRegArray(MCU_REG_INFO_LED, patt, sizeof(InfoLedPattern));
 }
 
 u8 MCU_getInfoLedStatus(void)
@@ -350,13 +360,13 @@ u8 MCU_getInfoLedStatus(void)
 bool MCU_getRtcTimeDate(RtcTimeDate *timeDate)
 {
 	// Read time and date at once.
-	return MCU_readRegArray(MCU_REG_RTC_S, (u8*)timeDate, sizeof(RtcTimeDate));
+	return MCU_readRegArray(MCU_REG_RTC_S, timeDate, sizeof(RtcTimeDate));
 }
 
 bool MCU_setRtcTimeDate(const RtcTimeDate *timeDate)
 {
 	// Write time and date at once.
-	return MCU_writeRegArray(MCU_REG_RTC_S, (const u8*)timeDate, sizeof(RtcTimeDate));
+	return MCU_writeRegArray(MCU_REG_RTC_S, timeDate, sizeof(RtcTimeDate));
 }
 
 u8 MCU_getRtcErrorCorrection(void)
@@ -372,13 +382,13 @@ bool MCU_setRtcErrorCorrection(u8 correction)
 bool MCU_getAlarmTimeDate(AlarmTimeDate *timeDate)
 {
 	// Read time and date at once.
-	return MCU_readRegArray(MCU_REG_ALARM_MIN, (u8*)timeDate, sizeof(AlarmTimeDate));
+	return MCU_readRegArray(MCU_REG_ALARM_MIN, timeDate, sizeof(AlarmTimeDate));
 }
 
 bool MCU_setAlarmTimeDate(const AlarmTimeDate *timeDate)
 {
 	// Write time and date at once.
-	return MCU_writeRegArray(MCU_REG_ALARM_MIN, (const u8*)timeDate, sizeof(AlarmTimeDate));
+	return MCU_writeRegArray(MCU_REG_ALARM_MIN, timeDate, sizeof(AlarmTimeDate));
 }
 
 u16 MCU_getRtcTick(void)
@@ -386,7 +396,7 @@ u16 MCU_getRtcTick(void)
 	u16 tick;
 
 	// Read both tick bytes at once.
-	if(!MCU_readRegArray(MCU_REG_RTC_TICK_LO, (u8*)&tick, sizeof(tick))) tick = 0;
+	if(!MCU_readRegArray(MCU_REG_RTC_TICK_LO, &tick, sizeof(tick))) tick = 0;
 
 	return tick;
 }
@@ -419,7 +429,7 @@ bool MCU_writeAccelerometerRegister(u8 reg, u8 data)
 	const u16 regData = (u16)data<<8 | reg;
 
 	// Write register and data at once.
-	if(!MCU_writeRegArray(MCU_REG_ACC_WRITE_OFF, (const u8*)&regData, sizeof(regData))) return false;
+	if(!MCU_writeRegArray(MCU_REG_ACC_WRITE_OFF, &regData, sizeof(regData))) return false;
 	MCU_waitIrqs(MCU_IRQ_ACC_RW_DONE); // TODO: Is this needed? mcu module doesn't wait for write.
 
 	return true;
@@ -428,7 +438,7 @@ bool MCU_writeAccelerometerRegister(u8 reg, u8 data)
 bool MCU_getAccelerometerSamples(AccData *samples)
 {
 	// Read all X/Y/Z sample bytes at once.
-	const bool res = MCU_readRegArray(MCU_REG_ACC_X_LO, (u8*)samples, sizeof(AccData));
+	const bool res = MCU_readRegArray(MCU_REG_ACC_X_LO, samples, sizeof(AccData));
 
 	// Sample data is in the upper 12 bits.
 	samples->x >>= 4;
@@ -443,7 +453,7 @@ u32 MCU_getPedometerStepCount(void)
 	u32 steps;
 
 	// Read all step count bytes at once.
-	if(!MCU_readRegArray(MCU_REG_PM_COUNT_LO, (u8*)&steps, 3)) steps = 0;
+	if(!MCU_readRegArray(MCU_REG_PM_COUNT_LO, &steps, 3)) steps = 0;
 
 	return steps & ~0xFF000000u; // Make sure byte 4 is 0.
 }
@@ -451,7 +461,7 @@ u32 MCU_getPedometerStepCount(void)
 bool MCU_setPedometerStepCount(u32 steps)
 {
 	// Write all step count bytes at once.
-	return MCU_writeRegArray(MCU_REG_PM_COUNT_LO, (u8*)&steps, 3);
+	return MCU_writeRegArray(MCU_REG_PM_COUNT_LO, &steps, 3);
 }
 
 // TODO: Reg 0x4E.
@@ -538,12 +548,12 @@ bool MCU_writeReg(McuReg reg, u8 data)
 	return I2C_writeReg(I2C_DEV_CTR_MCU, reg, data);
 }
 
-bool MCU_readRegArray(McuReg reg, u8 *out, u32 size)
+bool MCU_readRegArray(McuReg reg, void *out, u32 size)
 {
 	return I2C_readRegArray(I2C_DEV_CTR_MCU, reg, out, size);
 }
 
-bool MCU_writeRegArray(McuReg reg, const u8 *const in, u32 size)
+bool MCU_writeRegArray(McuReg reg, const void *const in, u32 size)
 {
 	return I2C_writeRegArray(I2C_DEV_CTR_MCU, reg, in, size);
 }

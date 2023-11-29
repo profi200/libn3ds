@@ -2,7 +2,7 @@
 
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -116,7 +116,7 @@ void I2C_init(void);
  *
  * @return     Returns true on success and false on failure.
  */
-bool I2C_readRegArray(const I2cDevice devId, const u8 regAddr, u8 *out, u32 size);
+bool I2C_readRegArray(const I2cDevice devId, const u8 regAddr, void *out, u32 size);
 
 /**
  * @brief      Writes an array of bytes to an array of registers via I2C.
@@ -128,7 +128,7 @@ bool I2C_readRegArray(const I2cDevice devId, const u8 regAddr, u8 *out, u32 size
  *
  * @return     Returns true on success and false on failure.
  */
-bool I2C_writeRegArray(const I2cDevice devId, const u8 regAddr, const u8 *in, u32 size);
+bool I2C_writeRegArray(const I2cDevice devId, const u8 regAddr, const void *in, u32 size);
 
 /**
  * @brief      Reads a byte from a register via I2C.
@@ -150,6 +150,19 @@ u8 I2C_readReg(const I2cDevice devId, const u8 regAddr);
  * @return     Returns true on success and false on failure.
  */
 bool I2C_writeReg(const I2cDevice devId, const u8 regAddr, const u8 data);
+// ---------------------------------------------------------------- //
+
+/**
+ * @brief      Writes an array of bytes to an array of registers via I2C without interrupts.
+ *
+ * @param[in]  devId    The device ID. Use the enum above.
+ * @param[in]  regAddr  The register address.
+ * @param[in]  in       The input buffer pointer.
+ * @param[in]  size     The buffer size.
+ *
+ * @return     Returns true on success and false on failure.
+ */
+bool I2C_writeRegArrayIntSafe(const I2cDevice devId, const u8 regAddr, const void *in, u32 size);
 
 /**
  * @brief      Writes a byte to a register via I2C without interrupts.

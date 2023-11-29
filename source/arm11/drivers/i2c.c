@@ -1,6 +1,6 @@
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ static I2cState g_i2cState[3] = {{0, (I2cBus*)I2C1_REGS_BASE, 0},
 static bool checkAck(I2cBus *const i2cBus)
 {
 	// If we received a NACK stop the transfer.
-	if((i2cBus->cnt & I2C_ACK) == 0u)
+	if((i2cBus->cnt & I2C_ACK) == 0)
 	{
 		i2cBus->cnt = I2C_EN | I2C_IRQ_EN | I2C_ERROR | I2C_STOP;
 		return false;
@@ -93,7 +93,7 @@ void I2C_init(void)
 	if(inited) return;
 	inited = true;
 
-	for(u32 i = 0; i < 3; i++)
+	for(unsigned i = 0; i < 3; i++)
 	{
 		static const Interrupt i2cIrqs[3] = {IRQ_I2C1, IRQ_I2C2, IRQ_I2C3};
 		const KHandle event = createEvent(true);
@@ -144,23 +144,24 @@ static bool startTransfer(const u8 devAddr, const u8 regAddr, const bool read, c
 	return tries > 0;
 }
 
-bool I2C_readRegArray(const I2cDevice devId, const u8 regAddr, u8 *out, u32 size)
+bool I2C_readRegArray(const I2cDevice devId, const u8 regAddr, void *out, u32 size)
 {
 	const u8 devAddr = g_i2cDevTable[devId].devAddr;
 	const I2cState *const state = &g_i2cState[g_i2cDevTable[devId].busId];
 	I2cBus *const i2cBus = state->i2cBus;
 	const KHandle event = state->event;
 	const KHandle mutex = state->mutex;
+	u8 *ptr8 = out;
 
 
 	bool res = true;
 	lockMutex(mutex);
 	if(startTransfer(devAddr, regAddr, true, state))
 	{
-		while(--size) *out++ = recvByte(i2cBus, I2C_ACK, event);
+		while(--size) *ptr8++ = recvByte(i2cBus, I2C_ACK, event);
 
 		// Last byte transfer.
-		*out = recvByte(i2cBus, I2C_STOP, event);
+		*ptr8 = recvByte(i2cBus, I2C_STOP, event);
 	}
 	else res = false;
 	unlockMutex(mutex);
@@ -168,13 +169,14 @@ bool I2C_readRegArray(const I2cDevice devId, const u8 regAddr, u8 *out, u32 size
 	return res;
 }
 
-bool I2C_writeRegArray(const I2cDevice devId, const u8 regAddr, const u8 *in, u32 size)
+bool I2C_writeRegArray(const I2cDevice devId, const u8 regAddr, const void *in, u32 size)
 {
 	const u8 devAddr = g_i2cDevTable[devId].devAddr;
 	const I2cState *const state = &g_i2cState[g_i2cDevTable[devId].busId];
 	I2cBus *const i2cBus = state->i2cBus;
 	const KHandle event = state->event;
 	const KHandle mutex = state->mutex;
+	const u8 *ptr8 = in;
 
 
 	lockMutex(mutex);
@@ -186,7 +188,7 @@ bool I2C_writeRegArray(const I2cDevice devId, const u8 regAddr, const u8 *in, u3
 
 	while(--size)
 	{
-		sendByte(i2cBus, *in++, 0, event);
+		sendByte(i2cBus, *ptr8++, 0, event);
 		if(!checkAck(i2cBus))
 		{
 			unlockMutex(mutex);
@@ -195,7 +197,7 @@ bool I2C_writeRegArray(const I2cDevice devId, const u8 regAddr, const u8 *in, u3
 	}
 
 	// Last byte transfer.
-	sendByte(i2cBus, *in, I2C_STOP, event);
+	sendByte(i2cBus, *ptr8, I2C_STOP, event);
 	if(!checkAck(i2cBus))
 	{
 		unlockMutex(mutex);
@@ -217,12 +219,25 @@ bool I2C_writeReg(const I2cDevice devId, const u8 regAddr, const u8 data)
 {
 	return I2C_writeRegArray(devId, regAddr, &data, 1);
 }
+// ---------------------------------------------------------------- //
 
-bool I2C_writeRegIntSafe(const I2cDevice devId, const u8 regAddr, const u8 data)
+static bool checkAckNoIrq(I2cBus *const i2cBus)
+{
+	// If we received a NACK stop the transfer.
+	if((i2cBus->cnt & I2C_ACK) == 0)
+	{
+		i2cBus->cnt = I2C_EN | I2C_ERROR | I2C_STOP;
+		return false;
+	}
+
+	return true;
+}
+
+bool I2C_writeRegArrayIntSafe(const I2cDevice devId, const u8 regAddr, const void *in, u32 size)
 {
 	const u8 devAddr = g_i2cDevTable[devId].devAddr;
 	I2cBus *const i2cBus = getI2cBusRegs(g_i2cDevTable[devId].busId);
-
+	const u8 *ptr8 = in;
 
 	u32 tries = 8;
 	do
@@ -233,23 +248,39 @@ bool I2C_writeRegIntSafe(const I2cDevice devId, const u8 regAddr, const u8 data)
 		i2cBus->data = devAddr;
 		i2cBus->cnt = I2C_EN | I2C_DIR_S | I2C_START;
 		while(i2cBus->cnt & I2C_EN);
-		if(!checkAck(i2cBus)) continue;
+		if(!checkAckNoIrq(i2cBus)) continue;
 
 		// Select register.
 		i2cBus->data = regAddr;
 		i2cBus->cnt = I2C_EN | I2C_DIR_S;
 		while(i2cBus->cnt & I2C_EN);
-		if(!checkAck(i2cBus)) continue;
+		if(!checkAckNoIrq(i2cBus)) continue;
 
 		break;
 	} while(--tries > 0);
 
 	if(tries == 0) return false;
 
-	i2cBus->data = data;
+	while(--size)
+	{
+		i2cBus->data = *ptr8++;
+		i2cBus->cnt = I2C_EN | I2C_DIR_S;
+		while(i2cBus->cnt & I2C_EN);
+		if(!checkAckNoIrq(i2cBus))
+			return false;
+	}
+
+	// Last byte transfer.
+	i2cBus->data = *ptr8;
 	i2cBus->cnt = I2C_EN | I2C_DIR_S | I2C_STOP;
 	while(i2cBus->cnt & I2C_EN);
-	if(!checkAck(i2cBus)) return false;
+	if(!checkAckNoIrq(i2cBus))
+		return false;
 
 	return true;
+}
+
+bool I2C_writeRegIntSafe(const I2cDevice devId, const u8 regAddr, const u8 data)
+{
+	return I2C_writeRegArrayIntSafe(devId, regAddr, &data, 1);
 }

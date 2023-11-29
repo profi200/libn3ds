@@ -2,7 +2,7 @@
 
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -30,16 +30,6 @@
                                  MCU_IRQ_WIFI_PRESS | MCU_IRQ_HOME_RELEASE | MCU_IRQ_HOME_PRESS | \
                                  MCU_IRQ_POWER_HELD | MCU_IRQ_POWER_PRESS))
 
-
-/*typedef struct
-{
-	// TODO
-} PowerLedPattern;*/
-
-/*typedef struct
-{
-	// TODO
-} InfoLedPattern;*/
 
 typedef struct
 {
@@ -335,20 +325,27 @@ bool MCU_setLedMasterBrightness(u8 brightness);
 /**
  * @brief      { function_description }
  *
- * @param      pattern  The pattern
- *
- * @return     { description_of_the_return_value }
+ * @return     The power led pattern.
  */
-bool MCU_getPowerLedPattern(u8 pattern[5]); // TODO: Struct.
+PwrLedPattern MCU_getPowerLedPattern(void);
 
 /**
  * @brief      { function_description }
  *
- * @param[in]  pattern  The pattern
+ * @param[in]  patt  The pattern
  *
  * @return     { description_of_the_return_value }
  */
-bool MCU_setPowerLedPattern(const u8 pattern[5]); // TODO: Struct.
+bool MCU_setPowerLedPattern(const PwrLedPattern patt);
+
+/**
+ * @brief      { function_description }
+ *
+ * @param[in]  patt  The pattern
+ *
+ * @return     { description_of_the_return_value }
+ */
+bool MCU_setLowPowerLedPattern(const u32 patt); // TODO: Figure out the pattern bytes. Apparently default 0x55555555.
 
 /**
  * @brief      { function_description }
@@ -401,11 +398,11 @@ bool MCU_set3dLedState(u8 state);
 /**
  * @brief      { function_description }
  *
- * @param[in]  pattern  The pattern
+ * @param[in]  patt  The pattern
  *
  * @return     { description_of_the_return_value }
  */
-bool MCU_setInfoLedPattern(const u8 pattern[100]); // TODO: Struct.
+bool MCU_setInfoLedPattern(const InfoLedPattern *const patt);
 
 /**
  * @brief      { function_description }
@@ -668,7 +665,7 @@ bool MCU_writeReg(McuReg reg, u8 data);
  *
  * @return     Returns true on success and false on failure.
  */
-bool MCU_readRegArray(McuReg reg, u8 *out, u32 size);
+bool MCU_readRegArray(McuReg reg, void *out, u32 size);
 
 /**
  * @brief      Writes multiple MCU registers or buffers behind registers.
@@ -679,4 +676,4 @@ bool MCU_readRegArray(McuReg reg, u8 *out, u32 size);
  *
  * @return     Returns true on success and false on failure.
  */
-bool MCU_writeRegArray(McuReg reg, const u8 *const in, u32 size);
+bool MCU_writeRegArray(McuReg reg, const void *const in, u32 size);
