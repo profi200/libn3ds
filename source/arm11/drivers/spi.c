@@ -102,12 +102,14 @@ bool NSPI_autoPollBit(SpiDevice dev, const u32 apParams)
 }
 
 // Note: Removing the counter check very slightly reduces performance.
-void NSPI_sendRecv(const SpiDevice dev, const u32 *in, u32 *out, const u32 inSize, const u32 outSize)
+void NSPI_sendRecv(const SpiDevice dev, const void *in, void *out, const u32 inSize, const u32 outSize)
 {
 	NspiBus *const nspiBus = getBusRegs(g_spiDevTable[dev & 0x7Fu].busId);
 	const u32 cntParams = NSPI_EN | g_spiDevTable[dev & 0x7Fu].csClk;
+	const u32 *in32 = in;
+	u32 *out32 = out;
 
-	if(in)
+	if(in32)
 	{
 		nspiBus->blklen = inSize;
 		nspiBus->cnt = cntParams | NSPI_DIR_S;
@@ -116,13 +118,13 @@ void NSPI_sendRecv(const SpiDevice dev, const u32 *in, u32 *out, const u32 inSiz
 		do
 		{
 			if((counter & 31) == 0) nspiWaitFifoBusy(nspiBus);
-			nspiBus->fifo = *in++;
+			nspiBus->fifo = *in32++;
 			counter += 4;
 		} while(counter < inSize);
 
 		nspiWaitBusy(nspiBus);
 	}
-	if(out)
+	if(out32)
 	{
 		nspiBus->blklen = outSize;
 		nspiBus->cnt = cntParams | NSPI_DIR_R;
@@ -131,7 +133,7 @@ void NSPI_sendRecv(const SpiDevice dev, const u32 *in, u32 *out, const u32 inSiz
 		do
 		{
 			if((counter & 31) == 0) nspiWaitFifoBusy(nspiBus);
-			*out++ = nspiBus->fifo;
+			*out32++ = nspiBus->fifo;
 			counter += 4;
 		} while(counter < outSize);
 

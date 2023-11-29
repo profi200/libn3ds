@@ -169,9 +169,9 @@ bool NSPI_autoPollBit(SpiDevice dev, const u32 apParams);
  * @brief      Sends and/or receives data to/from a SPI device.
  *
  * @param[in]  dev      The device ID.
- * @param[in]  in       Input data pointer for send.
- * @param      out      Output data pointer for receive.
+ * @param[in]  in       Input data pointer for send. 4 bytes alignment preferred.
+ * @param      out      Output data pointer for receive. 4 bytes alignment preferred.
  * @param[in]  inSize   Input buffer size. Must be <= 0x1FFFFF.
  * @param[in]  outSize  Output buffer size. Must be <= 0x1FFFFF.
  */
-void NSPI_sendRecv(const SpiDevice dev, const u32 *in, u32 *out, const u32 inSize, const u32 outSize);
+void NSPI_sendRecv(const SpiDevice dev, const void *in, void *out, const u32 inSize, const u32 outSize);

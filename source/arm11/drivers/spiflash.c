@@ -27,7 +27,7 @@ bool spiflash_get_status(void)
 	alignas(4) u8 cmd[4];
 
 	cmd[0] = SPIFLASH_RDSR;
-	NSPI_sendRecv(NSPI_DEV_CS_HIGH | NSPI_DEV_NVRAM, (u32*)cmd, (u32*)cmd, 1, 1);
+	NSPI_sendRecv(NSPI_DEV_CS_HIGH | NSPI_DEV_NVRAM, cmd, cmd, 1, 1);
 
 	if(cmd[0] & 1) return false;
 	return true;

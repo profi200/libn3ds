@@ -64,67 +64,67 @@ static void switchPage(u16 pageReg)
 		alignas(4) u8 inBuf[4];
 		inBuf[0] = CDC_REG_PAGE_CTRL; // Bit 0: 0 = write, 1 = read.
 		inBuf[1] = pageReg;
-		NSPI_sendRecv(NSPI_DEV_CS_HIGH | NSPI_DEV_CTR_CODEC, (u32*)inBuf, NULL, 2, 0);
+		NSPI_sendRecv(NSPI_DEV_CS_HIGH | NSPI_DEV_CTR_CODEC, inBuf, NULL, 2, 0);
 	}
 }
 
-static void readRegArray(u16 pageReg, u32 *buf, u32 size)
+static void readRegArray(const u16 pageReg, void *buf, const u32 size)
 {
 	switchPage(pageReg);
 
 	alignas(4) u8 inBuf[4];
 	inBuf[0] = pageReg<<1 | 1u; // Bit 0: 0 = write, 1 = read.
-	NSPI_sendRecv(NSPI_DEV_CS_HIGH | NSPI_DEV_CTR_CODEC, (u32*)inBuf, buf, 1, size);
+	NSPI_sendRecv(NSPI_DEV_CS_HIGH | NSPI_DEV_CTR_CODEC, inBuf, buf, 1, size);
 }
 
-static u8 readReg(u16 pageReg)
+static u8 readReg(const u16 pageReg)
 {
 	alignas(4) u8 outBuf[4];
-	readRegArray(pageReg, (u32*)outBuf, 1);
+	readRegArray(pageReg, outBuf, 1);
 
 	return outBuf[0];
 }
 
-static void writeRegArray(u16 pageReg, u32 *buf, u32 size)
+static void writeRegArray(const u16 pageReg, const void *buf, const u32 size)
 {
 	switchPage(pageReg);
 
 	alignas(4) u8 inBuf[4];
 	inBuf[0] = pageReg<<1; // Bit 0: 0 = write, 1 = read.
-	NSPI_sendRecv(NSPI_DEV_CTR_CODEC, (u32*)inBuf, NULL, 1, 0);
+	NSPI_sendRecv(NSPI_DEV_CTR_CODEC, inBuf, NULL, 1, 0);
 	NSPI_sendRecv(NSPI_DEV_CS_HIGH | NSPI_DEV_CTR_CODEC, buf, NULL, size, 0);
 }
 
-static void writeReg(u16 pageReg, u8 val)
+static void writeReg(const u16 pageReg, const u8 val)
 {
 	switchPage(pageReg);
 
 	alignas(4) u8 inBuf[4];
 	inBuf[0] = pageReg<<1; // Bit 0: 0 = write, 1 = read.
 	inBuf[1] = val;
-	NSPI_sendRecv(NSPI_DEV_CS_HIGH | NSPI_DEV_CTR_CODEC, (u32*)inBuf, NULL, 2, 0);
+	NSPI_sendRecv(NSPI_DEV_CS_HIGH | NSPI_DEV_CTR_CODEC, inBuf, NULL, 2, 0);
 }
 
 #ifdef LIBN3DS_LEGACY
-static void writeRegPowerman(u8 reg, u8 val)
+static void writeRegPowerman(const u8 reg, const u8 val)
 {
 	alignas(4) u8 inBuf[4];
 	inBuf[0] = reg & 0x7Fu; // Bit 7: 0 = write, 1 = read.
 	inBuf[1] = val;
-	NSPI_sendRecv(NSPI_DEV_CS_HIGH | NSPI_DEV_POWERMAN, (u32*)inBuf, NULL, 2, 0);
+	NSPI_sendRecv(NSPI_DEV_CS_HIGH | NSPI_DEV_POWERMAN, inBuf, NULL, 2, 0);
 }
 #endif
 
-static void maskReg(u16 pageReg, u8 val, u8 mask)
+static void maskReg(const u16 pageReg, const u8 val, const u8 mask)
 {
 	u8 data = readReg(pageReg);
 	data = (data & ~mask) | (val & mask);
 	writeReg(pageReg, data);
 }
 
-static void maskWaitReg(u16 pageReg, u8 val, u8 mask)
+static void maskWaitReg(const u16 pageReg, const u8 val, const u8 mask)
 {
-	for(u32 i = 0; i < 64; i++) // Some kind of timeout? No error checking.
+	for(unsigned i = 0; i < 64; i++) // Some kind of timeout? No error checking.
 	{
 		maskReg(pageReg, val, mask);
 		if((readReg(pageReg) & mask) == val) break;
@@ -196,7 +196,7 @@ static void setIirFilterMic(MicFilter filter, const void *const coeff)
 			return;
 	}
 
-	writeRegArray(pageReg, (u32*)coeff, size);
+	writeRegArray(pageReg, coeff, size);
 }
 
 static inline bool isDacMuted(I2sLine i2sLine)
@@ -367,29 +367,29 @@ static void soundInit(const CodecCalBase *const cal)
 		// Square waves look more like triangle waves and the sound is "softer".
 		const bool dacMuted = isDacMuted(I2S_LINE_1);
 		muteUnmuteDac(I2S_LINE_1, true); // Mute.
-		writeRegArray(9<<8 | 2, (u32*)&cal->filterFree.iir, 6);
-		writeRegArray(8<<8 | 12, (u32*)&cal->filterFree.b, 50);
-		writeRegArray(9<<8 | 8, (u32*)&cal->filterFree.iir, 6);
-		writeRegArray(8<<8 | 76, (u32*)&cal->filterFree.b, 50);
+		writeRegArray(9<<8 | 2, &cal->filterFree.iir, 6);
+		writeRegArray(8<<8 | 12, &cal->filterFree.b, 50);
+		writeRegArray(9<<8 | 8, &cal->filterFree.iir, 6);
+		writeRegArray(8<<8 | 76, &cal->filterFree.b, 50);
 		if(!dacMuted) muteUnmuteDac(I2S_LINE_1, false); // Unmute.
 	}
 #endif
 	{
 		const bool dacMuted = isDacMuted(I2S_LINE_2);
 		muteUnmuteDac(I2S_LINE_2, true); // Mute.
-		writeRegArray(10<<8 | 2, (u32*)&cal->filterFree.iir, 6);
-		writeRegArray(10<<8 | 12, (u32*)&cal->filterFree.b, 50);
+		writeRegArray(10<<8 | 2, &cal->filterFree.iir, 6);
+		writeRegArray(10<<8 | 12, &cal->filterFree.b, 50);
 		if(!dacMuted) muteUnmuteDac(I2S_LINE_2, true); // Unmute.
 	}
 
-	writeRegArray(12<<8 | 2, (u32*)&cal->filterSp32, 30);
-	writeRegArray(12<<8 | 66, (u32*)&cal->filterSp32, 30);
-	writeRegArray(12<<8 | 32, (u32*)&cal->filterSp47, 30);
-	writeRegArray(12<<8 | 96, (u32*)&cal->filterSp47, 30);
-	writeRegArray(11<<8 | 2, (u32*)&cal->filterHp32, 30);
-	writeRegArray(11<<8 | 66, (u32*)&cal->filterHp32, 30);
-	writeRegArray(11<<8 | 32, (u32*)&cal->filterHp47, 30);
-	writeRegArray(11<<8 | 96, (u32*)&cal->filterHp47, 30);
+	writeRegArray(12<<8 | 2, &cal->filterSp32, 30);
+	writeRegArray(12<<8 | 66, &cal->filterSp32, 30);
+	writeRegArray(12<<8 | 32, &cal->filterSp47, 30);
+	writeRegArray(12<<8 | 96, &cal->filterSp47, 30);
+	writeRegArray(11<<8 | 2, &cal->filterHp32, 30);
+	writeRegArray(11<<8 | 66, &cal->filterHp32, 30);
+	writeRegArray(11<<8 | 32, &cal->filterHp47, 30);
+	writeRegArray(11<<8 | 96, &cal->filterHp47, 30);
 
 	// Power on DAC?
 	powerOnDac();
@@ -644,7 +644,7 @@ void CODEC_setVolumeOverride(const s8 vol)
 		// Volume control via register.
 		// Overflows into CDC_REG_DAC_R_VOLUME_CTRL.
 		alignas(4) s8 volumes[2] = {vol, vol};
-		writeRegArray(CDC_REG_DAC_L_VOLUME_CTRL, (u32*)volumes, 2);
+		writeRegArray(CDC_REG_DAC_L_VOLUME_CTRL, volumes, 2);
 
 		maskReg(CDC_REG_VOL_MICDET_PIN_SAR_ADC, 0, 0x80);
 	}
@@ -654,7 +654,7 @@ bool CODEC_getRawAdcData(CdcAdcData *data)
 {
 	if((readReg(CDC_REG_103_38) & 2u) == 0)
 	{
-		readRegArray(251<<8 | 1, (u32*)data, sizeof(CdcAdcData));
+		readRegArray(251<<8 | 1, data, sizeof(CdcAdcData));
 
 		return true;
 	}
