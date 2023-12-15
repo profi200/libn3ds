@@ -40,8 +40,6 @@ u32 IPC_handleCmd(u8 cmdId, u32 sendBufs, u32 recvBufs, UNUSED const u32 *const 
 		case IPC_CMD_ID_MASK(IPC_CMD11_A9_FATAL):
 			arm9FatalError(buf[0]);
 			break;
-		case IPC_CMD_ID_MASK(IPC_CMD11_PANIC): // TODO: Remove.
-			break;
 		default:
 			panic();
 	}

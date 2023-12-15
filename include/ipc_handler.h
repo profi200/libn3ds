@@ -23,10 +23,10 @@
 
 #define IPC_MAX_PARAMS               (15)
 #define IPC_CMD_RESP_FLAG            (1u<<15)
-#define IPC_CMD_ID_MASK(cmd)         ((cmd)>>8)      // Max 127
-#define IPC_CMD_SEND_BUFS_MASK(cmd)  ((cmd)>>6 & 3u) // Max 3
-#define IPC_CMD_RECV_BUFS_MASK(cmd)  ((cmd)>>4 & 3u) // Max 3
-#define IPC_CMD_PARAMS_MASK(cmd)     ((cmd) & 15u)   // Max 15
+#define IPC_CMD_ID_MASK(cmd)         ((cmd)>>8)      // Max 127.
+#define IPC_CMD_SEND_BUFS_MASK(cmd)  ((cmd)>>6 & 3u) // Max 3.
+#define IPC_CMD_RECV_BUFS_MASK(cmd)  ((cmd)>>4 & 3u) // Max 3.
+#define IPC_CMD_PARAMS_MASK(cmd)     ((cmd) & 15u)   // Max 15.
 
 
 // https://stackoverflow.com/a/52770279
@@ -74,8 +74,7 @@ typedef enum
 {
 	// Miscellaneous API.
 	IPC_CMD11_PRINT_MSG = MAKE_CMD11(0, 0, 0), // Invalid on purpose. Will be decided later.
-	IPC_CMD11_A9_FATAL  = MAKE_CMD11(0, 0, 1), // A fatal error occured on ARM9.
-	IPC_CMD11_PANIC     = MAKE_CMD11(0, 0, 0)  // TODO: Remove.
+	IPC_CMD11_A9_FATAL  = MAKE_CMD11(0, 0, 1)  // A fatal error occured on ARM9.
 } IpcCmd11;
 
 #undef MAKE_CMD9
