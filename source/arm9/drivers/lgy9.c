@@ -79,7 +79,7 @@ Result LGY_prepareGbaMode(bool directBoot, u16 saveType, const char *const saveP
 
 	setupBiosOverlay(directBoot);
 	const u32 saveSize = setupSaveType(saveType);
-	strncpy_s(g_savePath, savePath, 511, 512);
+	safeStrcpy(g_savePath, savePath, 512);
 
 	Result res = RES_OK;
 	if(saveSize != 0)

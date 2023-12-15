@@ -2,7 +2,7 @@
 
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -20,9 +20,8 @@
 
 #include "types.h"
 
-#define min(a,b)	((size_t) (a) <= (size_t) (b) ? (size_t) (a) : (size_t) (b))
 
-#define arrayEntries(array)	sizeof(array)/sizeof(*array)
+#define ARRAY_ENTRIES(a)  (sizeof(a) / sizeof(*a))
 
 
 
@@ -57,26 +56,26 @@ size_t safeStrcpy(char *const dst, const char *const src, size_t num);
  */
 float str2float(const char *str);
 
-// case insensitive string compare function
-int strnicmp(const char *str1, const char *str2, u32 len);
-
-// custom safe strncpy, string is always 0-terminated for buflen > 0
-void strncpy_s(char *dest, const char *src, u32 nchars, const u32 buflen);
-
-void memcpy_s(void *dstBuf, size_t dstBufSize, size_t dstBufOffset,
-              void *srcBuf, size_t srcBufSize, size_t srcBufOffset, bool reverse);
-
-u32 getleu32(const void* ptr);
-
-u32 swap32(u32 val);
-
+/**
+ * @brief      Calculates the integer log2 of value.
+ *
+ * @param[in]  val   The input value.
+ *
+ * @return     log2 of val.
+ */
 static inline u32 intLog2(u32 val)
 {
 	// The result is undefined if __builtin_clzl() is called with 0.
 	return (val ? 31u - __builtin_clzl(val) : val);
 }
 
-// Round up to the next power of 2.
+/**
+ * @brief      Round up to the next power of 2.
+ *
+ * @param[in]  val   The input value. Ranges outside 2 - 2147483648 are undefined behavior!
+ *
+ * @return     Next power of 2 of val.
+ */
 static inline u32 nextPow2(u32 val)
 {
 	// Portable variant:
@@ -96,12 +95,28 @@ static inline u32 nextPow2(u32 val)
 	return 1u<<(32u - __builtin_clzl(val - 1));
 }
 
-// https://stackoverflow.com/a/42340213
+/**
+ * @brief      Converts a 8 bit BCD number to decimal.
+ *
+ * @param[in]  bcd   The BCD number.
+ *
+ * @return     Decimal representaion of bcd.
+ */
 static inline u8 bcd2dec(const u8 bcd)
 {
+	// https://stackoverflow.com/a/42340213
     return bcd - 6u * (bcd>>4);
 }
 
+/**
+ * @brief      Clamps s32 number x between min and max.
+ *
+ * @param[in]  x     The value to clamp.
+ * @param[in]  min   The minimum.
+ * @param[in]  max   The maximum.
+ *
+ * @return     Clamped value of x.
+ */
 static inline s32 clamp_s32(const s32 x, const s32 min, const s32 max)
 {
 	return (x < min ? min : (x > max ? max : x));

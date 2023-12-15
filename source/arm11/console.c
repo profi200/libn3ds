@@ -794,7 +794,7 @@ void consoleSetCursor(PrintConsole* console, int x, int y) {
 }
 
 u16 consoleGetRGB565Color(u8 colorIndex) {
-	if(colorIndex >= arrayEntries(colorTable))
+	if(colorIndex >= ARRAY_ENTRIES(colorTable))
 		return 0;
 	return colorTable[colorIndex];
 }
