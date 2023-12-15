@@ -164,16 +164,16 @@ ALWAYS_INLINE vu32* getTmioFifo(Tmio *const regs)
 
 // Outputs the matching divider for clk.
 // Shift the output right by 2 to get the value for REG_SD_CLK_CTRL.
-#define TMIO_CLK2DIV(clk)                        \
-({                                               \
-	u32 __shift = 1;                             \
-	while((clk) < TMIO_HCLK>>__shift) ++__shift; \
-	1u<<__shift;                                 \
-})
+ALWAYS_INLINE u32 TMIO_clk2div(const u32 clk)
+{
+	u32 shift = 1;
+	while(clk < TMIO_HCLK>>shift) ++shift;
+	return 1u<<shift;
+}
 
 // Clock off by default.
 // Nearest possible for 400 kHz is 261.827984375 kHz.
-#define SD_CLK_DEFAULT  (TMIO_CLK2DIV(400000)>>2)
+#define SD_CLK_DEFAULT  (TMIO_clk2div(400000)>>2)
 
 // REG_SD_OPTION
 // Note on card detection time:
@@ -360,7 +360,7 @@ u32 TMIO_sendCommand(TmioPort *const port, const u16 cmd, const u32 arg);
  */
 ALWAYS_INLINE void TMIO_setClock(TmioPort *const port, const u32 clk)
 {
-	port->sd_clk_ctrl = SD_CLK_PWR_SAVE | SD_CLK_EN | TMIO_CLK2DIV(clk)>>2;
+	port->sd_clk_ctrl = SD_CLK_PWR_SAVE | SD_CLK_EN | TMIO_clk2div(clk)>>2;
 }
 
 /**

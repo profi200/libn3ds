@@ -9,7 +9,7 @@
 
 #define LIST_ENTRY(ptr, type, member)              \
 ({                                                 \
-	void *__mptr = (void*)(ptr);                   \
+	u8 *__mptr = (void*)(ptr);                     \
 	(type*)(__mptr - (size_t)&((type*)0)->member); \
 })
 

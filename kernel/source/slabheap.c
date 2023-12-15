@@ -29,7 +29,7 @@ void slabInit(SlabHeap *slab, size_t objSize, size_t num)
 
 	listInit(slab);
 
-	void *pool = malloc(objSize * num);
+	u8 *pool = malloc(objSize * num);
 	if(!pool) return;
 	do
 	{

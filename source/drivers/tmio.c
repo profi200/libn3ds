@@ -34,9 +34,9 @@
 #ifdef ARM9
 // TODO: Use a timer instead? The delay is only ~282.628 µs at ~261.827 kHz.
 // ARM9 timer clock = controller clock. CPU is x2 timer clock.
-#define INIT_DELAY_FUNC()  wait_cycles(2 * TMIO_CLK2DIV(400000u) * 74)
+#define INIT_DELAY_FUNC()  wait_cycles(2 * TMIO_clk2div(400000u) * 74)
 #elif ARM11
-#define INIT_DELAY_FUNC()  TIMER_sleepNs((1000000000ull * TMIO_CLK2DIV(400000u) * 74) / TMIO_HCLK)
+#define INIT_DELAY_FUNC()  TIMER_sleepNs((1000000000ull * TMIO_clk2div(400000u) * 74) / TMIO_HCLK)
 #endif // #ifdef ARM9
 
 

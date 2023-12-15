@@ -65,7 +65,7 @@ void kernelInit(uint8_t priority)
 	initKernelState();
 
 	TaskCb *const idleT = (TaskCb*)slabAlloc(&g_taskSlab);
-	void *const iStack = malloc(IDLE_STACK_SIZE);
+	u8 *const iStack = malloc(IDLE_STACK_SIZE);
 	TaskCb *const mainT = (TaskCb*)slabCalloc(&g_taskSlab, sizeof(TaskCb));
 	if(idleT == NULL || iStack == NULL || mainT == NULL)
 	{
@@ -101,7 +101,7 @@ KHandle createTask(size_t stackSize, uint8_t priority, TaskFunc entry, void *tas
 
 	SlabHeap *const taskSlabPtr = &g_taskSlab;
 	TaskCb *const newT = (TaskCb*)slabAlloc(taskSlabPtr);
-	void *const stack  = malloc(stackSize);
+	u8 *const stack  = malloc(stackSize);
 	if(newT == NULL || stack == NULL)
 	{
 		slabFree(taskSlabPtr, newT);
