@@ -2,7 +2,7 @@
 
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -94,4 +94,3 @@ ALWAYS_INLINE Pxi* getPxiRegs(void)
 
 void PXI_init(void);
 u32 PXI_sendCmd(u32 cmd, const u32 *buf, u32 words);
-void PXI_sendPanicCmd(u32 cmd); // Not intended for normal use!

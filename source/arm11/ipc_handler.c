@@ -20,7 +20,7 @@
 #include "types.h"
 #include "ipc_handler.h"
 #include "drivers/cache.h"
-#include "arm11/debug.h"
+#include "debug.h"
 
 
 
@@ -35,9 +35,12 @@ u32 IPC_handleCmd(u8 cmdId, u32 sendBufs, u32 recvBufs, UNUSED const u32 *const 
 	u32 result = 0;
 	switch(cmdId)
 	{
-		case IPC_CMD_ID_MASK(IPC_CMD11_PRINT_MSG):
-		case IPC_CMD_ID_MASK(IPC_CMD11_PANIC):
-		case IPC_CMD_ID_MASK(IPC_CMD11_EXCEPTION):
+		/*case IPC_CMD_ID_MASK(IPC_CMD11_PRINT_MSG):
+			break;*/
+		case IPC_CMD_ID_MASK(IPC_CMD11_A9_FATAL):
+			arm9FatalError(buf[0]);
+			break;
+		case IPC_CMD_ID_MASK(IPC_CMD11_PANIC): // TODO: Remove.
 			break;
 		default:
 			panic();

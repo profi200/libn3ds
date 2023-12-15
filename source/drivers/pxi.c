@@ -1,6 +1,6 @@
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2023 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -20,11 +20,10 @@
 #include "drivers/pxi.h"
 #ifdef ARM9
 	#include "arm9/drivers/interrupt.h"
-	#include "arm9/debug.h"
 #elif ARM11
 	#include "arm11/drivers/interrupt.h"
-	#include "arm11/debug.h"
 #endif // #ifdef ARM9
+#include "debug.h"
 #include "ipc_handler.h"
 #include "fb_assert.h"
 #include "drivers/cache.h"
@@ -150,14 +149,4 @@ u32 PXI_sendCmd(u32 cmd, const u32 *buf, u32 words)
 #endif
 
 	return res;
-}
-
-void PXI_sendPanicCmd(u32 cmd)
-{
-	Pxi *const pxi = getPxiRegs();
-
-	sendWord(pxi, cmd);
-	sendSyncRequest(pxi);
-	while(recvWord(pxi) != (IPC_CMD_RESP_FLAG | cmd));
-	// We don't care about the result.
 }

@@ -26,7 +26,7 @@
 #include "drivers/cache.h"
 #include "arm9/lgy7_code.h"
 #include "fsutil.h"
-#include "arm9/debug.h"
+#include "debug.h"
 #include "drivers/sha.h"
 #include "util.h"
 

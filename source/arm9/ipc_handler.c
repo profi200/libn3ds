@@ -21,7 +21,7 @@
 #include "drivers/cache.h"
 #include "fs.h"
 #include "drivers/lgy_common.h"
-#include "arm9/debug.h"
+#include "debug.h"
 
 
 

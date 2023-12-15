@@ -24,9 +24,11 @@
 #ifdef NDEBUG
 #define fb_assert(c) ((void)0)
 #else
-#define fb_assert(c) ((c) ? ((void)0) : __fb_assert(#c ", " __FILE__, __LINE__))
+// #define fb_assert(c) ((c) ? ((void)0) : __fb_assert(#c ", " __FILE__, __LINE__))
+#define fb_assert(c) ((c) ? ((void)0) : __fb_assert(__FILE__, __LINE__, #c))
 #endif
 
 
 
-[[noreturn]] void __fb_assert(const char *const str, u32 line);
+// Moved to debug.c. TODO: Print function and condition.
+[[noreturn]] void __fb_assert(const char *const file, const unsigned line, const char *const cond);

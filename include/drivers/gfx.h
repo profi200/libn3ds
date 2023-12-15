@@ -28,16 +28,6 @@
 #define LCD_WIDTH_BOT        (240u)
 #define LCD_HEIGHT_BOT       (320u)
 
-// TODO: Get rid of the buf defines. This is pretty broken now. Instead let the ARM11 print ARM9 errors.
-#define LCD_SIZE_TOP         (LCD_WIDTH_TOP * LCD_HEIGHT_TOP * 3)
-#define LCD_SIZE_BOT         (LCD_WIDTH_BOT * LCD_HEIGHT_BOT * 2)
-#define FRAMEBUF_TOP_A0      (VRAM_BASE)
-#define FRAMEBUF_TOP_B0      (FRAMEBUF_TOP_A0 + LCD_SIZE_TOP)
-#define FRAMEBUF_BOT_A0      (FRAMEBUF_TOP_B0 + LCD_SIZE_TOP)
-#define FRAMEBUF_TOP_A1      (FRAMEBUF_BOT_A0 + LCD_SIZE_BOT)
-#define FRAMEBUF_TOP_B1      (FRAMEBUF_TOP_A1 + LCD_SIZE_TOP)
-#define FRAMEBUF_BOT_A1      (FRAMEBUF_TOP_B1 + LCD_SIZE_TOP)
-
 #define RGB8_2_565(r, g, b)  (((((r)>>3) & 0x1F)<<11) | ((((g)>>2) & 0x3F)<<5) | (((b)>>3) & 0x1F))
 
 
@@ -260,5 +250,7 @@ void GFX_sleep(void);
  * @brief      Wake up/initialize graphics hardware after sleep mode.
  */
 void GFX_sleepAwake(void);
+
+bool GFX_setupExceptionFrameBuffer(void);
 
 #endif

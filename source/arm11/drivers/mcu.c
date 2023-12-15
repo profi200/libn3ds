@@ -20,7 +20,7 @@
 #include <string.h>
 #include "arm11/drivers/mcu.h"
 #include "arm11/drivers/i2c.h"
-#include "arm11/debug.h"
+#include "debug.h"
 #include "arm11/drivers/interrupt.h"
 #include "arm11/drivers/gpio.h"
 

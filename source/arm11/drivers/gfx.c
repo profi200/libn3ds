@@ -30,7 +30,7 @@
 #include "mmio.h"
 #include "arm11/drivers/i2c.h"
 #include "arm11/drivers/mcu.h"
-#include "arm11/debug.h"
+#include "debug.h"
 #include "arm11/drivers/interrupt.h"
 #include "arm11/drivers/timer.h"
 #include "arm.h"
@@ -214,7 +214,7 @@ static void displayControllerInit(const GfxTopMode mode)
 	// Setup display controller timings.
 	// This must be done before LCD init.
 	setupDisplayController(GFX_LCD_TOP, mode);
-	setupDisplayController(GFX_LCD_BOT, (GfxTopMode)0);
+	setupDisplayController(GFX_LCD_BOT, GFX_TOP_2D);
 
 	// Set PDC frame buffer index and start both controllers.
 	const u8 swap = g_gfxState.swap;
@@ -410,7 +410,7 @@ void GFX_setFormat(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mo
 
 	// Update PDC regs.
 	setPdcPresetAndBufs(GFX_LCD_TOP, mode);
-	setPdcPresetAndBufs(GFX_LCD_BOT, (GfxTopMode)0);
+	setPdcPresetAndBufs(GFX_LCD_BOT, GFX_TOP_2D);
 
 	// TODO: Should we leave disabling fill to the caller to avoid glitches?
 	GFX_setForceBlack(false, false);
@@ -629,4 +629,37 @@ void GFX_sleepAwake(void)
 
 	// Enable frame buffer output.
 	GFX_setForceBlack(false, false);
+}
+
+bool GFX_setupExceptionFrameBuffer(void)
+{
+	// Check if we can access GX regs.
+	if(getPdnRegs()->gpu_cnt != (PDN_GPU_CNT_CLK_EN | PDN_GPU_CNT_NORST_ALL))
+		return false;
+
+	// Check if VRAM is enabled. TODO: We only need the first VRAM bank.
+	GxRegs *const gx = getGxRegs();
+	if((gx->psc_vram & PSC_VRAM_BANK_DIS_ALL) != 0)
+		return false;
+
+	// Check if bottom display controller is enabled.
+	if((gx->pdc1.cnt & PDC_CNT_EN) == 0)
+		return false;
+
+	// Override frame buffer.
+	// Setup a single bottom LCD frame buffer and use the RGB565 format.
+	GfxState *const state = &g_gfxState;
+	state->swapMask                   &= ~(1u<<GFX_LCD_BOT);
+	state->lcds[GFX_LCD_BOT].bufs[0]   = (u8*)VRAM_BASE;
+	state->lcds[GFX_LCD_BOT].bufs[1]   = (u8*)VRAM_BASE;
+	state->lcds[GFX_LCD_BOT].fb_fmt    = PDC_FB_DMA_INT(8u) | PDC_FB_BURST_24_32 |
+	                                     PDC_FB_OUT_A | PDC_FB_FMT(GFX_R5G6B5);
+	state->lcds[GFX_LCD_BOT].fb_stride = LCD_WIDTH_BOT * GFX_getPixelSize(GFX_R5G6B5);
+
+	// Setup PDC.
+	LCD_setForceBlack(true, false);
+	setPdcPresetAndBufs(GFX_LCD_BOT, GFX_TOP_2D);
+	gx->pdc1.swap = PDC_SWAP_IRQ_ACK_ALL; // Set to single buffer mode.
+
+	return true;
 }

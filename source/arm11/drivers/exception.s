@@ -62,7 +62,7 @@ exceptionHandler_skip_other_mode:
 	str r3, [sp, #80]              @ WFAR
 	mov r4, r0
 	mov r5, sp
-	bl deinitCpu
+	@ bl deinitCpu
 	mov r0, r4
 	mov sp, r5
 	mov r1, r5

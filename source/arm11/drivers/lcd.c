@@ -21,7 +21,7 @@
 #include "arm11/drivers/lcd.h"
 #include "arm11/drivers/hw_cal.h"
 #include "fs.h"
-#include "arm11/debug.h"
+#include "debug.h"
 #include "drivers/gfx.h"
 #include "arm11/drivers/timer.h"
 #include "fb_assert.h"
