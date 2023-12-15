@@ -81,21 +81,24 @@ static void sleepTicks(const u32 ticks)
 
 void TIMER_sleepMs(const u32 ms)
 {
-	//if(ms > 32038) __builtin_unreachable();
-	const u64 c = (((u64)TIMER_BASE_FREQ / 8)<<32) / (1000 / 8);
-	sleepTicks((c * ms)>>32);
+	// This fixed point calculation is accurate enough up to 32038.
+	// For some inputs we get 1 less than expected
+	// but this calculation alone will eat that single timer cycle.
+	sleepTicks((UINT64_C(0x20BA7ED916872) * ms)>>32); // ((u64)TIMER_BASE_FREQ / 8) * ms / (1000 / 8).
 }
 
 void TIMER_sleepUs(const u32 us)
 {
-	//if(us > 32038622) __builtin_unreachable();
-	const u64 c = (((u64)TIMER_BASE_FREQ / 8)<<32) / (1000000 / 8);
-	sleepTicks((c * us)>>32);
+	// This fixed point calculation is accurate enough up to 32038622.
+	// For some inputs we get 1 less than expected
+	// but this calculation alone will eat that single timer cycle.
+	sleepTicks((UINT64_C(0x860E514C22) * us)>>32); // ((u64)TIMER_BASE_FREQ / 8) * us / (1000000 / 8).
 }
 
 void TIMER_sleepNs(const u64 ns)
 {
-	//if(ns > 32038622678ull) __builtin_unreachable();
-	const u64 c = (((u64)TIMER_BASE_FREQ / 8)<<32) / (1000000000 / 8);
-	sleepTicks((c * ns)>>32);
+	// This fixed point calculation is accurate enough up to 32038622678.
+	// For some inputs we get 1 less than expected
+	// but this calculation alone will eat that single timer cycle.
+	sleepTicks((UINT64_C(0x22517D42) * ns)>>32); // ((u64)TIMER_BASE_FREQ / 8) * ns / (1000000000 / 8).
 }
