@@ -21,7 +21,7 @@
 #include "drivers/cache.h"
 
 
-#ifdef ARM11
+#ifdef __ARM11__
 #ifdef USE_NEW_CDMA
 #error "TODO: New3DS CDMA"
 #else
@@ -29,11 +29,11 @@
 #define PERIPHALS  (18u)
 #define IRQ_LINES  (9u) // The controller reports 16 but we only have 9 physical lines.
 #endif // ifdef USE_NEW_CDMA
-#elif ARM9
+#elif __ARM9__
 #define CHANNELS   (4u)
 #define PERIPHALS  (8u)
 #define IRQ_LINES  (12u)
-#endif // ifdef ARM11
+#endif // ifdef __ARM11__
 
 #define INTEN_VAL  ((1u<<IRQ_LINES) - 1) // Not 32 bit safe!
 
@@ -81,11 +81,11 @@ void DMA330_init(void)
 
 	if(PERIPHALS > 0)
 	{
-#ifdef ARM11
+#ifdef __ARM11__
 		u16 progBuf[33]; // Max 32 periphals + 1 for DMAEND.
-#elif ARM9
+#elif __ARM9__
 		u16 *progBuf = (u16*)(AHB_RAM_BASE + AHB_RAM_SIZE - 33 * 2); // ARM9 DTCM stack workaround.
-#endif // ifdef ARM11
+#endif // ifdef __ARM11__
 		for(u32 i = 0; i < PERIPHALS; i++)
 		{
 			// DMAFLUSHP i.
@@ -141,7 +141,7 @@ void DMA330_kill(u8 ch)
 	}
 }
 
-/*#ifdef ARM11
+/*#ifdef __ARM11__
 #include "arm11/fmt.h"
 void DMA330_dbgPrint(void)
 {
@@ -153,4 +153,4 @@ void DMA330_dbgPrint(void)
 		ee_printf(" CSR/FTR%lu: %08lX %08lX\n", i, dma330->chStat[i].csr, dma330->ftr[i]);
 	}
 }
-#endif*/ // ifdef ARM11
+#endif*/ // ifdef __ARM11__

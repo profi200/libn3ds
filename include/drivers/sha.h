@@ -22,11 +22,11 @@
 #include "mem_map.h"
 
 
-#ifdef ARM11
+#ifdef __ARM11__
 #define SHA_REGS_BASE  (IO_COMMON_BASE + 0x1000)
-#elif ARM9
+#elif __ARM9__
 #define SHA_REGS_BASE  (IO_AHB_BASE + 0xA000)
-#endif // #ifdef ARM11
+#endif // #ifdef __ARM11__
 
 // Vectorizing the FIFO improves code generation at the cost of being slightly slower for small data.
 typedef u32 ShaFifo __attribute__((vector_size(64)));
@@ -49,11 +49,11 @@ ALWAYS_INLINE Sha* getShaRegs(void)
 
 ALWAYS_INLINE volatile ShaFifo* getShaFifo(Sha *const regs)
 {
-#ifdef ARM11
+#ifdef __ARM11__
 	return (volatile ShaFifo*)((uintptr_t)regs + 0x200000);
 #else
 	return &regs->fifo;
-#endif // #ifdef ARM11
+#endif // #ifdef __ARM11__
 }
 
 
@@ -125,6 +125,6 @@ void sha(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEndiane
  * @param[in]  params         Extra parameters like endianess. See REG_SHA_CNT defines above.
  * @param[in]  hashEndianess  Endianess bitmask for the hash.
  */
-#ifdef ARM9
+#ifdef __ARM9__
 void sha_dma(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEndianess);
-#endif
+#endif // #ifdef __ARM9__

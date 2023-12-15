@@ -22,11 +22,11 @@
 #include "mem_map.h"
 
 
-#ifdef ARM9
-#define PXI_REGS_BASE                   (IO_AHB_BASE + 0x8000)
-#elif ARM11
-#define PXI_REGS_BASE                   (IO_COMMON_BASE + 0x63000)
-#endif // #ifdef ARM9
+#ifdef __ARM9__
+#define PXI_REGS_BASE  (IO_AHB_BASE + 0x8000)
+#elif __ARM11__
+#define PXI_REGS_BASE  (IO_COMMON_BASE + 0x63000)
+#endif // #ifdef __ARM9__
 
 typedef struct
 {
@@ -59,23 +59,23 @@ ALWAYS_INLINE Pxi* getPxiRegs(void)
 //       They are simply CPU read-/writable fields.
 #define PXI_SYNC_RECVD                  (REG_PXI_SYNC & 0xFFu)
 #define PXI_SYNC_SENT(sent)             ((REG_PXI_SYNC & ~(0xFFu<<8)) | (sent)<<8)
-#ifdef ARM9
+#ifdef __ARM9__
 #define PXI_SYNC_IRQ                    (1u<<29) // Trigger interrupt on ARM11.
 #define PXI_SYNC_IRQ2                   (1u<<30) // Another, separate interrupt trigger for ARM11.
-#elif ARM11
+#elif __ARM11__
 // 29 unused unlike ARM9 side.
 #define PXI_SYNC_IRQ                    (1u<<30) // Trigger interrupt on ARM9.
-#endif // #ifdef ARM9
+#endif // #ifdef __ARM9__
 #define PXI_SYNC_IRQ_EN                 (1u<<31) // Enable interrupt(s) from remote CPU.
 
 // REG_PXI_SYNC_IRQ (byte 3 of REG_PXI_SYNC)
-#ifdef ARM9
+#ifdef __ARM9__
 #define PXI_SYNC_IRQ_IRQ                (1u<<5) // Trigger interrupt on ARM11.
 #define PXI_SYNC_IRQ_IRQ2               (1u<<6) // Another, separate interrupt trigger for ARM11.
-#elif ARM11
+#elif __ARM11__
 // 29 unused unlike ARM9 side.
 #define PXI_SYNC_IRQ_IRQ                (1u<<6) // Trigger interrupt on ARM9.
-#endif // #ifdef ARM9
+#endif // #ifdef __ARM9__
 #define PXI_SYNC_IRQ_IRQ_EN             (1u<<7) // Enable interrupt(s) from remote CPU.
 
 // REG_PXI_CNT

@@ -18,11 +18,11 @@
 
 #include "types.h"
 #include "drivers/pxi.h"
-#ifdef ARM9
-	#include "arm9/drivers/interrupt.h"
-#elif ARM11
-	#include "arm11/drivers/interrupt.h"
-#endif // #ifdef ARM9
+#ifdef __ARM9__
+#include "arm9/drivers/interrupt.h"
+#elif __ARM11__
+#include "arm11/drivers/interrupt.h"
+#endif // #ifdef __ARM9__
 #include "debug.h"
 #include "ipc_handler.h"
 #include "fb_assert.h"
@@ -65,17 +65,17 @@ void PXI_init(void)
 	pxi->cnt  = PXI_CNT_EN_FIFOS | PXI_CNT_FIFO_ERROR | PXI_CNT_FLUSH_SEND;
 
 	// TODO: Make this handshake IRQ driven.
-#ifdef ARM9
+#ifdef __ARM9__
 	sendWord(pxi, 0x99);
 	while(recvWord(pxi) != 0x11);
 
 	IRQ_registerIsr(IRQ_PXI_SYNC, pxiIrqHandler);
-#elif ARM11
+#elif __ARM11__
 	while(recvWord(pxi) != 0x99);
 	sendWord(pxi, 0x11);
 
 	IRQ_registerIsr(IRQ_PXI_SYNC, 13, 0, pxiIrqHandler);
-#endif
+#endif // #ifdef __ARM9__
 }
 
 static void pxiIrqHandler(UNUSED u32 id)
@@ -138,7 +138,7 @@ u32 PXI_sendCmd(u32 cmd, const u32 *buf, u32 words)
 	g_lastResp[0] = 0;
 	const u32 res = g_lastResp[1];
 
-#ifdef ARM11
+#ifdef __ARM11__
 	// The CPU may do speculative prefetches of data after the first invalidation
 	// so we need to do it again.
 	for(u32 i = sendBufs; i < sendBufs + recvBufs; i++)
@@ -146,7 +146,7 @@ u32 PXI_sendCmd(u32 cmd, const u32 *buf, u32 words)
 		const IpcBuffer *const recvBuf = (IpcBuffer*)&buf[i * sizeof(IpcBuffer) / 4];
 		if(recvBuf->ptr && recvBuf->size) invalidateDCacheRange(recvBuf->ptr, recvBuf->size);
 	}
-#endif
+#endif // #ifdef __ARM11__
 
 	return res;
 }

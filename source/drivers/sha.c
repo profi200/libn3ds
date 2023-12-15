@@ -90,7 +90,7 @@ void sha(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEndiane
 	SHA_finish(hash, hashEndianess);
 }
 
-#ifdef ARM11
+#ifdef __ARM11__
 // Note: The FIFO is 64 bit capable but 64 bit is slower than 32 bit.
 /*SHA CDMA test prog:
 # 4 bytes burst with 16 transfers. Total 64 bytes per burst.
@@ -129,7 +129,7 @@ void sha_dma(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEnd
 	SHA_finish(hash, hashEndianess);
 }*/
 
-#elif ARM9
+#elif __ARM9__
 
 #include "arm9/drivers/ndma.h"
 #include "arm9/drivers/interrupt.h"
@@ -156,4 +156,4 @@ void sha_dma(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEnd
 
 	SHA_finish(hash, hashEndianess);
 }
-#endif // #ifdef ARM11
+#endif // #ifdef __ARM11__

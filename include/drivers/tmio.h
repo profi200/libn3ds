@@ -6,13 +6,13 @@
 
 // For simplicity we will name the accessible 2 controllers 1 and 2.
 // The real controller number is in the comment.
-#ifdef ARM9
+#ifdef __ARM9__
 #define TMIO1_REGS_BASE (IO_AHB_BASE + 0x6000)     // Controller 1.
 #define TMIO2_REGS_BASE (IO_AHB_BASE + 0x7000)     // Controller 3. Remappable.
-#elif ARM11
+#elif __ARM11__
 #define TMIO1_REGS_BASE (IO_COMMON_BASE + 0x22000) // Controller 2.
 #define TMIO2_REGS_BASE (IO_COMMON_BASE)           // Controller 3. Remappable.
-#endif // #ifdef ARM9
+#endif // #ifdef __ARM9__
 
 #define TMIO_HCLK       (67027964u) // In Hz.
 
@@ -66,11 +66,11 @@ ALWAYS_INLINE Tmio* getTmioRegs(const u8 controller)
 
 ALWAYS_INLINE vu32* getTmioFifo(Tmio *const regs)
 {
-#ifdef ARM11
+#ifdef __ARM11__
 	return (vu32*)((uintptr_t)regs + 0x200000); // FIFO is in the DMA region.
 #else
 	return &regs->sd_fifo32;
-#endif // #ifdef ARM11
+#endif // #ifdef __ARM11__
 }
 
 

@@ -18,12 +18,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef ARM9
+#ifdef __ARM9__
 #include "arm9/drivers/interrupt.h"
 #include "arm9/drivers/cfg9.h"
-#elif ARM11
+#elif __ARM11__
 #include "arm11/drivers/interrupt.h"
-#endif // #ifdef ARM9
+#endif // #ifdef __ARM9__
 
 
 // Note on port numbers:
@@ -39,18 +39,18 @@
 // ARM9 or ARM11 when TMIO_CARD_PORT for ARM9 is set to 2.
 #define TMIO_C2_MAP     (0u) // Controller 2 (physical 3) memory mapping. 0=ARM9 0x10007000 or 1=ARM11 0x10100000.
 
-#ifdef ARM9
+#ifdef __ARM9__
 #define TMIO_CARD_PORT  (2u) // Can be on port 0 or 2. 0 always on ARM9.
 #define TMIO_eMMC_PORT  (1u) // Port 1 only. Do not change.
-#elif ARM11
+#elif __ARM11__
 #define TMIO_CARD_PORT  (2u) // Port 2 only. Do not change.
 #define TMIO_eMMC_PORT  (3u) // Placeholder. Do not change. Not connected/accessible.
-#endif // #ifdef ARM9
+#endif // #ifdef __ARM9__
 
 
 
 // Don't modify anything below!
-#ifdef ARM9
+#ifdef __ARM9__
 #define TMIO_MAP_CONTROLLERS() \
 { \
 	getCfg9Regs()->sdmmcctl = (TMIO_CARD_PORT == 2u ? SDMMCCTL_CARD_TMIO3_SEL : SDMMCCTL_CARD_TMIO1_SEL) | \
@@ -67,7 +67,7 @@
 	if(TMIO_NUM_CONTROLLERS == 2u) \
 		IRQ_registerIsr(IRQ_TMIO3, (isr)); \
 }
-#elif ARM11
+#elif __ARM11__
 #define TMIO_MAP_CONTROLLERS()
 #define TMIO_UNMAP_CONTROLLERS()
 #define TMIO_NUM_CONTROLLERS      (TMIO_C2_MAP == 1u ? 2u : 1u)
@@ -78,7 +78,7 @@
 	if(TMIO_NUM_CONTROLLERS == 2u) \
 		IRQ_registerIsr(IRQ_TMIO3, 14, 0, (isr)); \
 }
-#endif // #ifdef ARM9
+#endif // #ifdef __ARM9__
 
 #define TMIO_UNREGISTER_ISR() \
 { \

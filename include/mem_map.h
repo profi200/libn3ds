@@ -19,7 +19,7 @@
  */
 
 
-#ifdef ARM9
+#ifdef __ARM9__
 // ITCM.
 #define ITCM_BASE          (0x00000000)
 #define ITCM_KERN9_MIRROR  (0x01FF8000)
@@ -43,9 +43,9 @@
 // ARM9 bootrom.
 #define BOOT9_BASE         (0xFFFF0000)
 #define BOOT9_SIZE         (0x00010000) // 64 KiB.
-#endif // #ifdef ARM9
+#endif // #ifdef __ARM9__
 
-#ifdef ARM11
+#ifdef __ARM11__
 // ARM11 bootrom.
 #define BOOT11_BASE        (0x00000000)
 #define BOOT11_LO_MIRROR   (0x00010000)
@@ -67,7 +67,7 @@
 // QTM RAM.
 #define QTM_RAM_BASE       (0x1F000000)
 #define QTM_RAM_SIZE       (0x00400000) // 4 MiB.
-#endif // #ifdef ARM11
+#endif // #ifdef __ARM11__
 
 
 // Common memory mapped IO registers.
@@ -97,7 +97,7 @@
 
 
 // Custom mappings.
-#ifdef ARM9
+#ifdef __ARM9__
 #define A9_VECTORS_START     (AHB_RAM_BASE)
 #define A9_VECTORS_SIZE      (0x40)
 #define A9_STUB_ENTRY        (ITCM_KERN9_MIRROR + ITCM_SIZE - 0x200)
@@ -111,9 +111,9 @@
 #define A9_EXC_STACK_END     (ITCM_KERN9_MIRROR + ITCM_SIZE)
 #define FIRM_LOAD_ADDR       (VRAM_BASE + 0x200000)
 #define RAM_FIRM_BOOT_ADDR   (FCRAM_BASE + 0x1000)
-#endif
+#endif // #ifdef __ARM9__
 
-#ifdef ARM11
+#ifdef __ARM11__
 #define A11_C0_STACK_START   (AXI_RAM_BASE)                // Core 0 stack.
 #define A11_C0_STACK_END     (A11_C0_STACK_START + 0x2000)
 #define A11_C1_STACK_START   (A11_C0_STACK_END)            // Core 1 stack.
@@ -132,4 +132,4 @@
 #define A11_STUB_ENTRY       (AXI_RAM_BASE + AXI_RAM_SIZE - 0x200)
 #define	A11_STUB_SIZE        (0x1A0) // Don't overwrite the vectors.
 #define A11_HEAP_END         (AXI_RAM_BASE + AXI_RAM_SIZE)
-#endif
+#endif // #ifdef __ARM11__

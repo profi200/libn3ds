@@ -24,15 +24,15 @@
 
 //#define USE_NEW_CDMA (1)
 
-#ifdef ARM11
+#ifdef __ARM11__
 #ifdef USE_NEW_CDMA
 #define DMA330_REGS_BASE  (IO_AXI_BASE + 0x6000)
 #else
 #define DMA330_REGS_BASE  (IO_AXI_BASE + 0x0000)
 #endif // ifdef USE_NEW_CDMA
-#elif ARM9
+#elif __ARM9__
 #define DMA330_REGS_BASE  (IO_AHB_BASE + 0xC000)
-#endif // ifdef ARM11
+#endif // ifdef __ARM11__
 
 typedef struct
 {
@@ -222,6 +222,6 @@ void DMA330_ackIrq(u8 eventIrq);
 void DMA330_sev(u8 event);
 void DMA330_kill(u8 ch);
 
-#ifdef ARM11
+#ifdef __ARM11__
 //void DMA330_dbgPrint(void);
-#endif // ifdef ARM11
+#endif // ifdef __ARM11__

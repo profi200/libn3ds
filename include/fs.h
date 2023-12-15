@@ -59,6 +59,6 @@ Result fMkdir(const char *const path);
 Result fRename(const char *const old, const char *const _new);
 Result fUnlink(const char *const path);
 
-#ifdef ARM9
+#ifdef __ARM9__
 void fsDeinit(void);
-#endif // ifdef ARM9
+#endif // ifdef __ARM9__

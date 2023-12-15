@@ -25,9 +25,9 @@
 [[noreturn]] void panicMsg(const char *const msg);
 [[noreturn]] void panic(void);
 
-#ifdef ARM11
+#ifdef __ARM11__
 [[noreturn]] void arm9FatalError(const u32 type);
-#endif
+#endif // #ifdef __ARM11__
 
 // Exception tests.
 /*static inline void __regTest(void)

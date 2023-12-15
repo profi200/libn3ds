@@ -106,7 +106,7 @@ MAKE_INTR_SET_REG(1, setCr, "mcr p15, 0, %0, c1, c0, 0", "memory")
 #endif // if !__thumb__
 
 
-#ifdef ARM11
+#ifdef __ARM11__
 #define __cpsid(flags) __asm__ volatile("cpsid " #flags : : : "memory")
 #define __cpsie(flags) __asm__ volatile("cpsie " #flags : : : "memory")
 #define __setend(end) __asm__ volatile("setend " #end : : : "memory")
@@ -273,7 +273,7 @@ MAKE_INTR_GET_REG(1, getCidr, "mrc p15, 0, %0, c13, c0, 1")
 MAKE_INTR_SET_REG(1, setCidr, "mcr p15, 0, %0, c13, c0, 1", "memory")
 #endif // if !__thumb__
 
-#elif ARM9
+#elif __ARM9__
 
 #if !__thumb__
 // ARM9 TRM says the register should be zero but Linux does the same
@@ -301,7 +301,7 @@ ALWAYS_INLINE u32 __swpb(vu8 *const addr, const u8 val)
 	return res;
 }
 #endif // if !__thumb__
-#endif // ifdef ARM11
+#endif // ifdef __ARM11__
 
 #undef MAKE_INTR_NO_INOUT
 #undef MAKE_INTR_GET_REG

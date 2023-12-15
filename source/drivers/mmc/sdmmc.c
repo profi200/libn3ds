@@ -20,11 +20,11 @@
 #include "drivers/mmc/sdmmc.h" // Includes types.h.
 #include "drivers/tmio.h"
 #include "drivers/tmio_config.h"
-#ifdef ARM9
+#ifdef __ARM9__
 #include "arm9/drivers/timer.h"
-#elif ARM11
+#elif __ARM11__
 #include "arm11/drivers/timer.h"
-#endif // #ifdef ARM9
+#endif // #ifdef __ARM9__
 #include "drivers/mmc/mmc_spec.h"
 #include "drivers/mmc/sd_spec.h"
 
@@ -616,7 +616,7 @@ u32 SDMMC_importDevState(const u8 devNum, const u8 devIn[64])
 	return SDMMC_ERR_NONE;
 }
 
-#ifdef ARM9
+#ifdef __ARM9__
 typedef struct
 {
 	bool initialized;
@@ -710,7 +710,7 @@ u32 SDMMC_importHosEmmcState(void)
 
 	return SDMMC_ERR_NONE;
 }
-#endif
+#endif // #ifdef __ARM9__
 
 // TODO: Less controller dependent code.
 u32 SDMMC_getDevInfo(const u8 devNum, SdmmcInfo *const infoOut)

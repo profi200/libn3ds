@@ -19,11 +19,11 @@
 #include "types.h"
 #include "drivers/tmio.h"
 #include "drivers/tmio_config.h"
-#ifdef ARM9
+#ifdef __ARM9__
 #include "util.h" // wait_cycles()
-#elif ARM11
+#elif __ARM11__
 #include "arm11/drivers/timer.h"
-#endif // #ifdef ARM9
+#endif // #ifdef __ARM9__
 
 
 // Using atomic load/store produces better code than volatile
@@ -31,13 +31,13 @@
 #define GET_STATUS(ptr)       atomic_load_explicit((ptr), memory_order_relaxed)
 #define SET_STATUS(ptr, val)  atomic_store_explicit((ptr), (val), memory_order_relaxed)
 
-#ifdef ARM9
+#ifdef __ARM9__
 // TODO: Use a timer instead? The delay is only ~282.628 µs at ~261.827 kHz.
 // ARM9 timer clock = controller clock. CPU is x2 timer clock.
 #define INIT_DELAY_FUNC()  wait_cycles(2 * TMIO_clk2div(400000u) * 74)
-#elif ARM11
+#elif __ARM11__
 #define INIT_DELAY_FUNC()  TIMER_sleepNs((1000000000ull * TMIO_clk2div(400000u) * 74) / TMIO_HCLK)
-#endif // #ifdef ARM9
+#endif // #ifdef __ARM9__
 
 
 static au32 g_status[2] = {0};
@@ -200,7 +200,7 @@ static void doCpuTransfer(Tmio *const regs, const u16 cmd, u8 *buf, const au32 *
 				const u8 *const blockEnd = buf + blockLen;
 				do
 				{
-#ifdef ARM11
+#ifdef __ARM11__
 					// ARM11 supports unaligned access.
 					*((u32*)buf) = *fifo;
 #else
@@ -216,7 +216,7 @@ static void doCpuTransfer(Tmio *const regs, const u16 cmd, u8 *buf, const au32 *
 						buf[2] = tmp>>16;
 						buf[3] = tmp>>24;
 					}
-#endif
+#endif // #ifdef __ARM11__
 					buf += 4;
 				} while(buf < blockEnd);
 
@@ -236,7 +236,7 @@ static void doCpuTransfer(Tmio *const regs, const u16 cmd, u8 *buf, const au32 *
 				const u8 *const blockEnd = buf + blockLen;
 				do
 				{
-#ifdef ARM11
+#ifdef __ARM11__
 					// ARM11 supports unaligned access.
 					*fifo = *((u32*)buf);
 #else
@@ -252,7 +252,7 @@ static void doCpuTransfer(Tmio *const regs, const u16 cmd, u8 *buf, const au32 *
 						tmp |= (u32)buf[3]<<24;
 						*fifo = tmp;
 					}
-#endif
+#endif // #ifdef __ARM11__
 					buf += 4;
 				} while(buf < blockEnd);
 

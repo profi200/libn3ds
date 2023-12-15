@@ -69,7 +69,7 @@ static inline u8 GFX_getPixelSize(const GfxFmt fmt)
 
 
 
-#ifdef ARM11
+#ifdef __ARM11__
 typedef enum
 {
 	GFX_TOP_2D   = 0u, // 240x400.
@@ -253,4 +253,4 @@ void GFX_sleepAwake(void);
 
 bool GFX_setupExceptionFrameBuffer(void);
 
-#endif
+#endif // #ifdef __ARM11__
