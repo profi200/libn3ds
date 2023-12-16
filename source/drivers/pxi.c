@@ -60,7 +60,6 @@ static inline void sendSyncRequest(Pxi *const pxi)
 void PXI_init(void)
 {
 	Pxi *const pxi = getPxiRegs();
-
 	pxi->sync = PXI_SYNC_IRQ_EN;
 	pxi->cnt  = PXI_CNT_EN_FIFOS | PXI_CNT_FIFO_ERROR | PXI_CNT_FLUSH_SEND;
 
@@ -78,10 +77,16 @@ void PXI_init(void)
 #endif // #ifdef __ARM9__
 }
 
+void PXI_deinit(void)
+{
+	Pxi *const pxi = getPxiRegs();
+	pxi->cnt  = PXI_CNT_FIFO_ERROR | PXI_CNT_FLUSH_SEND;
+	pxi->sync = 0;
+}
+
 static void pxiIrqHandler(UNUSED u32 id)
 {
 	Pxi *const pxi = getPxiRegs();
-
 	const u32 cmdCode = recvWord(pxi);
 	if(cmdCode & IPC_CMD_RESP_FLAG)
 	{

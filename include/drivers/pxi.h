@@ -98,6 +98,7 @@ ALWAYS_INLINE Pxi* getPxiRegs(void)
 
 
 void PXI_init(void);
+void PXI_deinit(void);
 u32 PXI_sendCmd(u32 cmd, const u32 *buf, u32 words);
 
 #ifdef __cplusplus

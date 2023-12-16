@@ -67,6 +67,7 @@ void WEAK __systemDeinit(void)
 {
 	fUnmount(FS_DRIVE_SDMC); // TODO: Checks?
 
+	PXI_deinit();
 	DMA330_init();
 	__cpsid(if);
 	IRQ_init();
