@@ -18,12 +18,17 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Based on ARM11 MPCore™ Processor Revision: r2p0 Technical Reference Manual (DDI0360F_arm11_mpcore_r2p0_trm.pdf).
-
 #if !__ASSEMBLER__
 #include "types.h"
 #endif // #if !__ASSEMBLER__
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// Based on ARM11 MPCore™ Processor Revision: r2p0 Technical Reference Manual (DDI0360F_arm11_mpcore_r2p0_trm.pdf).
 
 // Performance Monitor Control Register (PMNC).
 #define PM_EN           (1u)     // All three counters enabled.
@@ -133,3 +138,7 @@ ALWAYS_INLINE void perfMonitorCountCycles(void)
 	          PM_PMN0_IRQ | PM_CCNT_NODIV | PM_CCNT_RST | PM_PMN01_RST | PM_EN);
 }
 #endif // #if !__ASSEMBLER__
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

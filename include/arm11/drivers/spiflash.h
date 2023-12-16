@@ -21,6 +21,11 @@
 #include "types.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define SPIFLASH_PP    (0x02u) // Page Program (0x100 bytes).
 #define SPIFLASH_READ  (0x03u) // Read.
 #define SPIFLASH_WRDI  (0x04u) // Write Disable.
@@ -39,3 +44,7 @@
 // true if spiflash is installed, false otherwise
 bool spiflash_get_status(void);
 void spiflash_read(u32 offset, u32 size, u32 *buf);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

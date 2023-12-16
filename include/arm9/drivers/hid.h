@@ -1,11 +1,14 @@
 #pragma once
 
-/*
- * This code is part of ctrulib (https://github.com/smealum/ctrulib)
- */
-
 #include "types.h"
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// This code is part of ctrulib (https://github.com/devkitPro/libctru).
 
 #define HID_KEY_MASK_ALL          ((KEY_Y << 1) - 1)
 #define HID_VERBOSE_MODE_BUTTONS  (KEY_SELECT | KEY_START)
@@ -32,3 +35,7 @@ void hidScanInput(void);
 u32 hidKeysHeld(void);
 u32 hidKeysDown(void);
 u32 hidKeysUp(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

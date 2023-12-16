@@ -23,6 +23,11 @@
 #include "error_codes.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define HWCAL_MAGIC                (0x4C414343u) // "CCAL"
 #define CAL_CRC_OFFSET(cal_type)   offsetof(typeof(cal_type), crc16)
 
@@ -734,3 +739,7 @@ extern BacklightPwmCalBase g_blPwmCal;
 
 Result HWCAL_load(void);
 u32 HWCAL_getLoadedMask(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

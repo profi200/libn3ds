@@ -21,14 +21,13 @@
 #include "kernel.h"
 
 
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
 // TODO: Implement this using semaphores?
-
-
 
 /**
  * @brief      Creates a new kernel mutex.

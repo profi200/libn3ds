@@ -1,9 +1,14 @@
 #pragma once
 
-// Based on https://github.com/torvalds/linux/blob/master/include/linux/list.h
-
 #include <stddef.h>
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// Based on https://github.com/torvalds/linux/blob/master/include/linux/list.h
 
 #define LIST_INIT_VAL(name)  ((ListNode){&(name), &(name)})
 
@@ -99,3 +104,7 @@ static inline ListNode* listRemoveHead(ListNode *start)
 #define listPop(start)             listRemoveTail((start))
 #define listPushTail(start, node)  listAddAfter((start), (node))
 #define listPopHead(start)         listRemoveHead((start))
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #ifdef __ARM11__
 #define SHA_REGS_BASE  (IO_COMMON_BASE + 0x1000)
 #elif __ARM9__
@@ -128,3 +133,7 @@ void sha(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEndiane
 #ifdef __ARM9__
 void sha_dma(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEndianess);
 #endif // #ifdef __ARM9__
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

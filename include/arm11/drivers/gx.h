@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define GX_REGS_BASE  (IO_AXI_BASE + 0x200000)
 
 // PICA screen clear(?) registers.
@@ -279,3 +284,7 @@ enum
 // REG_GX_PPF_CNT
 #define PPF_EN                   (1u)
 #define PPF_IRQ_MASK             (1u<<8)
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

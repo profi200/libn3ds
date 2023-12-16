@@ -21,6 +21,11 @@
 #include "types.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define ARRAY_ENTRIES(a)  (sizeof(a) / sizeof(*a))
 
 
@@ -121,3 +126,7 @@ static inline s32 clamp_s32(const s32 x, const s32 min, const s32 max)
 {
 	return (x < min ? min : (x > max ? max : x));
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

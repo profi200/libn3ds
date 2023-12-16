@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 // Most register names from: https://github.com/torvalds/linux/blob/master/include/linux/irqchip/arm-gic.h
 #define GICC_REGS_BASE  (MPCORE_PRIV_BASE + 0x100)
 #define GICD_REGS_BASE  (MPCORE_PRIV_BASE + 0x1000)
@@ -83,3 +88,7 @@ ALWAYS_INLINE Gicd* getGicdRegs(void)
 {
 	return (Gicd*)GICD_REGS_BASE;
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

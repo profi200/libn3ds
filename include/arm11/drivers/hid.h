@@ -18,13 +18,16 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- *  Based on code from https://github.com/smealum/ctrulib
- */
-
 #include "types.h"
 #include "mem_map.h"
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// Based on code from https://github.com/smealum/ctrulib
 
 #define HID_REGS_BASE   (IO_COMMON_BASE + 0x46000)
 #define REG_HID_PAD     (*((vu16*)(HID_REGS_BASE + 0x0)) ^ 0xFFFu)
@@ -103,3 +106,7 @@ u32 hidKeysUp(void);
 const TouchPos* hidGetTouchPosPtr(void);
 const CpadPos* hidGetCpadPosPtr(void);
 u32 hidGetExtraKeys(u32 clearMask);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

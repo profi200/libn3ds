@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define TIMER_REGS_BASE  (IO_AHB_BASE + 0x3000)
 
 typedef struct
@@ -95,3 +100,7 @@ u16 TIMER_stop(const u8 tmr);
  * @param[in]  ms    The number of milliseconds to sleep.
  */
 void TIMER_sleepMs(const u32 ms);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

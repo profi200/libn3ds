@@ -32,6 +32,11 @@
 #include "util.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define NDMA_REGS_BASE  (IO_AHB_BASE + 0x2000)
 #define REG_NDMA_GCNT   *((vu32*)NDMA_REGS_BASE) // Global control.
 
@@ -154,3 +159,7 @@ void NDMA_copy(u32 *const dst, const u32 *const src, u32 size);
  * @param[in]  size   The size of the memory to fill. Must be multiple of 4.
  */
 void NDMA_fill(u32 *const dst, const u32 value, u32 size);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

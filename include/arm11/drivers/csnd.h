@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define CSND_REGS_BASE  (IO_COMMON_BASE + 0x3000)
 
 typedef struct
@@ -242,3 +247,7 @@ static inline void CSND_stopCap(const u8 ch)
 {
 	getCsndCapRegs(ch)->cnt = 0;
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

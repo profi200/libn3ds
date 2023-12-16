@@ -2,6 +2,12 @@
 
 #include "types.h"
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 // Possible error codes for most of the functions below.
 // TODO: Merge with WiFi error codes?
 enum
@@ -30,3 +36,7 @@ u32 SDIO_io_rw_extended(const bool write, const u8 func, const u32 addr, const b
 u8 SDIO_readReg8(const u8 func, const u32 addr);
 u32 SDIO_writeReg8(const u8 func, const u32 addr, const u8 in);
 u8 SDIO_writeReadReg8(const u8 func, const u32 addr, const u8 in);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

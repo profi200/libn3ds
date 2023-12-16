@@ -50,6 +50,11 @@
 
 #if !__ASSEMBLER__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define MAKE_INTR_NO_INOUT(isVolatile, name, inst, ...)  \
 ALWAYS_INLINE void __##name(void)                        \
 {                                                        \
@@ -307,5 +312,9 @@ ALWAYS_INLINE u32 __swpb(vu8 *const addr, const u8 val)
 #undef MAKE_INTR_GET_REG
 #undef MAKE_INTR_SET_REG_ZERO
 #undef MAKE_INTR_SET_REG
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // if !__ASSEMBLER__

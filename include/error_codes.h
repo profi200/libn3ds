@@ -21,6 +21,11 @@
 #include "types.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define CUSTOM_ERR_OFFSET  (200u)
 
 typedef u32 Result;
@@ -69,3 +74,7 @@ enum
 
 
 const char* result2String(Result res);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

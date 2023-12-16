@@ -31,6 +31,11 @@
 
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 u32 ee_vsnprintf(char *const buf, u32 size, const char *const fmt, va_list arg);
 u32 ee_vsprintf(char *const buf, const char *const fmt, va_list arg);
 __attribute__ ((format (printf, 2, 3))) u32 ee_sprintf(char *const buf, const char *const fmt, ...);
@@ -45,4 +50,8 @@ u32 ee_puts(const char *const str);
 #else
 #define debug_printf(fmt, ...) ee_printf(fmt, ##__VA_ARGS__)
 #define debug_puts(str) ee_puts(str)
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif

@@ -22,5 +22,14 @@
 
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 [[noreturn]] void _start(void);
 void deinitCpu(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

@@ -1,9 +1,14 @@
 #pragma once
 
-// Based on: https://github.com/ARM-software/CMSIS_5/blob/master/CMSIS/Core/Include/cmsis_gcc.h
-
 #include "types.h"
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// Based on: https://github.com/ARM-software/CMSIS_5/blob/master/CMSIS/Core/Include/cmsis_gcc.h
 
 // u32 result, u32 op1.
 #define MAKE_INTR_U32_1OP(isVolatile, inst)                            \
@@ -266,3 +271,7 @@ MAKE_INTR_U32_1OP(0, uxtb16)           // Zero extend two Bytes.
 #undef MAKE_INTR_U32_3OPS
 #undef MAKE_INTR_S32_3OPS
 #undef MAKE_INTR_U64_U32_U32_U64
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

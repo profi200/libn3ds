@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #ifdef __ARM9__
 #define PXI_REGS_BASE  (IO_AHB_BASE + 0x8000)
 #elif __ARM11__
@@ -94,3 +99,7 @@ ALWAYS_INLINE Pxi* getPxiRegs(void)
 
 void PXI_init(void);
 u32 PXI_sendCmd(u32 cmd, const u32 *buf, u32 words);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

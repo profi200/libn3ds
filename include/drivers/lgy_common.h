@@ -23,6 +23,11 @@
 #include "error_codes.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define LGY_MAX_ROM_SIZE    (1024u * 1024 * 32)
 #define LGY_MAX_SAVE_SIZE   (1024u * 128)
 #define LGY_ROM_LOC         (FCRAM_BASE)
@@ -87,3 +92,7 @@ Result LGY_prepareGbaMode(bool directBoot, u16 saveType, const char *const saveP
 Result LGY_setGbaRtc(const GbaRtc rtc);
 Result LGY_getGbaRtc(GbaRtc *const out);
 Result LGY_backupGbaSave(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

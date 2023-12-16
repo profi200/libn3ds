@@ -22,6 +22,11 @@
 
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 // ARM7 vector overlay for GBA mode.
 [[noreturn]] void _gba_vector_overlay(void);
 extern const u32 _gba_vector_overlay_size[];
@@ -30,3 +35,7 @@ extern const u32 _gba_vector_overlay_size[];
 [[noreturn]] void _gba_boot(void);
 extern u8 _gba_boot_swi_a9_addr[]; // "swi 0x01" location in ARM9 address space.
 extern const u32 _gba_boot_size[];
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

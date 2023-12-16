@@ -21,6 +21,11 @@
 #include "types.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef enum
 {
 	MCU_REG_VERS_MAJOR      = 0x00u, // (ro) MCU firmware major version.
@@ -191,3 +196,7 @@ typedef enum
 	ACC_CFG_ACC_OFF_PM_ON = 2u, // Accelerometer off and pedometer on.
 	ACC_CFG_ACC_ON_PM_ON  = 3u  // Accelerometer on and pedometer on.
 } AccCfg;
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

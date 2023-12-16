@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define SPICARD_REGS_BASE  (IO_AHB_BASE + 0xD800)
 
 typedef struct
@@ -120,3 +125,7 @@ bool SPICARD_autoPollBit(const SpicClk clk, const u32 apParams);
  * @param[in]  outSize  Output buffer size. Must be <= 0x1FFFFF.
  */
 void SPICARD_sendRecv(const SpicClk clk, const u32 *in, u32 *out, const u32 inSize, const u32 outSize);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

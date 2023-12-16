@@ -1,10 +1,16 @@
-// From https://github.com/devkitPro/libctru/blob/master/libctru/include/3ds/gpu/registers.h
-
 /**
  * @file registers.h
  * @description GPU registers.
  */
 #pragma once
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// From https://github.com/devkitPro/libctru/blob/master/libctru/include/3ds/gpu/registers.h
 
 ///@name Miscellaneous registers (0x000-0x03F)
 ///@{
@@ -767,3 +773,7 @@
 #define GPUREG_02FE 0x02FE ///< Unknown.
 #define GPUREG_02FF 0x02FF ///< Unknown.
 ///@}
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

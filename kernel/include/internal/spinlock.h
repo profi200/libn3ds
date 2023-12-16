@@ -22,6 +22,11 @@
 
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 static inline void spinlockLock(u32 *lock)
 {
 	u32 tmp;
@@ -43,3 +48,7 @@ static inline void spinlockUnlock(u32 *lock)
 	                 "sev"
 	                 : : "r" (0), "r" (lock) : "memory");
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

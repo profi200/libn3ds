@@ -22,4 +22,13 @@
 
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 void deinitCpu(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

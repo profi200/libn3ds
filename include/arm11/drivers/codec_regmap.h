@@ -1,11 +1,14 @@
 #pragma once
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 // Based on Texas Instruments TSC2117 SLAS550B.
 // Adjusted for the custom Texas Instruments PAIC3010B, AIC3010B, AIC3010D
 // and possibly other variants.
-
-
 
 enum
 {
@@ -319,3 +322,7 @@ enum
 #define HEADSET_SEL_INT_MIC    (0u)                        // Force internal microphone input.
 #define HEADSET_SEL_EXT_MIC    (1u<<HEADSET_SEL_MIC_SHIFT) // Force external microphone input.
 #define HEADSET_SEL_MIC_EN     (1u<<7)                     // Enable microphone override.
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

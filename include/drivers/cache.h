@@ -22,6 +22,11 @@
 
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 void invalidateICache(void);
 void invalidateICacheRange(const void *base, u32 size);
 void cleanDCache(void);
@@ -30,3 +35,7 @@ void cleanDCacheRange(const void *base, u32 size);
 void flushDCacheRange(const void *base, u32 size);
 void invalidateDCache(void);
 void invalidateDCacheRange(const void *base, u32 size);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

@@ -18,10 +18,15 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Based on JEDEC eMMC Card Product Standard V4.41.
-
 #include "drivers/tmio.h"
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// Based on JEDEC eMMC Card Product Standard V4.41.
 
 // Controller specific macros. Add controller specific bits here.
 // MMC_CMD_[response type]_[transfer type]
@@ -248,3 +253,7 @@
 #define EXT_CSD_BKOPS_SUPPORT                (502u) //  1,                      R, Background operations support.
 #define EXT_CSD_HPI_FEATURES                 (503u) //  1,                      R, HPI features.
 #define EXT_CSD_S_CMD_SET                    (504u) //  1,                      R, Supported Command Sets.
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define CFG9_REGS_BASE  (IO_AHB_BASE)
 
 typedef struct
@@ -122,3 +127,7 @@ ALWAYS_INLINE Cfg9* getCfg9Regs(void)
 // REG_CFG9_UNITINFO
 // TODO: Collect all the possible values for this reg.
 #define UNITINFO_RETAIL          (0u)
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

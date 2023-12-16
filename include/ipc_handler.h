@@ -21,6 +21,11 @@
 #include "types.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define IPC_MAX_PARAMS               (15)
 #define IPC_CMD_RESP_FLAG            (1u<<15)
 #define IPC_CMD_ID_MASK(cmd)         ((cmd)>>8)      // Max 127.
@@ -90,3 +95,7 @@ typedef struct
 
 
 u32 IPC_handleCmd(u8 cmdId, u32 sendBufs, u32 recvBufs, const u32 *const buf);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

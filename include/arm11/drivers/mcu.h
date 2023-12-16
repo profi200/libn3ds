@@ -22,6 +22,11 @@
 #include "arm11/drivers/mcu_regmap.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define DEFAULT_MCU_IRQ_MASK  (~(MCU_IRQ_TOP_BL_ON | MCU_IRQ_TOP_BL_OFF | MCU_IRQ_BOT_BL_ON | \
                                  MCU_IRQ_BOT_BL_OFF | MCU_IRQ_LCD_POWER_ON | MCU_IRQ_LCD_POWER_OFF | \
                                  MCU_IRQ_VOL_SLIDER_CHANGE | MCU_IRQ_BATT_CHARGE_START | \
@@ -677,3 +682,7 @@ bool MCU_readRegArray(McuReg reg, void *out, u32 size);
  * @return     Returns true on success and false on failure.
  */
 bool MCU_writeRegArray(McuReg reg, const void *const in, u32 size);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

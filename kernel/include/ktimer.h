@@ -21,12 +21,11 @@
 #include "kernel.h"
 
 
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-
 
 /*KHandle createTimer(bool pulse);
 

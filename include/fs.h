@@ -23,6 +23,11 @@
 #include "fatfs/ff.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define FS_MAX_DRIVES   (FF_VOLUMES)
 #define FS_DRIVE_NAMES  "sdmc:/"
 #define FS_MAX_FILES    (1u)
@@ -62,3 +67,7 @@ Result fUnlink(const char *const path);
 #ifdef __ARM9__
 void fsDeinit(void);
 #endif // ifdef __ARM9__
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

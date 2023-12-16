@@ -22,6 +22,11 @@
 #include "types.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef enum
 {
 	IRQ_DMAC_1_0      =  0u, // DMAC_1 =  NDMA
@@ -96,4 +101,8 @@ static inline void leaveCriticalSection(u32 oldState)
 {
 	__setCpsr_c((__getCpsr() & ~PSR_I) | oldState);
 }
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif

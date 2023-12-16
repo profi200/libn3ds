@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 //#define USE_NEW_CDMA (1)
 
 #ifdef __ARM11__
@@ -225,3 +230,7 @@ void DMA330_kill(u8 ch);
 #ifdef __ARM11__
 //void DMA330_dbgPrint(void);
 #endif // ifdef __ARM11__
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

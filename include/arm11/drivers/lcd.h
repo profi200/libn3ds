@@ -23,6 +23,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define LCD_REGS_BASE     (IO_AXI_BASE + 0x2000)
 
 #define MCU_LCD_IRQ_MASK  (MCU_IRQ_TOP_BL_ON | MCU_IRQ_TOP_BL_OFF | \
@@ -239,3 +244,7 @@ bool LCDI2C_writeReg(const u8 lcd, const LcdI2cReg reg, const u8 data);
 void LCDI2C_init(void);
 void LCDI2C_waitBacklightsOn(void);
 u16 LCDI2C_getRevisions(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

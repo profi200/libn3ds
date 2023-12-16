@@ -23,6 +23,11 @@
 #include "kevent.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define LGYFB_TOP_REGS_BASE      (IO_COMMON_BASE + 0x11000)
 #define LGYFB_BOT_REGS_BASE      (IO_COMMON_BASE + 0x10000)
 
@@ -112,3 +117,7 @@ KHandle LGYFB_init(/*const bool isTop,*/ const ScalerCfg *const cfg); // Returns
 void LGYFB_deinit(/*const bool isTop*/ void);
 void LGYFB_stop(/*const bool isTop*/ void);
 void LGYFB_start(/*const bool isTop*/ void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

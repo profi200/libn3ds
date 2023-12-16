@@ -1,5 +1,11 @@
 #pragma once
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 // Controller specific macros. Add controller specific bits here.
 // SDIO_CMD_[response type]_[transfer type]
 // Transfer type: R = read, W = write, EX = read or write.
@@ -86,3 +92,7 @@
 #define SDIO_CMD5_S18R  (1u<<24) // Switching to 1.8V Request.
 
 // TODO: CMD52/53 arg bits.
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

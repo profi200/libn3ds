@@ -21,6 +21,11 @@
 #include "types.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 // Possible error codes for most of the functions below.
 enum
 {
@@ -262,3 +267,7 @@ u32 SDMMC_sendCommand(const u8 devNum, MmcCommand *const mmcCmd);
 u32 SDMMC_getLastR1error(const u8 devNum);
 
 // TODO: TRIM/erase support.
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

@@ -21,6 +21,11 @@
 #include "types.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef enum
 {
 	CDC_AUDIO_OUT_AUTO      = 0u,
@@ -83,3 +88,7 @@ void CODEC_setVolumeOverride(const s8 vol);
  * @return     Returns true if data was available and false otherwise.
  */
 bool CODEC_getRawAdcData(CdcAdcData *data);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

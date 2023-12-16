@@ -22,6 +22,11 @@
 #include "internal/list.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef ListNode SlabHeap;
 
 
@@ -61,3 +66,7 @@ void* slabCalloc(SlabHeap *slab, size_t clrSize);
  * @param      ptr   The object slot pointer.
  */
 void slabFree(SlabHeap *slab, void *ptr);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

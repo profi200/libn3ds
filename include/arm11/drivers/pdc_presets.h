@@ -22,6 +22,11 @@
 #include "arm11/drivers/gx.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define NUM_PDC_PRESETS     (4u)
 #define PDC_PRESET_IDX_BOT  (3u)
 
@@ -178,3 +183,7 @@ static const PdcPreset g_pdcPresets[NUM_PDC_PRESETS] =
 		.latch_pos     = PDC_RANGE(0, 0)
 	}
 };
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

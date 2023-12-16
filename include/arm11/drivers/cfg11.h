@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define CFG11_REGS_BASE  (IO_COMMON_BASE + 0x40000)
 
 typedef struct
@@ -120,3 +125,7 @@ ALWAYS_INLINE Cfg11* getCfg11Regs(void)
 #define SOCINFO_CTR             (1u)    // Also set on New 3DS.
 #define SOCINFO_LGR1            (1u<<1) // Never saw the daylight? Set on retail N3DS (LGR2).
 #define SOCINFO_LGR2            (1u<<2) // Set on New 3DS.
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

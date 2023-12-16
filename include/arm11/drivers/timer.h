@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define TIMER_REGS_BASE  (MPCORE_PRIV_BASE + 0x600)
 
 typedef struct
@@ -118,3 +123,7 @@ void TIMER_sleepUs(const u32 us);
  * @param[in]  ns    Number of nanoseconds to sleep. Up to 32038622678.
  */
 void TIMER_sleepNs(const u64 ns);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

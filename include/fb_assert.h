@@ -21,6 +21,11 @@
 #include "types.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #ifdef NDEBUG
 #define fb_assert(c) ((void)0)
 #else
@@ -32,3 +37,7 @@
 
 // Moved to debug.c. TODO: Print function and condition.
 [[noreturn]] void __fb_assert(const char *const file, const unsigned line, const char *const cond);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

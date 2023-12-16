@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define LGY9_ARM7_STUB_LOC   (0x3007E00u)
 #define LGY9_ARM7_STUB_LOC9  (AHB_RAM_BASE + 0xBFE00u)
 #define LGY9_SAVE_LOC        (AHB_RAM_BASE + 0x80000u)
@@ -94,3 +99,7 @@ ALWAYS_INLINE Lgy9* getLgy9Regs(void)
 #define LGY9_RTC_BCD_S_MASK     (0x7Fu<<LGY_RTC_BCD_S_SHIFT)
 
 // REGs_LGY9_GBA_SAVE_TIMING
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

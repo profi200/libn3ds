@@ -18,10 +18,15 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Based on SD specification version 8.00.
-
 #include "drivers/tmio.h"
 
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// Based on SD specification version 8.00.
 
 // Controller specific macros. Add controller specific bits here.
 // SD_[command type]_[response type]_[transfer type]
@@ -205,3 +210,7 @@
 // cmd:    Function group 2 Command system.
 // acc:    Function group 1 Access mode.
 #define SD_SWITCH_FUNC_ARG(mode, pwr, driver, cmd, acc)  ((mode)<<31 | 0xFFu<<16 | ((pwr)&0xFu)<<12 | ((driver)&0xFu)<<8 | ((cmd)&0xFu)<<4 | ((acc)&0xFu))
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

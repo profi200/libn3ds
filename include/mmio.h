@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- *   This file is part of fastboot 3DS
+ *   This file is part of libn3ds
  *   Copyright (C) 2019 Aurora Wright, TuxSH, derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,20 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Based on https://github.com/AuroraWright/Luma3DS/blob/master/arm9/source/alignedseqmemcpy.s
-
 #include "types.h"
 
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// Based on https://github.com/LumaTeam/Luma3DS/blob/master/arm9/source/alignedseqmemcpy.s
+
 void iomemcpy(vu32 *restrict dst, const vu32 *restrict src, u32 size);
 void iomemset(vu32 *ptr, u32 value, u32 size);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

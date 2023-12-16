@@ -19,5 +19,14 @@
  */
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define LIKELY(expr)   __builtin_expect((expr), true)
 #define UNLIKELY(expr) __builtin_expect((expr), false)
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

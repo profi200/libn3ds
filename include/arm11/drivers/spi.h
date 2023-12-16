@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define NSPI1_REGS_BASE  (IO_COMMON_BASE + 0x60800)
 #define NSPI2_REGS_BASE  (IO_COMMON_BASE + 0x42800)
 #define NSPI3_REGS_BASE  (IO_COMMON_BASE + 0x43800)
@@ -175,3 +180,7 @@ bool NSPI_autoPollBit(SpiDevice dev, const u32 apParams);
  * @param[in]  outSize  Output buffer size. Must be <= 0x1FFFFF.
  */
 void NSPI_sendRecv(const SpiDevice dev, const void *in, void *out, const u32 inSize, const u32 outSize);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

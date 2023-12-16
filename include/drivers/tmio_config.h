@@ -26,6 +26,11 @@
 #endif // #ifdef __ARM9__
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 // Note on port numbers:
 // To make things easier 2 ports are assigned to each controller.
 // There are a maximum of 2 controllers mapped at the same time
@@ -86,3 +91,7 @@
 	if(TMIO_NUM_CONTROLLERS == 2u) \
 		IRQ_unregisterIsr(IRQ_TMIO3); \
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

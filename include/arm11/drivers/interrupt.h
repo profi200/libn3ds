@@ -22,6 +22,11 @@
 #include "arm.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef enum
 {
 	IRQ_IPI0          =   0u,
@@ -199,4 +204,8 @@ static inline void leaveCriticalSection(u32 oldState)
 {
 	__setCpsr_c((__getCpsr() & ~PSR_I) | oldState);
 }
+#endif
+
+#ifdef __cplusplus
+} // extern "C"
 #endif

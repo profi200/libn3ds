@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define PL301_REGS_BASE  (IO_AXI_BASE + 0xF400)
 
 typedef struct
@@ -55,3 +60,7 @@ ALWAYS_INLINE Pl301* getPl301Regs(void)
 {
 	return (Pl301*)PL301_REGS_BASE;
 }
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

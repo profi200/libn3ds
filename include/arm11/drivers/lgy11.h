@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define LGY11_REGS_BASE  (IO_COMMON_BASE + 0x41100)
 
 typedef struct
@@ -66,3 +71,7 @@ static inline void LGY11_selectInput(const u16 inputSelect)
 }
 
 void LGY11_deinit(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

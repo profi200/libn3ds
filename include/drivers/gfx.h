@@ -21,6 +21,11 @@
 #include "types.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 // Note: The LCDs are physically rotated 90° CCW.
 #define LCD_WIDTH_TOP        (240u)
 #define LCD_HEIGHT_TOP       (400u)
@@ -254,3 +259,7 @@ void GFX_sleepAwake(void);
 bool GFX_setupExceptionFrameBuffer(void);
 
 #endif // #ifdef __ARM11__
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define PDN_REGS_BASE  (IO_COMMON_BASE + 0x41000)
 
 typedef struct
@@ -156,3 +161,7 @@ void PDN_core123Init(void);
 void PDN_setSocmode(PdnSocmode socmode);
 void PDN_poweroffCore23(void);
 void PDN_controlGpu(const bool enableClk, const bool resetPsc, const bool resetOther);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

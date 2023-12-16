@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define I2C1_REGS_BASE  (IO_COMMON_BASE + 0x61000)
 #define I2C2_REGS_BASE  (IO_COMMON_BASE + 0x44000)
 #define I2C3_REGS_BASE  (IO_COMMON_BASE + 0x48000)
@@ -174,3 +179,7 @@ bool I2C_writeRegArrayIntSafe(const I2cDevice devId, const u8 regAddr, const voi
  * @return     Returns true on success and false on failure.
  */
 bool I2C_writeRegIntSafe(const I2cDevice devId, const u8 regAddr, const u8 data);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

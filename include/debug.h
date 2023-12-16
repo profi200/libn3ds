@@ -22,6 +22,11 @@
 
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 [[noreturn]] void panicMsg(const char *const msg);
 [[noreturn]] void panic(void);
 
@@ -78,3 +83,7 @@ static inline void __stackTest(void)
 	                 "bne 1b\n\t"
 	                 "str r0, [r0]" : : : "memory"); // Trigger data abort.
 }*/
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

@@ -22,6 +22,11 @@
 #include "mem_map.h"
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define SCU_REGS_BASE  (MPCORE_PRIV_BASE)
 
 typedef struct
@@ -93,3 +98,7 @@ ALWAYS_INLINE Scu* getScuRegs(void)
                                  SCU_WAY_0(0u))
 
 // TODO: SCU performance monitor bits.
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
