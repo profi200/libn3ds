@@ -143,6 +143,15 @@ static u16 reverseCrc16Modbus(const u16 init, const void *src, u32 size)
 	return crc;
 }
 
+static void endianSwapCodecFilter(u16 *filt, u32 entries)
+{
+	do
+	{
+		const u16 tmp = __builtin_bswap16(*filt);
+		*filt++ = tmp;
+	} while(--entries > 0);
+}
+
 static void updateCals(const Hwcal *const hwcal)
 {
 	// Check and update CODEC calibration.
@@ -153,7 +162,17 @@ static void updateCals(const Hwcal *const hwcal)
 		const u16 crc16 = reverseCrc16Modbus(0x55AA, &hwcal->codec, CAL_CRC_OFFSET(hwcal->codec));
 		if(hwcal->codec.crc16 == crc16)
 		{
+			// First copy data raw and then endian swap filters.
+			// Stored in little endian in HWCAL but CODEC wants them in big endian.
 			memcpy(&g_cdcCal, &hwcal->codec, sizeof(g_cdcCal));
+			endianSwapCodecFilter((u16*)&g_cdcCal.filterHp32, sizeof(g_cdcCal.filterHp32) / 2);
+			endianSwapCodecFilter((u16*)&g_cdcCal.filterHp47, sizeof(g_cdcCal.filterHp47) / 2);
+			endianSwapCodecFilter((u16*)&g_cdcCal.filterSp32, sizeof(g_cdcCal.filterSp32) / 2);
+			endianSwapCodecFilter((u16*)&g_cdcCal.filterSp47, sizeof(g_cdcCal.filterSp47) / 2);
+			endianSwapCodecFilter((u16*)&g_cdcCal.filterMic32, sizeof(g_cdcCal.filterMic32) / 2);
+			endianSwapCodecFilter((u16*)&g_cdcCal.filterMic47, sizeof(g_cdcCal.filterMic47) / 2);
+			endianSwapCodecFilter((u16*)&g_cdcCal.filterFree, sizeof(g_cdcCal.filterFree) / 2);
+
 			calLoadedMask = CAL_MASK_CODEC;
 		}
 	}
