@@ -45,19 +45,20 @@ ALWAYS_INLINE Timer* getTimerRegs(u8 timer)
 #define TIMER_BASE_FREQ     (67027964)
 
 // REG_TIMER_CNT
+// Note: Prescalers are ignored in count-up mode.
 #define TIMER_PRESC_1       (0u)
 #define TIMER_PRESC_64      (1u)
 #define TIMER_PRESC_256     (2u)
 #define TIMER_PRESC_1024    (3u)
-#define TIMER_COUNT_UP      (1u<<2) // For cascading at least 2 timers.
+#define TIMER_COUNT_UP      (1u<<2) // Increment on previous timer overflow.
 #define TIMER_IRQ_EN        (1u<<6)
 #define TIMER_EN            (1u<<7)
 
-// Convenience macros for calculating the ticks. Based on libnds.
+// Convenience macros for calculating ticks from frequency. Based on libnds.
 #define TIMER_FREQ(f)       (-TIMER_BASE_FREQ / (f))
-#define TIMER_FREQ_64(f)    TIMER_FREQ(64 * (f))
-#define TIMER_FREQ_256(f)   TIMER_FREQ(256 * (f))
-#define TIMER_FREQ_1024(f)  TIMER_FREQ(1024 * (f))
+#define TIMER_FREQ_64(f)    TIMER_FREQ((f)<<6)
+#define TIMER_FREQ_256(f)   TIMER_FREQ((f)<<8)
+#define TIMER_FREQ_1024(f)  TIMER_FREQ((f)<<10)
 
 
 
