@@ -65,7 +65,7 @@ ALWAYS_INLINE NdmaCh* getNdmaChRegs(u8 c)
 #define NDMA_HIGHEST_PRIO    (0u)
 
 // REG_NDMA_BCNT
-// TODO: When is the delay happening during transfers?
+// Inserts a delay with the specified amount of cycles after each physical block transfer.
 // TODO: Does NDMA run at 67 MHz in 3DS mode? We will assume so for now.
 #define NDMA_CYCLES(n)       (n)      // Maximum 65535. 0 means no delay/interval.
 #define NDMA_PRESCALER_1     (0u)     // 67027964 Hz.
