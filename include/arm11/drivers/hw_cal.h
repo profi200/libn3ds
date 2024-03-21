@@ -291,6 +291,8 @@ typedef struct
 	CdcBiquad b; // Not in TSC2117 datasheet. Name is a guess.
 	CdcBiquad c; // Not in TSC2117 datasheet. Name is a guess.
 } CdcEqFilters;
+static_assert(sizeof(CdcEqFilters) == 30);
+static_assert(offsetof(CdcEqFilters, c) == 20);
 
 // PRB_P25 filters.
 typedef struct
