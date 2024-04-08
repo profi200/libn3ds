@@ -58,7 +58,7 @@
 
 #define FF_USE_STRFUNC	0
 #define FF_PRINT_LLI	1
-#define FF_PRINT_FLOAT	0
+#define FF_PRINT_FLOAT	1
 #define FF_STRF_ENCODE	3
 /* FF_USE_STRFUNC switches string functions, f_gets(), f_putc(), f_puts() and
 /  f_printf().
@@ -84,7 +84,7 @@
 / Locale and Namespace Configurations
 /---------------------------------------------------------------------------*/
 
-#define FF_CODE_PAGE	437
+#define FF_CODE_PAGE	932
 /* This option specifies the OEM code page to be used on the target system.
 /  Incorrect code page setting can cause a file open failure.
 /
@@ -110,10 +110,11 @@
 /   949 - Korean (DBCS)
 /   950 - Traditional Chinese (DBCS)
 /     0 - Include all code pages above and configured by f_setcp()
+/     1 - "ASCII" (Ignore code page conversion)
 */
 
 
-#define FF_USE_LFN		3
+#define FF_USE_LFN		0
 #define FF_MAX_LFN		255
 /* The FF_USE_LFN switches the support for LFN (long file name).
 /
@@ -133,7 +134,7 @@
 /  ff_memfree() exemplified in ffsystem.c, need to be added to the project. */
 
 
-#define FF_LFN_UNICODE	2
+#define FF_LFN_UNICODE	0
 /* This option switches the character encoding on the API when LFN is enabled.
 /
 /   0: ANSI/OEM in current CP (TCHAR = char)
@@ -153,7 +154,7 @@
 /  on character encoding. When LFN is not enabled, these options have no effect. */
 
 
-#define FF_FS_RPATH		1
+#define FF_FS_RPATH		0
 /* This option configures support for relative path.
 /
 /   0: Disable relative path and remove related functions.
@@ -170,8 +171,8 @@
 /* Number of volumes (logical drives) to be used. (1-10) */
 
 
-#define FF_STR_VOLUME_ID	1
-#define FF_VOLUME_STRS		"SDMC"
+#define FF_STR_VOLUME_ID	0
+#define FF_VOLUME_STRS		"RAM","NAND","CF","SD","SD2","USB","USB2","USB3"
 /* FF_STR_VOLUME_ID switches support for volume ID in arbitrary strings.
 /  When FF_STR_VOLUME_ID is set to 1 or 2, arbitrary strings can be used as drive
 /  number in the path name. FF_VOLUME_STRS defines the volume ID strings for each
@@ -237,10 +238,10 @@
 /  Note that enabling exFAT discards ANSI C (C89) compatibility. */
 
 
-#define FF_FS_NORTC		1
-#define FF_NORTC_MON	11
-#define FF_NORTC_MDAY	14
-#define FF_NORTC_YEAR	2023
+#define FF_FS_NORTC		0
+#define FF_NORTC_MON	1
+#define FF_NORTC_MDAY	1
+#define FF_NORTC_YEAR	2022
 /* The option FF_FS_NORTC switches timestamp feature. If the system does not have
 /  an RTC or valid timestamp is not needed, set FF_FS_NORTC = 1 to disable the
 /  timestamp feature. Every object modified by FatFs will have a fixed timestamp
@@ -292,5 +293,80 @@
 */
 
 
+/*---------------------------------------------------------------------------/
+/ wf-fatfs Fork Configurations (Optimizations)
+/---------------------------------------------------------------------------*/
+
+#define FF_WF_UNALIGNED_ACCESS 0
+/* FF_WF_UNALIGNED_ACCESS enables performance optimizations based on certain
+/  CPU architecture assumptions.
+/
+/  0: Any endianness, unaligned access support not required. Slowest.
+/  1: Little-endian, unaligned access support not required.
+/  2: Little-endian, unaligned access support required. Fastest.
+*/
+
+
+#define FF_WF_FAST_CONTIGUOUS_READ  0
+#define FF_WF_FAST_CONTIGUOUS_WRITE 0
+/* FF_WF_FAST_CONTIGUOUS_* controls whether or not contiguous reads or writes
+/  of more than 1 cluster (>4-32KB) are optimized to use large disk_read()
+/  and disk_write() calls. This can be useful on platforms where the cost of
+/  initializing a sector read/write is large.
+/
+/  0: Do not optimize this scenario.
+/  1: Optimize this scenario.
+*/
+
+
+#define FF_WF_CACHE_CLUSTER_SHIFT 0
+/* FF_WF_CACHE_CLUSTER_SHIFT controls whether the cluster bitshift value
+/  is cached. This is useful on platforms with slow divisions.
+*/
+
+
+/*---------------------------------------------------------------------------/
+/ wf-fatfs Fork Configurations (Tweaks)
+/---------------------------------------------------------------------------*/
+
+#define FF_WF_LIST_DOTDOT 0
+/* FF_WF_LIST_DOTDOT controls whether or not f_readdir() and other functions
+/  expose "." and ".." directory entries.
+/
+/  0: "." and ".." directory entries are hidden.
+/  1: "." and ".." directory entries are exposed.
+*/
+
+
+#define FF_WF_MARK_WINDOW_READS 0
+/* FF_WF_MARK_WINDOW_READS allows marking reads done on the FATFS instance's
+/  window (directory/cluster reads) with an "| 0x80" on the pdrv argument
+/  in disk_read(). This can be used as information for sector caching
+/  algorithms.
+*/
+
+/*---------------------------------------------------------------------------/
+/ wf-fatfs Fork Configurations (POSIX compatibility improvements)
+/---------------------------------------------------------------------------*/
+
+#define FF_WF_FILINFO_LOCATION 0
+/* FF_WF_FILINFO_LOCATION controls whether or not the FILINFO structure
+/  contains fpdrv (physical drive ID) and fclust (file cluster #) values.
+/
+/  FIXME: This is not currently supported when FF_FS_EXFAT == 1.
+*/
+
+
+#define FF_WF_STAT_ORIGIN_DIRECTORY 0
+/* FF_WF_STAT_ORIGIN_DIRECTORY controls whether or not the origin directory
+/  can pass an f_stat() call.
+*/
+
+
+#define FF_WF_GETFREE_NULL_PATH 0
+/* FF_WF_GETFREE_NULL_PATH controls whether or not f_getfree() can be called
+/  on a FATFS instance directly by passing NULL to path and an instance
+/  in the "return" pointer.
+*/
 
 /*--- End of configuration options ---*/

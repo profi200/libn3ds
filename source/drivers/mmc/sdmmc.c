@@ -744,8 +744,8 @@ u32 SDMMC_getCid(const u8 devNum, u32 cidOut[4])
 	return SDMMC_ERR_NONE;
 }
 
-#include "fatfs/ff.h"     // Needed for the "byte" type used in diskio.h.
-#include "fatfs/diskio.h"
+#include "fatfs/source/ff.h" // Needed for the "byte" type used in diskio.h.
+#include "fatfs/source/diskio.h"
 u8 SDMMC_getDiskStatus(const u8 devNum)
 {
 	if(devNum > SDMMC_MAX_DEV_NUM) return STA_NODISK | STA_NOINIT;

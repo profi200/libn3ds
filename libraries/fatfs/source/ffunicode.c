@@ -15218,7 +15218,7 @@ static const WCHAR uc869[] = {	/*  CP869(Greek 2) to Unicode conversion table */
 /* SBCS Fixed Code Page                                                   */
 /*------------------------------------------------------------------------*/
 
-#if FF_CODE_PAGE != 0 && FF_CODE_PAGE < 900
+#if FF_CODE_PAGE != 0 && FF_CODE_PAGE != 1 && FF_CODE_PAGE < 900
 WCHAR ff_uni2oem (	/* Returns OEM code character, zero on error */
 	DWORD	uni,	/* UTF-16 encoded character to be converted */
 	WORD	cp		/* Code page for the conversion */

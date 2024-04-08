@@ -19,7 +19,7 @@
 #include "types.h"
 #include "error_codes.h"
 #include "fs.h"
-#include "fatfs/ff.h"
+#include "fatfs/source/ff.h"
 
 
 static const char *const g_fsPathTable[FS_MAX_DRIVES] = {FS_DRIVE_NAMES};
