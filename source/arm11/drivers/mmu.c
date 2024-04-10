@@ -1,6 +1,6 @@
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #include "mem_map.h"
 #include "fb_assert.h"
 #include "arm11/drivers/scu.h"
-#include "mmio.h"
+#include "memory.h"
 #include "arm.h"
 
 
@@ -169,7 +169,7 @@ void setupMmu(void)
 	if(!__getCpuId())
 	{
 		// Clear L1 and L2 tables
-		iomemset((u32*)g_mmuTables, 0, sizeof(MmuTables));
+		clear32((u32*)g_mmuTables, 0, sizeof(MmuTables));
 
 		// IO mem mapping
 		mmuMapSections(IO_COMMON_BASE, IO_COMMON_BASE, 4, true,

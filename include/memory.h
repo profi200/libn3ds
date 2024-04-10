@@ -29,15 +29,8 @@ extern "C"
 
 // Based on https://github.com/LumaTeam/Luma3DS/blob/master/arm9/source/alignedseqmemcpy.s
 
-void kmemcpy(u32 *restrict dst, const u32 *restrict src, u32 size);
-
-// Alias of kmemcpy() with volatile arguments.
-void iokmemcpy(vu32 *restrict dst, const vu32 *restrict src, u32 size);
-
-void kmemset(u32 *ptr, u32 value, u32 size);
-
-// Alias of kmemset() with volatile arguments.
-void iokmemset(vu32 *ptr, u32 value, u32 size);
+void copy32(u32 *restrict dst, const u32 *restrict src, u32 size);
+void clear32(u32 *ptr, const u32 value, u32 size);
 
 #ifdef __cplusplus
 } // extern "C"

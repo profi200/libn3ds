@@ -1,6 +1,6 @@
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "internal/slabheap.h"
-#include "internal/kmemcpy_set.h"
+#include "memory.h"
 
 
 
@@ -48,7 +48,7 @@ void* slabAlloc(SlabHeap *slab)
 void* slabCalloc(SlabHeap *slab, size_t clrSize)
 {
 	void *const ptr = slabAlloc(slab);
-	if(ptr) kmemset(ptr, 0, clrSize);
+	if(ptr) clear32(ptr, 0, clrSize);
 	return ptr;
 }
 

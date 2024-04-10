@@ -101,7 +101,7 @@ BEGIN_ASM_FUNC _start no_section
 	ldr r1, =__bss_end__
 	sub r2, r1, r0
 	mov r1, #0
-	bl iomemset
+	bl clear32
 	@ Setup newlib heap
 	ldr r0, =A11_HEAP_END
 	ldr r1, =fake_heap_end

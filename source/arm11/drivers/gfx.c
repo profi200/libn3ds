@@ -27,7 +27,7 @@
 #include "arm11/drivers/lcd.h"
 #include "arm11/drivers/gpu_regs.h"
 #include "mem_map.h"
-#include "mmio.h"
+#include "memory.h"
 #include "arm11/drivers/i2c.h"
 #include "arm11/drivers/mcu.h"
 #include "debug.h"
@@ -180,7 +180,7 @@ static void setPdcPresetAndBufs(const GfxLcd lcd, const GfxTopMode mode)
 
 	// Set LCD timings.
 	LcdState *const state = &g_gfxState.lcds[lcd];
-	iomemcpy(&pdc->h_total, &preset->h_total, offsetof(PdcPreset, pic_dim) - offsetof(PdcPreset, h_total));
+	copy32((u32*)&pdc->h_total, &preset->h_total, offsetof(PdcPreset, pic_dim) - offsetof(PdcPreset, h_total));
 	pdc->pic_dim      = preset->pic_dim;
 	pdc->pic_border_h = preset->pic_border_h;
 	pdc->pic_border_v = preset->pic_border_v;

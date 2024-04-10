@@ -71,7 +71,7 @@ BEGIN_ASM_FUNC _start no_section
 	ldr r1, =__bss_end__
 	sub r2, r1, r0
 	mov r1, #0
-	bl iomemset
+	bl clear32
 	@ Setup newlib heap
 	ldr r0, =IO_AHB_BASE        @ CFG9 regs
 	ldr r1, [r0, #0xFFC]        @ REG_CFG9_SOCINFO

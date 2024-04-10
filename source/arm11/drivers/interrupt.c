@@ -1,6 +1,6 @@
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 #include "types.h"
 #include "arm11/drivers/gic.h"
 #include "arm11/drivers/interrupt.h"
-#include "mmio.h"
+#include "memory.h"
 #include "arm.h"
 #include "arm11/drivers/cfg11.h"
 
@@ -55,7 +55,7 @@ static void configPrivateInterrupts(Gicd *const gicd)
 	gicd->pending_clear[0] = 0xFFFFFFFFu;
 
 	// Set first 32 interrupts to lowest priority.
-	iomemset(gicd->pri, 0xF0F0F0F0u, 8 * 4);
+	clear32((u32*)gicd->pri, 0xF0F0F0F0u, 8 * 4);
 
 	// Interrupt target 0-31 can't be changed.
 
@@ -111,7 +111,7 @@ static void configExternalInterrupts(Gicd *const gicd)
 		           ICONF_L_1N, ICONF_L_1N, ICONF_RSVD, ICONF_RSVD)  // 124-127
 	};
 
-	iomemcpy(&gicd->config[2], configTable, 6 * 4);
+	copy32((u32*)&gicd->config[2], configTable, 6 * 4);
 }
 
 // Note: Core 0 must execute this last.
@@ -134,8 +134,8 @@ void IRQ_init(void)
 
 		// Set the remaining 96 interrupts to lowest priority.
 		// Set the remaining 96 interrupts to target no CPU.
-		iomemset(&gicd->pri[8], 0xF0F0F0F0u, (32 - 8) * 4);
-		iomemset(&gicd->target[8], 0, (32 - 8) * 4);
+		clear32((u32*)&gicd->pri[8], 0xF0F0F0F0u, (32 - 8) * 4);
+		clear32((u32*)&gicd->target[8], 0, (32 - 8) * 4);
 
 		configExternalInterrupts(gicd);
 

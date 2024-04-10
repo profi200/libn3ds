@@ -1,6 +1,6 @@
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 #include "drivers/sha.h"
-#include "mmio.h"
+#include "memory.h"
 
 
 
@@ -50,7 +50,7 @@ void SHA_update(const u32 *data, u32 size)
 	if(size != 0u)
 	{
 		waitBusy(sha);
-		iomemcpy((vu32*)fifo, data, size);
+		copy32((u32*)fifo, data, size);
 	}
 }
 
@@ -80,7 +80,7 @@ void SHA_getState(u32 *const out)
 			size = 20;
 	}
 
-	iomemcpy(out, sha->hash, size);
+	copy32(out, (u32*)sha->hash, size);
 }
 
 void sha(const u32 *data, u32 size, u32 *const hash, u16 params, u16 hashEndianess)

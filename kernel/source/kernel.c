@@ -1,6 +1,6 @@
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 #include "kernel.h"
 #include "internal/config.h"
 #include "internal/kernel_private.h"
-#include "internal/kmemcpy_set.h"
+#include "memory.h"
 #include "internal/slabheap.h"
 #include "internal/util.h"
 #include "internal/list.h"
@@ -110,7 +110,7 @@ KHandle createTask(size_t stackSize, uint8_t priority, TaskFunc entry, void *tas
 	}
 
 	cpuRegs *const regs = (cpuRegs*)(stack + stackSize - sizeof(cpuRegs));
-	kmemset((u32*)regs, 0, sizeof(cpuRegs));
+	clear32((u32*)regs, 0, sizeof(cpuRegs));
 	regs->lr            = (u32)entry;
 	newT->prio          = priority;
 	newT->id            = g_numTasks; // TODO: Make this more sophisticated.

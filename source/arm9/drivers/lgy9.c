@@ -1,6 +1,6 @@
 /*
  *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 #include "drivers/lgy_common.h"
 #include "error_codes.h"
 #include "mem_map.h"
-#include "mmio.h"
+#include "memory.h"
 #include "drivers/cache.h"
 #include "arm9/lgy7_code.h"
 #include "fsutil.h"
@@ -39,12 +39,12 @@ static char g_savePath[512] = {0};
 
 static void setupBiosOverlay(bool directBoot)
 {
-	iomemcpy(getLgy9Regs()->a7_vector, (u32*)_gba_vector_overlay, (u32)_gba_vector_overlay_size);
+	copy32((u32*)getLgy9Regs()->a7_vector, (u32*)_gba_vector_overlay, (u32)_gba_vector_overlay_size);
 	//static const u32 biosVectors[8] = {0xEA000018, 0xEA000004, 0xEA00004C, 0xEA000002,
 	//                                   0xEA000001, 0xEA000000, 0xEA000042, 0xE59FD1A0};
-	//iomemcpy(getLgy9Regs()->a7_vector, biosVectors, 32);
+	//copy32(getLgy9Regs()->a7_vector, biosVectors, 32);
 
-	iomemcpy((u32*)LGY9_ARM7_STUB_LOC9, (u32*)_gba_boot, (u32)_gba_boot_size);
+	copy32((u32*)LGY9_ARM7_STUB_LOC9, (u32*)_gba_boot, (u32)_gba_boot_size);
 	if(!directBoot) *_gba_boot_swi_a9_addr = 0x26; // Patch swi 0x01 (RegisterRamReset) to swi 0x26 (HardReset).
 	flushDCacheRange((void*)LGY9_ARM7_STUB_LOC9, (u32)_gba_boot_size);
 }
@@ -68,7 +68,7 @@ static u32 setupSaveType(u16 saveType)
 	{
 		saveTm = saveTm1m64k;
 	}
-	iomemcpy(lgy9->gba_save_timing, saveTm, 16);
+	copy32((u32*)lgy9->gba_save_timing, saveTm, 16);
 
 	return saveSize;
 }
@@ -89,7 +89,7 @@ Result LGY_prepareGbaMode(bool directBoot, u16 saveType, const char *const saveP
 		{
 			// Ignore a missing save file and fill the save with 0xFFs.
 			res = RES_OK;
-			iomemset((u32*)LGY9_SAVE_LOC, 0xFFFFFFFFu, saveSize);
+			clear32((u32*)LGY9_SAVE_LOC, 0xFFFFFFFFu, saveSize);
 		}
 
 		// Hash the savegame so it's only backed up when changed.
