@@ -52,7 +52,7 @@
 #define GFX_PDC1_IRQS     (PDC_CNT_NO_IRQ_ALL)
 #endif // #ifndef LIBN3DS_LEGACY
 
-#define VRAM_BACKUP_LOC (LGY_ROM_LOC+LGY_MAX_ROM_SIZE)
+KHandle myHandle;
 
 typedef struct
 {
@@ -73,8 +73,6 @@ typedef struct
 } GfxState;
 
 static GfxState g_gfxState = {0};
-
-
 
 static void allocateFramebufs(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode)
 {
@@ -333,6 +331,7 @@ void GFX_init(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode)
 		bindInterruptToEvent(kevent, IRQ_PSC0 + i, 14);
 		state->events[i] = kevent;
 	}
+	myHandle = createEvent(true);
 
 	// Not in gsp. Clear entire VRAM.
 	GX_memoryFill((u32*)VRAM_BANK0, PSC_FILL_32_BITS, VRAM_BANK_SIZE, 0,
@@ -555,18 +554,14 @@ void GX_processCommandList(const u32 size, const u32 *const cmdList)
 	gx->p3d[GPUREG_CMDBUF_JUMP0] = 1;
 }
 
-static void myIrq(UNUSED u32 src)
-{
-		hidScanInput();
-		if ((hidGetExtraKeys(0) & KEY_HOME)) {
-			getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
-			getPdnRegs()->wake_enable = 0;
-			return;
-		}
+static unsigned int abc = 0;
 
-		getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
+// static void myIrq(UNUSED u32 src)
+// {
+	
+// 	signalEvent(myHandle, false);
+// }
 
-}
 
 void GFX_enterLowPowerState(void)
 {
@@ -581,26 +576,20 @@ void GFX_enterLowPowerState(void)
 	{
 		unbindInterruptEvent(IRQ_PSC0 + i);
 	}
-
-	IRQ_registerIsr(IRQ_PDN, 0, 0, myIrq);	
+	
 	getPdnRegs()->gpu_cnt = PDN_GPU_CNT_NORST_ALL;
 	getPdnRegs()->wake_enable = PDN_WAKE_SHELL_OPENED;	
-	
 	getPdnRegs()->cnt |= PDN_CNT_SLEEP;
-
-	
-	while (getPdnRegs()->wake_enable) {
-		hidScanInput();
-		if (!(hidGetExtraKeys(0) & KEY_HOME)) {
-			getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
-			getPdnRegs()->wake_enable = 0;
-			break;
-		}
-	}
 }
 
 void GFX_returnFromLowPowerState(void)
 {
+	bindInterruptToEvent(myHandle, IRQ_PDN, 14);	
+	waitForEvent(myHandle);
+	getPdnRegs()->wake_enable = 0;
+	getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;		
+	unbindInterruptEvent(IRQ_PDN);
+
 	getPdnRegs()->gpu_cnt = PDN_GPU_CNT_CLK_EN | PDN_GPU_CNT_NORST_ALL;
 
 	for(u8 i = 0; i < 6; i++)
@@ -616,6 +605,7 @@ void GFX_returnFromLowPowerState(void)
 
 	GFX_waitForVBlank0();
 	GFX_waitForVBlank0();
+	ee_printf("ABC: %d\n", abc);
 }
 
 
