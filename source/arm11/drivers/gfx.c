@@ -37,6 +37,8 @@
 #include "util.h"
 #include "arm11/allocator/vram.h"
 #include "kevent.h"
+#include "arm11/drivers/hid.h"
+#include "arm11/fmt.h"
 #include "drivers/cache.h"
 
 
@@ -549,6 +551,86 @@ void GX_processCommandList(const u32 size, const u32 *const cmdList)
 	gx->p3d[GPUREG_CMDBUF_ADDR0] = (u32)cmdList>>3;
 	gx->p3d[GPUREG_CMDBUF_JUMP0] = 1;
 }
+
+static void myIrq(UNUSED u32 src)
+{
+		hidScanInput();
+		if ((hidGetExtraKeys(0) & KEY_HOME)) {
+			getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
+			getPdnRegs()->wake_enable = 0;
+			return;
+		}
+
+		getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
+
+}
+
+void GFX_enterLowPowerState(void)
+{
+	
+	// GFX_setForceBlack(true, true);
+	
+	// Stop PDCs.
+	GxRegs *const gx = getGxRegs();
+	gx->pdc0.cnt = 0x700; // Stop
+	gx->pdc1.cnt = 0x700; // Stop
+	const u32 swap = 0x70100 | g_gfxState.swap;
+	gx->pdc0.swap = swap;
+	gx->pdc1.swap = swap;
+	
+	for(u8 i = 0; i < 6; i++)
+	{
+		unbindInterruptEvent(IRQ_PSC0 + i);
+	}
+
+	wait_cycles(1000);
+	IRQ_registerIsr(IRQ_PDN, 0, 0, myIrq);
+	getPdnRegs()->gpu_cnt = PDN_GPU_CNT_NORST_ALL;
+	getPdnRegs()->wake_enable = PDN_WAKE_SHELL_OPENED;	
+
+	
+	while (getPdnRegs()->wake_enable) {
+		hidScanInput();
+		if (!(hidGetExtraKeys(0) & KEY_HOME)) {
+			getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
+			getPdnRegs()->wake_enable = 0;
+			break;
+		}
+	}
+}
+
+void GFX_returnFromLowPowerState(void)
+{
+	getPdnRegs()->gpu_cnt = PDN_GPU_CNT_CLK_EN | PDN_GPU_CNT_NORST_ALL;
+	GxRegs *const gx = getGxRegs();
+	gx->psc_vram = 0;
+
+	for(u8 i = 0; i < 6; i++)
+	{
+		bindInterruptToEvent(g_gfxState.events[i], IRQ_PSC0 + i, 14);
+	}
+
+
+	//REG_GX_GPU_CLK = 0x70100;
+	// gx->psc_fill0.cnt = 0;
+	// gx->psc_fill1.cnt = 0;
+	// *((vu32*)0x10400050) = 0x22221200;
+	// *((vu32*)0x10400054) = 0xFF2;
+
+	// stopDisplayControllersSafe();
+	const u32 swap = 0x70100 | g_gfxState.swap;
+	gx->pdc0.swap = swap;
+	gx->pdc1.swap = swap;
+	gx->pdc0.cnt = 0x10501;
+	gx->pdc1.cnt = 0x10501;
+	
+	// GFX_setForceBlack(false, false);
+
+	GFX_waitForVBlank0();
+	GFX_waitForVBlank0();
+	ee_puts("Welcome back");
+}
+
 
 void GFX_sleep(void)
 {
