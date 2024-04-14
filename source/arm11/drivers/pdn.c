@@ -215,8 +215,6 @@ void PDN_controlGpu(const bool enableClk, const bool resetPsc, const bool resetO
 	}
 }
 
-KHandle myHandle;
-
 void PDN_sleep(void)
 {
 	getPdnRegs()->wake_enable = PDN_WAKE_SHELL_OPENED;
@@ -225,13 +223,14 @@ void PDN_sleep(void)
 
 void PDN_wakeup(void)
 {
-	if (!myHandle)
+	static KHandle pdnWakeEvent;
+	if (!pdnWakeEvent)
 	{
-		myHandle = createEvent(true);
+		pdnWakeEvent = createEvent(true);
 	}
 
-	bindInterruptToEvent(myHandle, IRQ_PDN, 14);
-	waitForEvent(myHandle);
+	bindInterruptToEvent(pdnWakeEvent, IRQ_PDN, 14);
+	waitForEvent(pdnWakeEvent);
 	getPdnRegs()->wake_enable = 0;
 	getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
 	unbindInterruptEvent(IRQ_PDN);
