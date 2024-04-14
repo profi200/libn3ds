@@ -40,7 +40,9 @@
 #include "arm11/drivers/hid.h"
 #include "arm11/fmt.h"
 #include "drivers/cache.h"
+#include <stdlib.h>
 
+#include "drivers/lgy_common.h"
 
 #ifndef LIBN3DS_LEGACY
 #define GFX_PDC0_IRQS     (PDC_CNT_NO_IRQ_ERR | PDC_CNT_NO_IRQ_H)
@@ -50,6 +52,7 @@
 #define GFX_PDC1_IRQS     (PDC_CNT_NO_IRQ_ALL)
 #endif // #ifndef LIBN3DS_LEGACY
 
+#define VRAM_BACKUP_LOC (LGY_ROM_LOC+LGY_MAX_ROM_SIZE)
 
 typedef struct
 {
@@ -567,26 +570,23 @@ static void myIrq(UNUSED u32 src)
 
 void GFX_enterLowPowerState(void)
 {
-	
-	// GFX_setForceBlack(true, true);
-	
-	// Stop PDCs.
-	GxRegs *const gx = getGxRegs();
-	gx->pdc0.cnt = 0x700; // Stop
-	gx->pdc1.cnt = 0x700; // Stop
-	const u32 swap = 0x70100 | g_gfxState.swap;
-	gx->pdc0.swap = swap;
-	gx->pdc1.swap = swap;
+	GFX_setForceBlack(true, true);
+
+	const GfxState *const state = &g_gfxState;
+	LCD_deinit(state->mcuLcdState);
+
+	stopDisplayControllersSafe();
 	
 	for(u8 i = 0; i < 6; i++)
 	{
 		unbindInterruptEvent(IRQ_PSC0 + i);
 	}
 
-	wait_cycles(1000);
-	IRQ_registerIsr(IRQ_PDN, 0, 0, myIrq);
+	IRQ_registerIsr(IRQ_PDN, 0, 0, myIrq);	
 	getPdnRegs()->gpu_cnt = PDN_GPU_CNT_NORST_ALL;
 	getPdnRegs()->wake_enable = PDN_WAKE_SHELL_OPENED;	
+	
+	getPdnRegs()->cnt |= PDN_CNT_SLEEP;
 
 	
 	while (getPdnRegs()->wake_enable) {
@@ -602,33 +602,20 @@ void GFX_enterLowPowerState(void)
 void GFX_returnFromLowPowerState(void)
 {
 	getPdnRegs()->gpu_cnt = PDN_GPU_CNT_CLK_EN | PDN_GPU_CNT_NORST_ALL;
-	GxRegs *const gx = getGxRegs();
-	gx->psc_vram = 0;
 
 	for(u8 i = 0; i < 6; i++)
 	{
 		bindInterruptToEvent(g_gfxState.events[i], IRQ_PSC0 + i, 14);
 	}
 
+	displayControllerInit(GFX_TOP_2D);
+	const GfxState *const state = &g_gfxState;
 
-	//REG_GX_GPU_CLK = 0x70100;
-	// gx->psc_fill0.cnt = 0;
-	// gx->psc_fill1.cnt = 0;
-	// *((vu32*)0x10400050) = 0x22221200;
-	// *((vu32*)0x10400054) = 0xFF2;
-
-	// stopDisplayControllersSafe();
-	const u32 swap = 0x70100 | g_gfxState.swap;
-	gx->pdc0.swap = swap;
-	gx->pdc1.swap = swap;
-	gx->pdc0.cnt = 0x10501;
-	gx->pdc1.cnt = 0x10501;
-	
-	// GFX_setForceBlack(false, false);
+	LCD_init(state->mcuLcdState<<1, state->lcdLum);
+	GFX_setForceBlack(false, false);
 
 	GFX_waitForVBlank0();
 	GFX_waitForVBlank0();
-	ee_puts("Welcome back");
 }
 
 
