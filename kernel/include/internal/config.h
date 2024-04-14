@@ -25,7 +25,7 @@
  * Maximum number of objects we can create (Slabheap).
 */
 #define MAX_TASKS        (3) // Including main and idle task.
-#define MAX_EVENTS       (10)
+#define MAX_EVENTS       (11)
 #define MAX_MUTEXES      (3)
 #define MAX_SEMAPHORES   (0)
 #define MAX_TIMERS       (0)
