@@ -256,9 +256,6 @@ void GFX_sleep(void);
  */
 void GFX_sleepAwake(void);
 
-void GFX_returnFromLowPowerState(void);
-void GFX_enterLowPowerState(void);
-
 bool GFX_setupExceptionFrameBuffer(void);
 
 #endif // #ifdef __ARM11__

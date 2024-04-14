@@ -589,6 +589,8 @@ void GFX_returnFromLowPowerState(void)
 
 void GFX_sleep(void)
 {
+	GFX_setForceBlack(true, true);
+
 	const GfxState *const state = &g_gfxState;
 	LCD_deinit(state->mcuLcdState);
 
@@ -604,6 +606,11 @@ void GFX_sleep(void)
 	// Stop display controllers.
 	stopDisplayControllersSafe();
 
+	for(u8 i = 0; i < 6; i++)
+	{
+		unbindInterruptEvent(IRQ_PSC0 + i);
+	}
+
 	// Wait for at least 1 horizontal line. 40 µs in this case.
 	// 16713.680875044929009032708 / 413 = 40.468960956525251837852 µs.
 	// TODO: 40 µs may not be enough in legacy mode?
@@ -618,12 +625,19 @@ void GFX_sleep(void)
 
 	// Stop clock.
 	PDN_controlGpu(false, false, false);
+	PDN_sleep();
 }
 
 void GFX_sleepAwake(void)
 {
+	PDN_wakeup();
 	// Resume clock and reset PSC.
 	PDN_controlGpu(true, true, false);
+
+	for(u8 i = 0; i < 6; i++)
+	{
+		bindInterruptToEvent(g_gfxState.events[i], IRQ_PSC0 + i, 14);
+	}
 
 	// Restore PSC settings.
 	GxRegs *const gx = getGxRegs();
@@ -642,23 +656,14 @@ void GFX_sleepAwake(void)
 	// TODO: Do we need the PPF hardware bug workaround here too?
 	//       Since PPF is not being reset i don't think so?
 
-	// Initialize display controllers.
-	// gsp does completely reinitialize both display controllers here.
-	// Since both PDCs are not reset in sleep mode this is not strictly necessary.
-	// Warning: If we decide to change this to a full reinit restore the mode!
-	const GfxState *const state = &g_gfxState;
-	gx->pdc0.swap = state->swap;    // Bit 1 is not writable.
-	gx->pdc1.swap = state->swap>>1;
-	gx->pdc0.cnt  = PDC_CNT_OUT_EN | GFX_PDC0_IRQS | PDC_CNT_EN;
-	gx->pdc1.cnt  = PDC_CNT_OUT_EN | GFX_PDC1_IRQS | PDC_CNT_EN;
+	displayControllerInit(GFX_TOP_2D);
 
 	// TODO: Enable 3D LED if needed.
 
 	// Power on LCDs and backlights.
+	const GfxState *const state = &g_gfxState;
 	LCD_init(state->mcuLcdState<<1, state->lcdLum);
 
-	// Active backlight and luminance stuff.
-	// TODO
 
 	// Not from gsp. Wait for VRAM clear finish.
 	GFX_waitForPSC0();
@@ -666,6 +671,9 @@ void GFX_sleepAwake(void)
 
 	// Enable frame buffer output.
 	GFX_setForceBlack(false, false);
+
+	GFX_waitForVBlank0();
+	GFX_waitForVBlank0();
 }
 
 bool GFX_setupExceptionFrameBuffer(void)
