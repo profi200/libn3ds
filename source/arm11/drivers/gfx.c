@@ -37,12 +37,8 @@
 #include "util.h"
 #include "arm11/allocator/vram.h"
 #include "kevent.h"
-#include "arm11/drivers/hid.h"
-#include "arm11/fmt.h"
 #include "drivers/cache.h"
-#include <stdlib.h>
 
-#include "drivers/lgy_common.h"
 
 #ifndef LIBN3DS_LEGACY
 #define GFX_PDC0_IRQS     (PDC_CNT_NO_IRQ_ERR | PDC_CNT_NO_IRQ_H)
@@ -51,6 +47,7 @@
 #define GFX_PDC0_IRQS     (PDC_CNT_NO_IRQ_ERR | PDC_CNT_NO_IRQ_H)
 #define GFX_PDC1_IRQS     (PDC_CNT_NO_IRQ_ALL)
 #endif // #ifndef LIBN3DS_LEGACY
+
 
 typedef struct
 {
@@ -71,6 +68,8 @@ typedef struct
 } GfxState;
 
 static GfxState g_gfxState = {0};
+
+
 
 static void allocateFramebufs(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode)
 {
@@ -554,17 +553,15 @@ void GX_processCommandList(const u32 size, const u32 *const cmdList)
 void GFX_enterLowPowerState(void)
 {
 	GFX_setForceBlack(true, true);
-
 	const GfxState *const state = &g_gfxState;
 	LCD_deinit(state->mcuLcdState);
-
 	stopDisplayControllersSafe();
-	
+
 	for(u8 i = 0; i < 6; i++)
 	{
 		unbindInterruptEvent(IRQ_PSC0 + i);
 	}
-	
+
 	PDN_controlGpu(false, false, false);
 	PDN_sleep();
 }

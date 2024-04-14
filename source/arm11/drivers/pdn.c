@@ -219,7 +219,7 @@ KHandle myHandle;
 
 void PDN_sleep(void)
 {
-	getPdnRegs()->wake_enable = PDN_WAKE_SHELL_OPENED;	
+	getPdnRegs()->wake_enable = PDN_WAKE_SHELL_OPENED;
 	getPdnRegs()->cnt |= PDN_CNT_SLEEP;
 }
 
@@ -229,10 +229,10 @@ void PDN_wakeup(void)
 	{
 		myHandle = createEvent(true);
 	}
-	
-	bindInterruptToEvent(myHandle, IRQ_PDN, 14);	
+
+	bindInterruptToEvent(myHandle, IRQ_PDN, 14);
 	waitForEvent(myHandle);
 	getPdnRegs()->wake_enable = 0;
-	getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;		
+	getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
 	unbindInterruptEvent(IRQ_PDN);
 }
