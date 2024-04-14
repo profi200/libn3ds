@@ -52,8 +52,6 @@
 #define GFX_PDC1_IRQS     (PDC_CNT_NO_IRQ_ALL)
 #endif // #ifndef LIBN3DS_LEGACY
 
-KHandle myHandle;
-
 typedef struct
 {
 	u8 *bufs[4];   // PDC frame buffer pointers in order: A0, B0, A1, B1.
@@ -331,7 +329,6 @@ void GFX_init(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode)
 		bindInterruptToEvent(kevent, IRQ_PSC0 + i, 14);
 		state->events[i] = kevent;
 	}
-	myHandle = createEvent(true);
 
 	// Not in gsp. Clear entire VRAM.
 	GX_memoryFill((u32*)VRAM_BANK0, PSC_FILL_32_BITS, VRAM_BANK_SIZE, 0,
@@ -554,15 +551,6 @@ void GX_processCommandList(const u32 size, const u32 *const cmdList)
 	gx->p3d[GPUREG_CMDBUF_JUMP0] = 1;
 }
 
-static unsigned int abc = 0;
-
-// static void myIrq(UNUSED u32 src)
-// {
-	
-// 	signalEvent(myHandle, false);
-// }
-
-
 void GFX_enterLowPowerState(void)
 {
 	GFX_setForceBlack(true, true);
@@ -577,20 +565,14 @@ void GFX_enterLowPowerState(void)
 		unbindInterruptEvent(IRQ_PSC0 + i);
 	}
 	
-	getPdnRegs()->gpu_cnt = PDN_GPU_CNT_NORST_ALL;
-	getPdnRegs()->wake_enable = PDN_WAKE_SHELL_OPENED;	
-	getPdnRegs()->cnt |= PDN_CNT_SLEEP;
+	PDN_controlGpu(false, false, false);
+	PDN_sleep();
 }
 
 void GFX_returnFromLowPowerState(void)
 {
-	bindInterruptToEvent(myHandle, IRQ_PDN, 14);	
-	waitForEvent(myHandle);
-	getPdnRegs()->wake_enable = 0;
-	getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;		
-	unbindInterruptEvent(IRQ_PDN);
-
-	getPdnRegs()->gpu_cnt = PDN_GPU_CNT_CLK_EN | PDN_GPU_CNT_NORST_ALL;
+	PDN_wakeup();
+	PDN_controlGpu(true, false, false);
 
 	for(u8 i = 0; i < 6; i++)
 	{
@@ -605,7 +587,6 @@ void GFX_returnFromLowPowerState(void)
 
 	GFX_waitForVBlank0();
 	GFX_waitForVBlank0();
-	ee_printf("ABC: %d\n", abc);
 }
 
 

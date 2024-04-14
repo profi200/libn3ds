@@ -25,6 +25,7 @@
 #include "arm11/start.h"
 #include "util.h"
 #include "arm11/drivers/scu.h"
+#include "kevent.h"
 
 
 //#define CORE123_INIT (1)
@@ -212,4 +213,26 @@ void PDN_controlGpu(const bool enableClk, const bool resetPsc, const bool resetO
 		wait_cycles(12); // 4x the needed cycles in case we are in LGR2 mode.
 		pdn->gpu_cnt = reg | PDN_GPU_CNT_NORST_ALL;
 	}
+}
+
+KHandle myHandle;
+
+void PDN_sleep(void)
+{
+	getPdnRegs()->wake_enable = PDN_WAKE_SHELL_OPENED;	
+	getPdnRegs()->cnt |= PDN_CNT_SLEEP;
+}
+
+void PDN_wakeup(void)
+{
+	if (!myHandle)
+	{
+		myHandle = createEvent(true);
+	}
+	
+	bindInterruptToEvent(myHandle, IRQ_PDN, 14);	
+	waitForEvent(myHandle);
+	getPdnRegs()->wake_enable = 0;
+	getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;		
+	unbindInterruptEvent(IRQ_PDN);
 }
