@@ -550,43 +550,6 @@ void GX_processCommandList(const u32 size, const u32 *const cmdList)
 	gx->p3d[GPUREG_CMDBUF_JUMP0] = 1;
 }
 
-void GFX_enterLowPowerState(void)
-{
-	GFX_setForceBlack(true, true);
-	const GfxState *const state = &g_gfxState;
-	LCD_deinit(state->mcuLcdState);
-	stopDisplayControllersSafe();
-
-	for(u8 i = 0; i < 6; i++)
-	{
-		unbindInterruptEvent(IRQ_PSC0 + i);
-	}
-
-	PDN_controlGpu(false, false, false);
-	PDN_sleep();
-}
-
-void GFX_returnFromLowPowerState(void)
-{
-	PDN_wakeup();
-	PDN_controlGpu(true, false, false);
-
-	for(u8 i = 0; i < 6; i++)
-	{
-		bindInterruptToEvent(g_gfxState.events[i], IRQ_PSC0 + i, 14);
-	}
-
-	displayControllerInit(GFX_TOP_2D);
-	const GfxState *const state = &g_gfxState;
-
-	LCD_init(state->mcuLcdState<<1, state->lcdLum);
-	GFX_setForceBlack(false, false);
-
-	GFX_waitForVBlank0();
-	GFX_waitForVBlank0();
-}
-
-
 void GFX_sleep(void)
 {
 	GFX_setForceBlack(true, true);
