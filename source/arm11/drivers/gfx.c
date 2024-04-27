@@ -586,17 +586,10 @@ void GFX_sleep(void)
 	GxRegs *const gx = getGxRegs();
 	gx->psc_vram |= PSC_VRAM_BANK_DIS_ALL;
 
-	// Stop clock.
-	PDN_controlGpu(false, false, false);
-	PDN_sleep();
 }
 
 void GFX_sleepAwake(void)
 {
-	PDN_wakeup();
-	// Resume clock and reset PSC.
-	PDN_controlGpu(true, true, false);
-
 	for(u8 i = 0; i < 6; i++)
 	{
 		bindInterruptToEvent(g_gfxState.events[i], IRQ_PSC0 + i, 14);

@@ -215,23 +215,28 @@ void PDN_controlGpu(const bool enableClk, const bool resetPsc, const bool resetO
 	}
 }
 
+static void my_isr(u32 intSource) {
+	getPdnRegs()->wake_enable = 0;
+	getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
+}
+
 void PDN_sleep(void)
 {
+	IRQ_registerIsr(IRQ_PDN, 14, 0, my_isr);
 	getPdnRegs()->wake_enable = PDN_WAKE_SHELL_OPENED;
+	
 	getPdnRegs()->cnt |= PDN_CNT_SLEEP;
+
+	// turning off Gpu needs to be done after sleeping
+	PDN_controlGpu(false, false, false);
+
+	__wfi();
+
+	getPdnRegs()->wake_enable = 0;
+	getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
 }
 
 void PDN_wakeup(void)
 {
-	static KHandle pdnWakeEvent;
-	if (!pdnWakeEvent)
-	{
-		pdnWakeEvent = createEvent(true);
-	}
-
-	bindInterruptToEvent(pdnWakeEvent, IRQ_PDN, 14);
-	waitForEvent(pdnWakeEvent);
-	getPdnRegs()->wake_enable = 0;
-	getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
-	unbindInterruptEvent(IRQ_PDN);
+	PDN_controlGpu(true, true, false);
 }
