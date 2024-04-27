@@ -580,11 +580,7 @@ void GFX_sleep(void)
 	TIMER_sleepUs(40);
 
 	// Flush caches to VRAM.
-	flushDCacheRange((void*)VRAM_BASE, VRAM_SIZE);
-
-	// Disable VRAM banks. This is needed for PDN sleep mode.
-	GxRegs *const gx = getGxRegs();
-	gx->psc_vram |= PSC_VRAM_BANK_DIS_ALL;
+	flushDCacheRange((void*)VRAM_BASE, VRAM_SIZE);	
 
 }
 
@@ -597,7 +593,6 @@ void GFX_sleepAwake(void)
 
 	// Restore PSC settings.
 	GxRegs *const gx = getGxRegs();
-	gx->psc_vram &= ~PSC_VRAM_BANK_DIS_ALL;
 	gx->gpu_clk  = 0x70100;
 	gx->psc_fill0.cnt = 0;
 	gx->psc_fill1.cnt = 0;

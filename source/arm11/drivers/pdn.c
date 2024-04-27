@@ -26,6 +26,7 @@
 #include "util.h"
 #include "arm11/drivers/scu.h"
 #include "kevent.h"
+#include "arm11/drivers/gx.h"
 
 
 //#define CORE123_INIT (1)
@@ -215,28 +216,35 @@ void PDN_controlGpu(const bool enableClk, const bool resetPsc, const bool resetO
 	}
 }
 
-static void my_isr(u32 intSource) {
+static void pdn_isr(UNUSED u32 intSource) 
+{
 	getPdnRegs()->wake_enable = 0;
 	getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
 }
 
 void PDN_sleep(void)
 {
-	IRQ_registerIsr(IRQ_PDN, 14, 0, my_isr);
+	IRQ_registerIsr(IRQ_PDN, 14, 0, pdn_isr);
 	getPdnRegs()->wake_enable = PDN_WAKE_SHELL_OPENED;
-	
+
+	if (getPdnRegs()->cnt & PDN_CNT_VRAM_OFF)
+	{
+		// Disable VRAM banks. This is needed for PDN sleep mode.
+		GxRegs *const gx = getGxRegs();
+		gx->psc_vram |= PSC_VRAM_BANK_DIS_ALL;
+	}
+
 	getPdnRegs()->cnt |= PDN_CNT_SLEEP;
 
 	// turning off Gpu needs to be done after sleeping
 	PDN_controlGpu(false, false, false);
-
 	__wfi();
-
-	getPdnRegs()->wake_enable = 0;
-	getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
 }
 
 void PDN_wakeup(void)
 {
 	PDN_controlGpu(true, true, false);
+	GxRegs *const gx = getGxRegs();
+	gx->psc_vram &= ~PSC_VRAM_BANK_DIS_ALL;
+
 }
