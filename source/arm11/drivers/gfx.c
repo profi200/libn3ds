@@ -607,15 +607,15 @@ void GFX_sleepAwake(void)
 	// TODO: Do we need the PPF hardware bug workaround here too?
 	//       Since PPF is not being reset i don't think so?
 
-    // Initialize display controllers.
-    // gsp does completely reinitialize both display controllers here.
-    // Since both PDCs are not reset in sleep mode this is not strictly necessary.
-    // Warning: If we decide to change this to a full reinit restore the mode!
-    const GfxState *const state = &g_gfxState;
-    gx->pdc0.swap = state->swap;    // Bit 1 is not writable.
-    gx->pdc1.swap = state->swap>>1;
-    gx->pdc0.cnt  = PDC_CNT_OUT_EN | GFX_PDC0_IRQS | PDC_CNT_EN;
-    gx->pdc1.cnt  = PDC_CNT_OUT_EN | GFX_PDC1_IRQS | PDC_CNT_EN;
+	// Initialize display controllers.
+	// gsp does completely reinitialize both display controllers here.
+	// Since both PDCs are not reset in sleep mode this is not strictly necessary.
+	// Warning: If we decide to change this to a full reinit restore the mode!
+	const GfxState *const state = &g_gfxState;
+	gx->pdc0.swap = state->swap;	// Bit 1 is not writable.
+	gx->pdc1.swap = state->swap>>1;
+	gx->pdc0.cnt  = PDC_CNT_OUT_EN | GFX_PDC0_IRQS | PDC_CNT_EN;
+	gx->pdc1.cnt  = PDC_CNT_OUT_EN | GFX_PDC1_IRQS | PDC_CNT_EN;
 
 	// TODO: Enable 3D LED if needed.
 
