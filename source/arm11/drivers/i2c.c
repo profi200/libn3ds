@@ -144,6 +144,41 @@ static bool startTransfer(const u8 devAddr, const u8 regAddr, const bool read, c
 	return tries > 0;
 }
 
+static bool startTransfer_no_reg(const u8 devAddr, const bool read, const I2cState *const state)
+{
+	u32 tries = 8;
+	I2cBus *const i2cBus = state->i2cBus;
+	const KHandle event = state->event;
+	do
+	{
+		// Edge case on previous transfer error (NACK).
+		// This is a special case where we can't predict when or if
+		// the IRQ has fired. If it fires after checking but
+		// before a wfi this would hang.
+		if(i2cBus->cnt & I2C_EN) waitForEvent(event);
+		clearEvent(event);
+
+		// Select device and start.
+		sendByte(i2cBus, devAddr, I2C_START, event);
+		if(!checkAck(i2cBus)) continue;
+
+		// Select register.
+		// sendByte(i2cBus, regAddr, 0, event);
+		// if(!checkAck(i2cBus)) continue;
+
+		// Select device in read mode for read transfer.
+		if(read)
+		{
+			sendByte(i2cBus, devAddr | 1u, I2C_START, event);
+			if(!checkAck(i2cBus)) continue;
+		}
+
+		break;
+	} while(--tries > 0);
+
+	return tries > 0;
+}
+
 bool I2C_readRegArray(const I2cDevice devId, const u8 regAddr, void *out, u32 size)
 {
 	const u8 devAddr = g_i2cDevTable[devId].devAddr;
@@ -157,6 +192,31 @@ bool I2C_readRegArray(const I2cDevice devId, const u8 regAddr, void *out, u32 si
 	bool res = true;
 	lockMutex(mutex);
 	if(startTransfer(devAddr, regAddr, true, state))
+	{
+		while(--size) *ptr8++ = recvByte(i2cBus, I2C_ACK, event);
+
+		// Last byte transfer.
+		*ptr8 = recvByte(i2cBus, I2C_STOP, event);
+	}
+	else res = false;
+	unlockMutex(mutex);
+
+	return res;
+}
+
+bool I2C_readArray(const I2cDevice devId, void *out, u32 size)
+{
+	const u8 devAddr = g_i2cDevTable[devId].devAddr;
+	const I2cState *const state = &g_i2cState[g_i2cDevTable[devId].busId];
+	I2cBus *const i2cBus = state->i2cBus;
+	const KHandle event = state->event;
+	const KHandle mutex = state->mutex;
+	u8 *ptr8 = out;
+
+
+	bool res = true;
+	lockMutex(mutex);
+	if(startTransfer_no_reg(devAddr, true, state))
 	{
 		while(--size) *ptr8++ = recvByte(i2cBus, I2C_ACK, event);
 

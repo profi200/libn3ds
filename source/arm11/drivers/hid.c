@@ -27,7 +27,9 @@
 #include "arm11/drivers/interrupt.h"
 #include "arm11/drivers/gpio.h"
 #include "arm11/drivers/codec.h"
+#include "arm11/drivers/device17.h"
 
+#include "arm11/fmt.h"
 
 #define MCU_HID_IRQ_MASK  (MCU_IRQ_VOL_SLIDER_CHANGE | MCU_IRQ_BATT_CHARGE_START | \
                            MCU_IRQ_BATT_CHARGE_STOP | MCU_IRQ_SHELL_OPEN | \
@@ -36,14 +38,30 @@
                            MCU_IRQ_POWER_HELD | MCU_IRQ_POWER_PRESS)
 
 #define CPAD_THRESHOLD  (400)
-
+#define CSTICK_THRESHOLD (3)
 
 static u32 g_kHeld = 0, g_kDown = 0, g_kUp = 0;
 static u32 g_extraKeys = 0;
+static bool g_useDevice17 = false;
 TouchPos g_tPos = {0};
 CpadPos g_cPos = {0};
 
 
+
+bool hasDevice17(void)
+{
+	McuSysModel model = MCU_getSystemModel();
+	switch(model)
+	{
+		case SYS_MODEL_N2DS_XL:
+		case SYS_MODEL_N3DS:
+		case SYS_MODEL_N3DS_XL:
+		return true;
+
+		default:
+		return false;
+	}
+}
 
 void hidInit(void)
 {
@@ -58,7 +76,7 @@ void hidInit(void)
 	state = MCU_getEarlyButtonsHeld();
 	tmp |= ~state<<1 & KEY_HOME;          // Current HOME button state
 	g_extraKeys = tmp;
-
+	g_useDevice17 = hasDevice17();
 	CODEC_init();
 }
 
@@ -111,12 +129,35 @@ static u32 rawCodec2Hid(void)
 	return fakeKeys;
 }
 
+u32 device17ToHid(void)
+{
+	u32 key = 0;
+	Device17* dev = Device17_GetDevice();
+	
+	key |= (dev->button & ZL) ? KEY_ZL : 0;
+	key |= (dev->button & ZR) ? KEY_ZR : 0;
+
+	if (dev->cstick_y_coarse >= CSTICK_THRESHOLD) key |= KEY_CSTICK_UP;
+	if (dev->cstick_y_coarse <= -CSTICK_THRESHOLD) key |= KEY_CSTICK_DOWN;
+	if (dev->cstick_x_coarse >= CSTICK_THRESHOLD) key |= KEY_CSTICK_LEFT;
+	if (dev->cstick_x_coarse <= -CSTICK_THRESHOLD) key |= KEY_CSTICK_RIGHT;
+	
+	return key;
+}
+
 void hidScanInput(void)
 {
 	updateMcuHidState();
 
 	const u32 kOld = g_kHeld;
 	g_kHeld = rawCodec2Hid() | REG_HID_PAD;
+
+	
+	if (g_useDevice17) {
+		Device17_Poll();
+		g_kHeld |= device17ToHid();
+	}
+
 	g_kDown = (~kOld) & g_kHeld;
 	g_kUp = kOld & (~g_kHeld);
 }
