@@ -27,7 +27,7 @@
 #include "arm11/drivers/interrupt.h"
 #include "arm11/drivers/gpio.h"
 #include "arm11/drivers/codec.h"
-#include "arm11/drivers/device17.h"
+#include "arm11/drivers/n3ds_exthid.h"
 
 #include "arm11/fmt.h"
 
@@ -42,13 +42,13 @@
 
 static u32 g_kHeld = 0, g_kDown = 0, g_kUp = 0;
 static u32 g_extraKeys = 0;
-static bool g_useDevice17 = false;
+static bool g_useN3DSEXTHID = false;
 TouchPos g_tPos = {0};
 CpadPos g_cPos = {0};
 
 
 
-bool hasDevice17(void)
+bool hasN3DSEXTHID(void)
 {
 	McuSysModel model = MCU_getSystemModel();
 	switch(model)
@@ -76,7 +76,7 @@ void hidInit(void)
 	state = MCU_getEarlyButtonsHeld();
 	tmp |= ~state<<1 & KEY_HOME;          // Current HOME button state
 	g_extraKeys = tmp;
-	g_useDevice17 = hasDevice17();
+	g_useN3DSEXTHID = hasN3DSEXTHID();
 	CODEC_init();
 }
 
@@ -129,10 +129,10 @@ static u32 rawCodec2Hid(void)
 	return fakeKeys;
 }
 
-u32 device17ToHid(void)
+u32 N3DS_EXTHIDToHid(void)
 {
 	u32 key = 0;
-	Device17* dev = Device17_GetDevice();
+	N3DS_EXTHID* dev = N3DS_EXTHID_GetDevice();
 	
 	key |= (dev->button & ZL) ? KEY_ZL : 0;
 	key |= (dev->button & ZR) ? KEY_ZR : 0;
@@ -153,9 +153,9 @@ void hidScanInput(void)
 	g_kHeld = rawCodec2Hid() | REG_HID_PAD;
 
 	
-	if (g_useDevice17) {
-		Device17_Poll();
-		g_kHeld |= device17ToHid();
+	if (g_useN3DSEXTHID) {
+		N3DS_EXTHID_Poll();
+		g_kHeld |= N3DS_EXTHIDToHid();
 	}
 
 	g_kDown = (~kOld) & g_kHeld;

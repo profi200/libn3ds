@@ -24,7 +24,7 @@ extern "C"
 
 #include "types.h"
 
-enum Device17_Button {
+enum N3DS_EXTHID_Button {
     ZR = (1<<1),
     ZL = (1<<2),
 };
@@ -32,18 +32,18 @@ enum Device17_Button {
 typedef struct
 {
     u8 _status;
-    enum Device17_Button button;
+    enum N3DS_EXTHID_Button button;
     s8 cstick_y_coarse;
     s8 cstick_x_coarse;
     u8 _ignored;
     s8 cstick_y_fine;
     s8 cstick_x_fine;
 
-} Device17;
+} N3DS_EXTHID;
 
-void Device17_Poll(void);
+void N3DS_EXTHID_Poll(void);
 
-Device17* Device17_GetDevice(void);
+N3DS_EXTHID* N3DS_EXTHID_GetDevice(void);
 
 #ifdef __cplusplus
 } // extern "C"
