@@ -123,6 +123,8 @@ void I2C_init(void);
  */
 bool I2C_readRegArray(const I2cDevice devId, const u8 regAddr, void *out, u32 size);
 
+bool I2C_readArray(const I2cDevice devId, void *out, u32 size);
+
 /**
  * @brief      Writes an array of bytes to an array of registers via I2C.
  *
