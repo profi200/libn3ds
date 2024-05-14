@@ -110,13 +110,19 @@ Result LGY_setGbaRtc(const GbaRtc rtc)
 
 	//while(lgy9->gba_rtc_cnt & LGY9_RTC_CNT_BUSY);
 	//lgy9->gba_rtc_cnt = 0; // Legacy P9 does this. Useless?
-	lgy9->gba_rtc_toffset = 1u<<15; // Time offset 0 and 24h format.
-	lgy9->gba_rtc_doffset = 0;      // Date offset 0.
+	lgy9->gba_rtc_toffset = LGY9_RTC_TOFFS_24H; // Time offset 0 and 24h format.
+	lgy9->gba_rtc_doffset = 0;                  // Date offset 0.
 	lgy9->gba_rtc_cnt = LGY9_RTC_CNT_WR;
 	while(lgy9->gba_rtc_cnt & LGY9_RTC_CNT_BUSY);
 
-	if(lgy9->gba_rtc_cnt & LGY9_RTC_CNT_WR_ERR) return RES_GBA_RTC_ERR;
-	else                                        return RES_OK;
+	if(lgy9->gba_rtc_cnt & LGY9_RTC_CNT_WR_ERR)
+	{
+		return RES_GBA_RTC_ERR;
+	}
+	else
+	{
+		return RES_OK;
+	}
 }
 
 Result LGY_getGbaRtc(GbaRtc *const out)
