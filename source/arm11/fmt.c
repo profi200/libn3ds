@@ -59,6 +59,8 @@ This code is based on a file that contains the following:
 
 //TuxSH's changes: add support for 64-bit numbers, remove floating-point code
 
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdarg.h>
 #include <string.h>
 #include "types.h"
