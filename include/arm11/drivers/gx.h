@@ -181,6 +181,10 @@ enum
 	GX_RGBA4  = 4u
 };
 
+// REG_GX_GPU_CLK
+// Bit 0 causes a huge performance drop when copying from VRAM A to B via PPF.
+// Also screws up PDC DMA causing garbage to be displayed.
+
 // REG_GX_PSC_DMA_PRIO0
 // TODO: Figure this out + testing.
 // 4 bits for each priority.
@@ -207,7 +211,7 @@ enum
 #define PSC_VRAM_BANK2_DIS       (1u<<10)
 #define PSC_VRAM_BANK3_DIS       (1u<<11)
 #define PSC_VRAM_BANK_DIS_ALL    (PSC_VRAM_BANK3_DIS | PSC_VRAM_BANK2_DIS | PSC_VRAM_BANK1_DIS | PSC_VRAM_BANK0_DIS)
-// Bits 16-17 unknown.
+// Bits 16-17 unknown. Setting both causes a huge performance drop when copying from VRAM A to B via PPF.
 
 // REG_GX_PSC_IRQ_STAT
 // Bit 0 and 1 exist. Unknown purpose.
