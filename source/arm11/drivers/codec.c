@@ -27,6 +27,7 @@
 #include "arm11/drivers/timer.h"
 #include "arm11/drivers/gpio.h"
 #include "arm11/drivers/mcu.h"
+#include "arm11/drivers/i2s.h"
 
 
 typedef enum
@@ -345,15 +346,13 @@ static void soundInit(const CodecCalBase *const cal)
 		TIMER_sleepMs(10);                        // Fixed 10 ms delay when changing this GPIO to high.
 	}
 
-	// TODO: Clean this up.
-	// Before enabling the I2S interfaces make sure they are fully
-	// off so we can write to all bits in these registers.
-	*((vu16*)0x10145000) = 0;
-	*((vu16*)0x10145002) = 0;
-	// Bit 14 is MCLK1 multiplier (8 and 16 MHz)? I2S1: DSP and GBA 32728.498046875 Hz.
-	*((vu16*)0x10145000) = 1u<<15 | 2u<<13 | 32u<<6;
-	// Bit 14 is MCLK2 multiplier (8 and 16 MHz)? I2S2: CSND 47605.08806818181818182 Hz.
-	*((vu16*)0x10145002) = 1u<<15 | 3u<<13;
+	// Setup I2S outputs.
+	// Clear enable bits first so we can write all other bits.
+	I2sRegs *const i2s = getI2sRegs();
+	i2s->i2s1_cnt = 0;
+	i2s->i2s2_cnt = 0;
+	i2s->i2s1_cnt = I2S1_EN | I2S1_MCLK1_16MHZ | I2S1_FREQ_32KHZ | I2S1_LGY_VOL(32) | I2S1_DSP_VOL(0);
+	i2s->i2s2_cnt = I2S2_EN | I2S2_MCLK2_16MHZ | I2S2_FREQ_47KHZ;
 
 	// Speaker driver powerup time?
 	maskReg(CDC_REG_101_17, 0x10, 0x1C);
@@ -545,8 +544,13 @@ bool g_legacySwitchState = false;
 
 void CODEC_deinit(void)
 {
-	GPIO_write(GPIO_3_0, 1); // GPIO bitmask 0x40
-	TIMER_sleepMs(10); // Fixed 10 ms delay when setting this GPIO.
+	const McuSysModel sysModel = MCU_getSystemModel();
+	if(sysModel == SYS_MODEL_3DS)
+	{
+		GPIO_write(GPIO_CTR_DEPOP, 1); // GPIO bitmask 0x40.
+		TIMER_sleepMs(10);             // Fixed 10 ms delay when setting this GPIO.
+	}
+
 	g_legacySwitchState = (readReg(CDC_REG_103_37) & 0x40u) != 0;
 	if(!g_legacySwitchState) legacyTouchscreenMode(true);
 	maskReg(CDC_REG_103_37, 0, 3);
@@ -566,20 +570,35 @@ void CODEC_deinit(void)
 		if(readReg(CDC_REG_100_34) & 1u) break;
 		TIMER_sleepMs(1);
 	}
-	*((vu16*)0x10145000) &= ~0x8000u;
-	*((vu16*)0x10145002) &= ~0x8000u;
+
+	I2sRegs *const i2s = getI2sRegs();
+	i2s->i2s1_cnt &= ~I2S1_EN;
+	i2s->i2s2_cnt &= ~I2S2_EN;
+
 	getPdnRegs()->i2s_cnt = 0;
-	GPIO_write(GPIO_3_0, 0); // GPIO bitmask 0x40
-	TIMER_sleepMs(18); // Fixed 18 ms delay when unsetting this GPIO.
+
+	if(sysModel == SYS_MODEL_3DS)
+	{
+		GPIO_write(GPIO_CTR_DEPOP, 0); // GPIO bitmask 0x40.
+		TIMER_sleepMs(18);             // Fixed 18 ms delay when unsetting this GPIO.
+	}
 }
 
 void CODEC_wakeup(void)
 {
-	GPIO_write(GPIO_3_0, 1); // GPIO bitmask 0x40
-	TIMER_sleepMs(10); // Fixed 10 ms delay when setting this GPIO.
+	const McuSysModel sysModel = MCU_getSystemModel();
+	if(sysModel == SYS_MODEL_3DS)
+	{
+		GPIO_write(GPIO_CTR_DEPOP, 1); // GPIO bitmask 0x40.
+		TIMER_sleepMs(10);             // Fixed 10 ms delay when setting this GPIO.
+	}
+
 	getPdnRegs()->i2s_cnt = PDN_I2S_CNT_I2S_CLK2_EN;
-	*((vu16*)0x10145000) |= 0x8000u;
-	*((vu16*)0x10145002) |= 0x8000u;
+
+	I2sRegs *const i2s = getI2sRegs();
+	i2s->i2s1_cnt |= I2S1_EN;
+	i2s->i2s2_cnt |= I2S2_EN;
+
 	//maskReg(0x64, 0x45, 0, 0x30); // Output select automatic
 	maskReg(CDC_REG_100_67, 0, 0x80);
 	maskReg(CDC_REG_100_67, 0x80, 0x80);
@@ -600,8 +619,12 @@ void CODEC_wakeup(void)
 	maskReg(CDC_REG_103_37, 3, 3);
 	legacyTouchscreenMode(g_legacySwitchState);
 	if(g_touchscreenState) enableTouchscreen();
-	GPIO_write(GPIO_3_0, 0); // GPIO bitmask 0x40
-	TIMER_sleepMs(18); // Fixed 18 ms delay when unsetting this GPIO.
+
+	if(sysModel == SYS_MODEL_3DS)
+	{
+		GPIO_write(GPIO_CTR_DEPOP, 0); // GPIO bitmask 0x40.
+		TIMER_sleepMs(18);             // Fixed 18 ms delay when unsetting this GPIO.
+	}
 }
 
 void CODEC_runHeadphoneDetection(void)
