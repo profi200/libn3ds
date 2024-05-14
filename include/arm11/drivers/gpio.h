@@ -91,6 +91,9 @@ typedef enum
 
 	GPIO_2_HEADPH_JACK = GPIO_2_0, // Used after CODEC init.
 
+	GPIO_CTR_DEPOP     = GPIO_3_0, // Old 3DS only (not XL). Speaker pop suppression circuit.
+	GPIO_EXTHID_IRQ    = GPIO_3_0, // N3DS/N2DS (XL) only. ZL/ZR pressed and/or C-Stick sample data ready IRQ (falling edge).
+	GPIO_EXTHID_WAKE   = GPIO_3_3, // N3DS/N2DS (XL) only. Wakes up the EXTHID chip from sleep if set high?
 	GPIO_3_HEADPH_JACK = GPIO_3_8, // Unused/other function after CODEC init.
 	GPIO_3_MCU         = GPIO_3_9
 } Gpio;

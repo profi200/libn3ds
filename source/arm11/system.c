@@ -51,8 +51,8 @@ void WEAK __systemInit(void)
 		}
 
 		I2C_init();
-		hidInit();
 		MCU_init();
+		hidInit();
 	}
 	else // Any other core
 	{

@@ -26,6 +26,7 @@
 #include "arm11/drivers/pdn.h"
 #include "arm11/drivers/timer.h"
 #include "arm11/drivers/gpio.h"
+#include "arm11/drivers/mcu.h"
 
 
 typedef enum
@@ -284,7 +285,8 @@ static void headsetInit(void)
 {
 	// Headset detection stuff.
 	GPIO_config(GPIO_2_HEADPH_JACK, GPIO_IRQ_RISING | GPIO_INPUT); // Headphone jack IRQ.
-	maskReg(CDC_REG_HEADSET_SEL, GPIO_read(GPIO_2_HEADPH_JACK)<<HEADSET_SEL_HP_SHIFT | HEADSET_SEL_HP_EN, 0x30); // GPIO bitmask 8.
+	const u8 headphoneState = GPIO_read(GPIO_2_HEADPH_JACK);
+	maskReg(CDC_REG_HEADSET_SEL, headphoneState<<HEADSET_SEL_HP_SHIFT | HEADSET_SEL_HP_EN, 0x30); // GPIO bitmask 8.
 	maskReg(CDC_REG_100_67, 0, 0x80); // TODO: Can we remove this?
 	maskReg(CDC_REG_100_67, 0x80, 0x80);
 }
@@ -333,12 +335,15 @@ static void shutterSoundInit(const CodecCalBase *const cal)
 
 static void soundInit(const CodecCalBase *const cal)
 {
-	// TODO: Depop circuit stuff is CTR only.
-	// Speaker depop. Probably to suppress the noise when the driver turns on.
-	// But this doesn't stop the pop noise on o3DS (CTR) at all?
-	GPIO_config(GPIO_3_0, GPIO_OUTPUT);
-	GPIO_write(GPIO_3_0, 1); // GPIO bitmask 0x40
-	TIMER_sleepMs(10); // Fixed 10 ms delay when setting this GPIO.
+	const McuSysModel sysModel = MCU_getSystemModel();
+	if(sysModel == SYS_MODEL_3DS)
+	{
+		// Speaker pop suppression. Probably to suppress the noise when the driver turns on.
+		// But this doesn't stop the pop noise on o3DS (CTR) at all?
+		GPIO_config(GPIO_CTR_DEPOP, GPIO_OUTPUT);
+		GPIO_write(GPIO_CTR_DEPOP, 1);            // GPIO bitmask 0x40.
+		TIMER_sleepMs(10);                        // Fixed 10 ms delay when changing this GPIO to high.
+	}
 
 	// TODO: Clean this up.
 	// Before enabling the I2S interfaces make sure they are fully
@@ -439,11 +444,13 @@ static void soundInit(const CodecCalBase *const cal)
 	// outputs to be fully up and running?
 	TIMER_sleepMs(38);
 
-	// TODO: Depop circuit stuff is CTR only.
-	// Speaker depop. Probably to suppress the noise when the driver turns on.
-	// But this doesn't stop the pop noise on o3DS (CTR) at all?
-	GPIO_write(GPIO_3_0, 0); // GPIO bitmask 0x40
-	TIMER_sleepMs(18); // Fixed 18 ms delay when unsetting this GPIO.
+	if(sysModel == SYS_MODEL_3DS)
+	{
+		// Speaker pop suppression. Probably to suppress the noise when the driver turns on.
+		// But this doesn't stop the pop noise on o3DS (CTR) at all?
+		GPIO_write(GPIO_CTR_DEPOP, 0); // GPIO bitmask 0x40.
+		TIMER_sleepMs(18);             // Fixed 18 ms delay when changing this GPIO to low.
+	}
 }
 
 static void touchAndCirclePadInit(const CodecCalBase *const cal)
