@@ -474,7 +474,7 @@ static void touchAndCirclePadInit(const CodecCalBase *const cal)
 
 	// Not needed?
 	// Console dependent.
-	//I2C_writeReg(I2C_DEV_CTR_MCU, 0x26, I2C_readReg(I2C_DEV_CTR_MCU, 0x26) | 0x10);
+	//I2C_write(I2C_DEV_CTR_MCU, 0x26, I2C_read(I2C_DEV_CTR_MCU, 0x26) | 0x10);
 
 	// TODO: This should be called externally.
 	enableTouchscreen();

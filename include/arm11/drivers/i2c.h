@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -64,19 +64,19 @@ ALWAYS_INLINE I2cBus* getI2cBusRegs(const u8 busId)
 
 
 // REG_I2C_CNT
-#define I2C_STOP           (1u)
-#define I2C_START          (1u<<1)
-#define I2C_ERROR          (1u<<2)
-#define I2C_ACK            (1u<<4)
-#define I2C_DIR_S          (0u)    // Direction send.
-#define I2C_DIR_R          (1u<<5) // Direction receive.
-#define I2C_IRQ_EN         (1u<<6)
-#define I2C_EN             (1u<<7)
+#define I2C_STOP            (1u)
+#define I2C_START           (1u<<1)
+#define I2C_ERROR           (1u<<2)
+#define I2C_ACK             (1u<<4)
+#define I2C_DIR_S           (0u)    // Direction send.
+#define I2C_DIR_R           (1u<<5) // Direction receive.
+#define I2C_IRQ_EN          (1u<<6)
+#define I2C_EN              (1u<<7)
 
 // REG_I2C_CNTEX
-#define I2C_SCL_STATE_MASK (1u)     // Read-only SCL line state?
-#define I2C_CLK_STRETCH_EN (1u<<1)  // Enables clock stretching.
-#define I2C_UNK_CNTEX15    (1u<<15) // "LGCY" Legacy related?
+#define I2C_SCL_STATE_MASK  (1u)     // Read-only SCL line state?
+#define I2C_CLK_STRETCH_EN  (1u<<1)  // Enables clock stretching.
+#define I2C_UNK_CNTEX15     (1u<<15) // "LGCY" Legacy related?
 
 // REG_I2C_SCL
 #define I2C_DELAYS(high, low)  ((high)<<8 | (low)) // "PRD" TODO: How long and when does it delay?
@@ -84,81 +84,83 @@ ALWAYS_INLINE I2cBus* getI2cBusRegs(const u8 busId)
 
 typedef enum
 {
-	I2C_DEV_TWL_MCU   =  0u, // DSi mode MCU
-	I2C_DEV_CAMERA1   =  1u, // Internal self-facing camera
-	I2C_DEV_CAMERA2   =  2u, // External right camera
-	I2C_DEV_CTR_MCU   =  3u,
-	I2C_DEV_CAMERA3   =  4u, // External left camera
-	I2C_DEV_LCD0      =  5u, // Upper LCD
-	I2C_DEV_LCD1      =  6u, // Lower LCD
+	I2C_DEV_TWL_MCU   =  0u, // DSi mode MCU.
+	I2C_DEV_CAMERA1   =  1u, // Internal self-facing camera.
+	I2C_DEV_CAMERA2   =  2u, // External right camera.
+	I2C_DEV_CTR_MCU   =  3u, // 3DS mode MCU.
+	I2C_DEV_CAMERA3   =  4u, // External left camera.
+	I2C_DEV_LCD0      =  5u, // Upper LCD.
+	I2C_DEV_LCD1      =  6u, // Lower LCD.
 	I2C_DEV_UNK7      =  7u, // Debug?
 	I2C_DEV_UNK8      =  8u, // Debug?
 	I2C_DEV_UNK9      =  9u, // HID debug?
 	I2C_DEV_GYRO_OLD  = 10u, // Old 3DS only?
 	I2C_DEV_GYRO_NEW  = 11u, // New 3DS only?
 	I2C_DEV_UNK12     = 12u, // HID "DebugPad"?
-	I2C_DEV_IR        = 13u, // Infrared (IrDA)
+	I2C_DEV_IR        = 13u, // Infrared (IrDA).
 	I2C_DEV_EEPROM    = 14u, // Dev unit only?
 	I2C_DEV_NFC       = 15u,
-	I2C_DEV_QTM       = 16u, // IO expander chip (New 3DS only)
-	I2C_DEV_N3DS_HID  = 17u  // C-Stick and ZL/ZR buttons
+	I2C_DEV_QTM       = 16u, // IO expander chip (New 3DS only).
+	I2C_DEV_N3DS_HID  = 17u  // C-Stick and ZL/ZR buttons.
 } I2cDevice;
+
+#define I2C_NO_REG_VAL  (0x100u)
 
 
 
 /**
- * @brief      Initializes the I2C buses. Call this only once.
+ * @brief      Initializes the I²C buses. Call this only once.
  */
 void I2C_init(void);
 
 /**
- * @brief      Reads data from multiple registers to a buffer via I2C.
+ * @brief      Reads data from a device via I²C and stores it in a buffer.
  *
  * @param[in]  devId    The device ID.
- * @param[in]  regAddr  The start register address.
+ * @param[in]  regAddr  The start register address. If I2C_NO_REG_VAL use direct transfer (no register).
  * @param      out      The output buffer pointer.
  * @param[in]  size     The buffer size.
  *
  * @return     Returns true on success and false on failure.
  */
-bool I2C_readRegArray(const I2cDevice devId, const u8 regAddr, void *out, u32 size);
+bool I2C_readArray(const I2cDevice devId, const u32 regAddr, void *out, u32 size);
 
 /**
- * @brief      Writes an array of bytes to an array of registers via I2C.
+ * @brief      Writes data from a buffer to a device via I²C.
  *
  * @param[in]  devId    The device ID.
- * @param[in]  regAddr  The start register address.
+ * @param[in]  regAddr  The start register address. If I2C_NO_REG_VAL use direct transfer (no register).
  * @param[in]  in       The input buffer pointer.
  * @param[in]  size     The buffer size.
  *
  * @return     Returns true on success and false on failure.
  */
-bool I2C_writeRegArray(const I2cDevice devId, const u8 regAddr, const void *in, u32 size);
+bool I2C_writeArray(const I2cDevice devId, const u32 regAddr, const void *in, u32 size);
 
 /**
- * @brief      Reads a byte from a register via I2C.
+ * @brief      Reads a byte from a device via I²C.
  *
  * @param[in]  devId    The device ID.
- * @param[in]  regAddr  The register address.
+ * @param[in]  regAddr  The register address. If I2C_NO_REG_VAL use direct transfer (no register).
  *
  * @return     Returns the register data on success otherwise 0xFF.
  */
-u8 I2C_readReg(const I2cDevice devId, const u8 regAddr);
+u8 I2C_read(const I2cDevice devId, const u32 regAddr);
 
 /**
- * @brief      Writes a byte to a register via I2C.
+ * @brief      Writes a byte to a device via I²C.
  *
  * @param[in]  devId    The device ID.
- * @param[in]  regAddr  The register address.
+ * @param[in]  regAddr  The register address. If I2C_NO_REG_VAL use direct transfer (no register).
  * @param[in]  data     The data to write.
  *
  * @return     Returns true on success and false on failure.
  */
-bool I2C_writeReg(const I2cDevice devId, const u8 regAddr, const u8 data);
+bool I2C_write(const I2cDevice devId, const u32 regAddr, const u8 data);
 // ---------------------------------------------------------------- //
 
 /**
- * @brief      Writes an array of bytes to an array of registers via I2C without interrupts.
+ * @brief      Writes data from a buffer to an array of registers via I²C without interrupts.
  *
  * @param[in]  devId    The device ID. Use the enum above.
  * @param[in]  regAddr  The register address.
@@ -170,7 +172,7 @@ bool I2C_writeReg(const I2cDevice devId, const u8 regAddr, const u8 data);
 bool I2C_writeRegArrayIntSafe(const I2cDevice devId, const u8 regAddr, const void *in, u32 size);
 
 /**
- * @brief      Writes a byte to a register via I2C without interrupts.
+ * @brief      Writes a byte to a register via I²C without interrupts.
  *
  * @param[in]  devId    The device ID. Use the enum above.
  * @param[in]  regAddr  The register address.

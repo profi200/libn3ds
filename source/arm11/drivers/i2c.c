@@ -109,7 +109,7 @@ void I2C_init(void)
 	}
 }
 
-static bool startTransfer(const u8 devAddr, const u8 regAddr, const bool read, const I2cState *const state)
+static bool startTransfer(const u8 devAddr, const u32 regAddr, const bool read, const I2cState *const state)
 {
 	u32 tries = 8;
 	I2cBus *const i2cBus = state->i2cBus;
@@ -123,18 +123,28 @@ static bool startTransfer(const u8 devAddr, const u8 regAddr, const bool read, c
 		if(i2cBus->cnt & I2C_EN) waitForEvent(event);
 		clearEvent(event);
 
-		// Select device and start.
-		sendByte(i2cBus, devAddr, I2C_START, event);
-		if(!checkAck(i2cBus)) continue;
-
-		// Select register.
-		sendByte(i2cBus, regAddr, 0, event);
-		if(!checkAck(i2cBus)) continue;
-
-		// Select device in read mode for read transfer.
-		if(read)
+		// If regAddr is valid we select a register. Otherwise direct transfer.
+		if(regAddr < 0x100)
 		{
-			sendByte(i2cBus, devAddr | 1u, I2C_START, event);
+			// Select device for write and start.
+			sendByte(i2cBus, devAddr, I2C_START, event);
+			if(!checkAck(i2cBus)) continue;
+
+			// Select register.
+			sendByte(i2cBus, regAddr, 0, event);
+			if(!checkAck(i2cBus)) continue;
+
+			// Select device in read mode for read transfer.
+			if(read)
+			{
+				sendByte(i2cBus, devAddr | 1u, I2C_START, event);
+				if(!checkAck(i2cBus)) continue;
+			}
+		}
+		else
+		{
+			// Select device and start.
+			sendByte(i2cBus, (read ? devAddr | 1u : devAddr), I2C_START, event);
 			if(!checkAck(i2cBus)) continue;
 		}
 
@@ -144,7 +154,7 @@ static bool startTransfer(const u8 devAddr, const u8 regAddr, const bool read, c
 	return tries > 0;
 }
 
-bool I2C_readRegArray(const I2cDevice devId, const u8 regAddr, void *out, u32 size)
+bool I2C_readArray(const I2cDevice devId, const u32 regAddr, void *out, u32 size)
 {
 	const u8 devAddr = g_i2cDevTable[devId].devAddr;
 	const I2cState *const state = &g_i2cState[g_i2cDevTable[devId].busId];
@@ -169,7 +179,7 @@ bool I2C_readRegArray(const I2cDevice devId, const u8 regAddr, void *out, u32 si
 	return res;
 }
 
-bool I2C_writeRegArray(const I2cDevice devId, const u8 regAddr, const void *in, u32 size)
+bool I2C_writeArray(const I2cDevice devId, const u32 regAddr, const void *in, u32 size)
 {
 	const u8 devAddr = g_i2cDevTable[devId].devAddr;
 	const I2cState *const state = &g_i2cState[g_i2cDevTable[devId].busId];
@@ -208,16 +218,16 @@ bool I2C_writeRegArray(const I2cDevice devId, const u8 regAddr, const void *in, 
 	return true;
 }
 
-u8 I2C_readReg(const I2cDevice devId, const u8 regAddr)
+u8 I2C_read(const I2cDevice devId, const u32 regAddr)
 {
 	u8 data;
-	if(!I2C_readRegArray(devId, regAddr, &data, 1)) return 0xFF;
+	if(!I2C_readArray(devId, regAddr, &data, 1)) return 0xFF;
 	return data;
 }
 
-bool I2C_writeReg(const I2cDevice devId, const u8 regAddr, const u8 data)
+bool I2C_write(const I2cDevice devId, const u32 regAddr, const u8 data)
 {
-	return I2C_writeRegArray(devId, regAddr, &data, 1);
+	return I2C_writeArray(devId, regAddr, &data, 1);
 }
 // ---------------------------------------------------------------- //
 

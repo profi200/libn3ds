@@ -540,20 +540,20 @@ u8 MCU_getEarlyButtonsHeld(void)
 
 u8 MCU_readReg(McuReg reg)
 {
-	return I2C_readReg(I2C_DEV_CTR_MCU, reg);
+	return I2C_read(I2C_DEV_CTR_MCU, reg);
 }
 
 bool MCU_writeReg(McuReg reg, u8 data)
 {
-	return I2C_writeReg(I2C_DEV_CTR_MCU, reg, data);
+	return I2C_write(I2C_DEV_CTR_MCU, reg, data);
 }
 
 bool MCU_readRegArray(McuReg reg, void *out, u32 size)
 {
-	return I2C_readRegArray(I2C_DEV_CTR_MCU, reg, out, size);
+	return I2C_readArray(I2C_DEV_CTR_MCU, reg, out, size);
 }
 
 bool MCU_writeRegArray(McuReg reg, const void *const in, u32 size)
 {
-	return I2C_writeRegArray(I2C_DEV_CTR_MCU, reg, in, size);
+	return I2C_writeArray(I2C_DEV_CTR_MCU, reg, in, size);
 }

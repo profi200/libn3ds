@@ -329,10 +329,10 @@ u8 LCDI2C_readReg(const u8 lcd, const LcdI2cReg reg)
 	u8 buf[2];
 	const I2cDevice dev = (lcd == 0 ? I2C_DEV_LCD0 : I2C_DEV_LCD1);
 
-	bool res = I2C_writeReg(dev, LCD_I2C_REG_READ_ADDR, reg);
+	bool res = I2C_write(dev, LCD_I2C_REG_READ_ADDR, reg);
 	if(res)
 	{
-		res = I2C_readRegArray(dev, LCD_I2C_REG_READ_ADDR, buf, 2);
+		res = I2C_readArray(dev, LCD_I2C_REG_READ_ADDR, buf, 2);
 	}
 
 	return (res ? buf[1] : 0xFF);
@@ -342,7 +342,7 @@ bool LCDI2C_writeReg(const u8 lcd, const LcdI2cReg reg, const u8 data)
 {
 	const I2cDevice dev = (lcd == 0 ? I2C_DEV_LCD0 : I2C_DEV_LCD1);
 
-	return I2C_writeReg(dev, reg, data);
+	return I2C_write(dev, reg, data);
 }
 
 void LCDI2C_init(void)
