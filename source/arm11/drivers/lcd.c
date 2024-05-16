@@ -327,7 +327,7 @@ void LCD_setParallaxBarrier(const bool on)
 u8 LCDI2C_readReg(const u8 lcd, const LcdI2cReg reg)
 {
 	u8 buf[2];
-	const I2cDevice dev = (lcd == 0 ? I2C_DEV_LCD0 : I2C_DEV_LCD1);
+	const I2cDevice dev = (lcd == 0 ? I2C_DEV_LCD1 : I2C_DEV_LCD2);
 
 	bool res = I2C_write(dev, LCD_I2C_REG_READ_ADDR, reg);
 	if(res)
@@ -340,7 +340,7 @@ u8 LCDI2C_readReg(const u8 lcd, const LcdI2cReg reg)
 
 bool LCDI2C_writeReg(const u8 lcd, const LcdI2cReg reg, const u8 data)
 {
-	const I2cDevice dev = (lcd == 0 ? I2C_DEV_LCD0 : I2C_DEV_LCD1);
+	const I2cDevice dev = (lcd == 0 ? I2C_DEV_LCD1 : I2C_DEV_LCD2);
 
 	return I2C_write(dev, reg, data);
 }

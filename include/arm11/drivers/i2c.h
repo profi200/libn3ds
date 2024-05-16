@@ -84,24 +84,24 @@ ALWAYS_INLINE I2cBus* getI2cBusRegs(const u8 busId)
 
 typedef enum
 {
-	I2C_DEV_TWL_MCU   =  0u, // DSi mode MCU.
-	I2C_DEV_CAMERA1   =  1u, // Internal self-facing camera.
-	I2C_DEV_CAMERA2   =  2u, // External right camera.
-	I2C_DEV_CTR_MCU   =  3u, // 3DS mode MCU.
-	I2C_DEV_CAMERA3   =  4u, // External left camera.
-	I2C_DEV_LCD0      =  5u, // Upper LCD.
-	I2C_DEV_LCD1      =  6u, // Lower LCD.
-	I2C_DEV_UNK7      =  7u, // Debug?
-	I2C_DEV_UNK8      =  8u, // Debug?
-	I2C_DEV_UNK9      =  9u, // HID debug?
-	I2C_DEV_GYRO_OLD  = 10u, // Old 3DS only?
-	I2C_DEV_GYRO_NEW  = 11u, // New 3DS only?
-	I2C_DEV_UNK12     = 12u, // HID "DebugPad"?
-	I2C_DEV_IR        = 13u, // Infrared (IrDA).
-	I2C_DEV_EEPROM    = 14u, // Dev unit only?
-	I2C_DEV_NFC       = 15u,
-	I2C_DEV_QTM       = 16u, // IO expander chip (New 3DS only).
-	I2C_DEV_N3DS_HID  = 17u  // C-Stick and ZL/ZR buttons.
+	I2C_DEV_TWL_MCU =  0u, // DSi mode MCU.
+	I2C_DEV_CAMERA1 =  1u, // Internal self-facing camera.
+	I2C_DEV_CAMERA2 =  2u, // External right camera.
+	I2C_DEV_CTR_MCU =  3u, // 3DS mode MCU.
+	I2C_DEV_CAMERA3 =  4u, // External left camera.
+	I2C_DEV_LCD1    =  5u, // Upper LCD.
+	I2C_DEV_LCD2    =  6u, // Lower LCD.
+	I2C_DEV_UNK7    =  7u, // Debug?
+	I2C_DEV_UNK8    =  8u, // Debug?
+	I2C_DEV_GYRO1   =  9u, // Unknown Gyroscope vendor.
+	I2C_DEV_GYRO2   = 10u, // Old 3DS only? Invensense ITG-3270 MEMS Gyroscope.
+	I2C_DEV_GYRO3   = 11u, // New 3DS only? Unknown Gyroscope vendor.
+	I2C_DEV_UNK12   = 12u, // HID "DebugPad"?
+	I2C_DEV_IR      = 13u, // NXP SC16IS750 infrared transmitter/receiver.
+	I2C_DEV_EEPROM  = 14u, // Dev unit only. Hardware calibration data.
+	I2C_DEV_NFC     = 15u, // Broadcom BCM20791 (New 2/3DS only).
+	I2C_DEV_IO_EXP  = 16u, // Texas Instruments TCA6416A I/O expander (New 3DS only).
+	I2C_DEV_EXTHID  = 17u  // C-Stick and ZL/ZR buttons (New 2/3DS only).
 } I2cDevice;
 
 #define I2C_NO_REG_VAL  (0x100u)
