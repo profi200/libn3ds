@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,14 +27,62 @@ extern "C"
 {
 #endif
 
+/**
+ * @brief      Invalidates all instruction cache lines.
+ */
 void invalidateICache(void);
-void invalidateICacheRange(const void *base, u32 size);
-void cleanDCache(void);
-void flushDCache(void);
-void cleanDCacheRange(const void *base, u32 size);
-void flushDCacheRange(const void *base, u32 size);
+
+/**
+ * @brief      Invalidates instruction cache lines in an address range.
+ *
+ * @param[in]  base  The base address.
+ * @param[in]  size  The range size in bytes.
+ */
+void invalidateICacheRange(const void *base, size_t size);
+
+/**
+ * @brief      Invalidates all data cache lines.
+ */
 void invalidateDCache(void);
-void invalidateDCacheRange(const void *base, u32 size);
+
+/**
+ * @brief      Invalidates data cache lines in an address range.
+ *
+ * @param[in]  base  The base address.
+ * @param[in]  size  The range size in bytes.
+ */
+void invalidateDCacheRange(const void *base, size_t size);
+
+/**
+ * @brief      Invalidates all instruction and data caches lines.
+ */
+void invalidateBothCaches(void);
+
+/**
+ * @brief      Cleans (writes back to memory) all data cache lines.
+ */
+void cleanDCache(void);
+
+/**
+ * @brief      Cleans (writes back to memory) data cache lines in an address range.
+ *
+ * @param[in]  base  The base address.
+ * @param[in]  size  The range size in bytes.
+ */
+void cleanDCacheRange(const void *base, size_t size);
+
+/**
+ * @brief      Flushes (clean + invalidate) all data cache lines.
+ */
+void flushDCache(void);
+
+/**
+ * @brief      Flushes (clean + invalidate) data cache lines in an address range.
+ *
+ * @param[in]  base  The base address.
+ * @param[in]  size  The range size in bytes.
+ */
+void flushDCacheRange(const void *base, size_t size);
 
 #ifdef __cplusplus
 } // extern "C"
