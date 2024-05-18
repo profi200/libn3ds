@@ -72,8 +72,6 @@ DRESULT disk_read (
 {
 	(void)pdrv;
 
-	// TODO: FatFs will use memcpy() for sizes under 512 bytes
-	//       but larger transfers run into this check if unaligned.
 	DRESULT res = RES_OK;
 	if((uintptr_t)buff % 4 == 0)
 	{
@@ -104,7 +102,23 @@ DRESULT disk_read (
 		// Stop DMA.
 		ndmaCh->cnt = 0;
 	}
-	else res = RES_PARERR;
+	else
+	{
+		// TODO: More optimization. For unaligned buffers we could use a bounce buffer but it costs extra memory.
+		do
+		{
+			const u16 blockCount = (count > 0xFFFF ? 0xFFFF : count);
+			if(SDMMC_readSectors(SDMMC_DEV_CARD, sector, buff, blockCount) != SDMMC_ERR_NONE)
+			{
+				res = RES_ERROR;
+				break;
+			}
+
+			buff += blockCount;
+			sector += blockCount;
+			count -= blockCount;
+		} while(count > 0);
+	}
 
 	return res;
 }
@@ -126,8 +140,6 @@ DRESULT disk_write (
 {
 	(void)pdrv;
 
-	// TODO: FatFs will use memcpy() for sizes under 512 bytes
-	//       but larger transfers run into this check if unaligned.
 	DRESULT res = RES_OK;
 	if((uintptr_t)buff % 4 == 0)
 	{
@@ -160,7 +172,23 @@ DRESULT disk_write (
 		// NDMA hardware bug workaround.
 		(void)*((const vu8*)buff);
 	}
-	else res = RES_PARERR;
+	else
+	{
+		// TODO: More optimization. For unaligned buffers we could use a bounce buffer but it costs extra memory.
+		do
+		{
+			const u16 blockCount = (count > 0xFFFF ? 0xFFFF : count);
+			if(SDMMC_writeSectors(SDMMC_DEV_CARD, sector, buff, blockCount) != SDMMC_ERR_NONE)
+			{
+				res = RES_ERROR;
+				break;
+			}
+
+			buff += blockCount;
+			sector += blockCount;
+			count -= blockCount;
+		} while(count > 0);
+	}
 
 	return res;
 }
