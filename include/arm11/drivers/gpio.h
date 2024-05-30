@@ -63,27 +63,27 @@ extern "C"
 
 typedef enum
 {
-	GPIO_1_0           =  MAKE_GPIO(0u, 0u),
-	GPIO_1_1           =  MAKE_GPIO(1u, 0u),
-	GPIO_1_2           =  MAKE_GPIO(2u, 0u),
+	GPIO_1_0           =  MAKE_GPIO(0u, 0u), // Bitmask 0x1.
+	GPIO_1_1           =  MAKE_GPIO(1u, 0u), // Bitmask 0x2.
+	GPIO_1_2           =  MAKE_GPIO(2u, 0u), // Bitmask 0x4.
 
-	GPIO_2_0           =  MAKE_GPIO(0u, 1u),
-	GPIO_2_1           =  MAKE_GPIO(1u, 1u),
-	GPIO_2_2           =  MAKE_GPIO(0u, 2u), // REG_GPIO2_DAT2
+	GPIO_2_0           =  MAKE_GPIO(0u, 1u), // Bitmask 0x8.
+	GPIO_2_1           =  MAKE_GPIO(1u, 1u), // Bitmask 0x10.
+	GPIO_2_2           =  MAKE_GPIO(0u, 2u), // Bitmask 0x20. REG_GPIO2_DAT2.
 
-	GPIO_3_0           =  MAKE_GPIO(0u, 3u),
-	GPIO_3_1           =  MAKE_GPIO(1u, 3u),
-	GPIO_3_2           =  MAKE_GPIO(2u, 3u),
-	GPIO_3_3           =  MAKE_GPIO(3u, 3u),
-	GPIO_3_4           =  MAKE_GPIO(4u, 3u),
-	GPIO_3_5           =  MAKE_GPIO(5u, 3u),
-	GPIO_3_6           =  MAKE_GPIO(6u, 3u),
-	GPIO_3_7           =  MAKE_GPIO(7u, 3u),
-	GPIO_3_8           =  MAKE_GPIO(8u, 3u),
-	GPIO_3_9           =  MAKE_GPIO(9u, 3u),
-	GPIO_3_10          = MAKE_GPIO(10u, 3u),
-	GPIO_3_11          = MAKE_GPIO(11u, 3u),
-	GPIO_3_12          =  MAKE_GPIO(0u, 4u), // REG_GPIO3_DAT2
+	GPIO_3_0           =  MAKE_GPIO(0u, 3u), // Bitmask 0x40.
+	GPIO_3_1           =  MAKE_GPIO(1u, 3u), // Bitmask 0x80.
+	GPIO_3_2           =  MAKE_GPIO(2u, 3u), // Bitmask 0x100.
+	GPIO_3_3           =  MAKE_GPIO(3u, 3u), // Bitmask 0x200.
+	GPIO_3_4           =  MAKE_GPIO(4u, 3u), // Bitmask 0x400.
+	GPIO_3_5           =  MAKE_GPIO(5u, 3u), // Bitmask 0x800.
+	GPIO_3_6           =  MAKE_GPIO(6u, 3u), // Bitmask 0x1000.
+	GPIO_3_7           =  MAKE_GPIO(7u, 3u), // Bitmask 0x2000.
+	GPIO_3_8           =  MAKE_GPIO(8u, 3u), // Bitmask 0x4000.
+	GPIO_3_9           =  MAKE_GPIO(9u, 3u), // Bitmask 0x8000.
+	GPIO_3_10          = MAKE_GPIO(10u, 3u), // Bitmask 0x10000.
+	GPIO_3_11          = MAKE_GPIO(11u, 3u), // Bitmask 0x20000.
+	GPIO_3_12          =  MAKE_GPIO(0u, 4u), // Bitmask 0x40000. REG_GPIO3_DAT2.
 
 	// Aliases
 	GPIO_1_TOUCHSCREEN = GPIO_1_1, // Unset while touchscreen pen down. Unused after CODEC init.
