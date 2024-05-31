@@ -93,7 +93,10 @@ typedef enum
 
 	GPIO_CTR_DEPOP     = GPIO_3_0, // Old 3DS only (not XL). Speaker pop suppression circuit.
 	GPIO_EXTHID_IRQ    = GPIO_3_0, // N3DS/N2DS (XL) only. ZL/ZR pressed and/or C-Stick sample data ready IRQ (falling edge).
+	GPIO_IR_S750_IRQ   = GPIO_3_1, // SC16IS750 falling edge IRQ (IR module).
 	GPIO_EXTHID_WAKE   = GPIO_3_3, // N3DS/N2DS (XL) only. Wakes up the EXTHID chip from sleep if set high?
+	GPIO_IR_ROHM_TX_RC = GPIO_3_4, // ROHM RPM841-H11 transmit pin in remote control mode (IR module).
+	GPIO_IR_ROHM_RXD   = GPIO_3_5, // ROHM RPM841-H11 receive pin (IR module).
 	GPIO_3_HEADPH_JACK = GPIO_3_8, // Unused/other function after CODEC init.
 	GPIO_3_MCU         = GPIO_3_9
 } Gpio;
