@@ -66,7 +66,7 @@ void MCU_init(void)
 	I2C_init();
 
 	// Configure GPIO for MCU IRQs.
-	GPIO_config(GPIO_3_MCU, GPIO_IRQ_FALLING | GPIO_INPUT);
+	GPIO_config(GPIO_CTR_MCU_IRQ, GPIO_IRQ_FALLING | GPIO_INPUT);
 
 	// TODO: Clear alarm regs here like mcu module? Is this really needed?
 

@@ -108,7 +108,7 @@ typedef enum
 	GPIO_IR_ROHM_TX_RC  = GPIO_3_4, // ROHM RPM841-H11 transmit pin in remote control mode (IR module).
 	GPIO_IR_ROHM_RXD    = GPIO_3_5, // ROHM RPM841-H11 receive pin (IR module).
 	GPIO_3_HEADPH_JACK  = GPIO_3_8, // Unused/other function after CODEC init.
-	GPIO_3_MCU          = GPIO_3_9,
+	GPIO_CTR_MCU_IRQ    = GPIO_3_9, // CTR MCU falling edge IRQ.
 
 	GPIO_ATHEROS_NRST   = GPIO_3_12 // Active low reset pin for the Atheros WiFi chipset.
 } Gpio;

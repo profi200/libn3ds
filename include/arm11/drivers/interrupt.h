@@ -127,6 +127,8 @@ typedef enum
 	IRQ_SHELL_CLOSED  = IRQ_GPIO_1_2_LOW,  // Triggers on GPIO_1_2 low.
 	IRQ_TOUCHSCREEN   = IRQ_GPIO_1_1,      // Triggers on touchscreen pen down.
 	IRQ_HEADPH_JACK   = IRQ_GPIO_2_0,      // Headphone jack. Triggers on both plugging in and out?
+	IRQ_EXTHID        = IRQ_GPIO_3_0,      // N3DS/N2DS (XL) only. ZL/ZR pressed and/or C-Stick sample data ready IRQ.
+	IRQ_IR_NXP        = IRQ_GPIO_3_1,      // NXP SC16IS750 IRQ (IR module).
 	IRQ_CTR_MCU       = IRQ_GPIO_3_9       // Various MCU events trigger this. See MCU interrupt mask.
 } Interrupt;
 
