@@ -63,14 +63,19 @@ extern "C"
 
 typedef enum
 {
+	// Not configurable (input only) GPIOs.
 	GPIO_1_0           =  MAKE_GPIO(0u, 0u), // Bitmask 0x1.
 	GPIO_1_1           =  MAKE_GPIO(1u, 0u), // Bitmask 0x2.
 	GPIO_1_2           =  MAKE_GPIO(2u, 0u), // Bitmask 0x4.
 
+	// Configurable GPIOs (direction, IRQ edge, IRQ enable).
 	GPIO_2_0           =  MAKE_GPIO(0u, 1u), // Bitmask 0x8.
 	GPIO_2_1           =  MAKE_GPIO(1u, 1u), // Bitmask 0x10.
+
+	// Not configurable (output only) GPIO.
 	GPIO_2_2           =  MAKE_GPIO(0u, 2u), // Bitmask 0x20. REG_GPIO2_DAT2.
 
+	// Configurable GPIOs (direction, IRQ edge, IRQ enable).
 	GPIO_3_0           =  MAKE_GPIO(0u, 3u), // Bitmask 0x40.
 	GPIO_3_1           =  MAKE_GPIO(1u, 3u), // Bitmask 0x80.
 	GPIO_3_2           =  MAKE_GPIO(2u, 3u), // Bitmask 0x100.
@@ -83,22 +88,29 @@ typedef enum
 	GPIO_3_9           =  MAKE_GPIO(9u, 3u), // Bitmask 0x8000.
 	GPIO_3_10          = MAKE_GPIO(10u, 3u), // Bitmask 0x10000.
 	GPIO_3_11          = MAKE_GPIO(11u, 3u), // Bitmask 0x20000.
+
+	// Not configurable (output only) GPIO.
 	GPIO_3_12          =  MAKE_GPIO(0u, 4u), // Bitmask 0x40000. REG_GPIO3_DAT2.
+	// -------------------------------------------------------------------------------------------- //
 
 	// Aliases
-	GPIO_1_TOUCHSCREEN = GPIO_1_1, // Unset while touchscreen pen down. Unused after CODEC init.
-	GPIO_1_SHELL       = GPIO_1_2, // 1 when closed.
+	GPIO_1_TOUCHSCREEN  = GPIO_1_1, // Unset while touchscreen pen down. Unused after CODEC init.
+	GPIO_1_SHELL        = GPIO_1_2, // 1 when closed.
 
-	GPIO_2_HEADPH_JACK = GPIO_2_0, // Used after CODEC init.
+	GPIO_2_HEADPH_JACK  = GPIO_2_0, // Used after CODEC init.
 
-	GPIO_CTR_DEPOP     = GPIO_3_0, // Old 3DS only (not XL). Speaker pop suppression circuit.
-	GPIO_EXTHID_IRQ    = GPIO_3_0, // N3DS/N2DS (XL) only. ZL/ZR pressed and/or C-Stick sample data ready IRQ (falling edge).
-	GPIO_IR_NXP_IRQ    = GPIO_3_1, // NXP SC16IS750 falling edge IRQ (IR module).
-	GPIO_EXTHID_WAKE   = GPIO_3_3, // N3DS/N2DS (XL) only. Wakes up the EXTHID chip from sleep if set high?
-	GPIO_IR_ROHM_TX_RC = GPIO_3_4, // ROHM RPM841-H11 transmit pin in remote control mode (IR module).
-	GPIO_IR_ROHM_RXD   = GPIO_3_5, // ROHM RPM841-H11 receive pin (IR module).
-	GPIO_3_HEADPH_JACK = GPIO_3_8, // Unused/other function after CODEC init.
-	GPIO_3_MCU         = GPIO_3_9
+	GPIO_WIFI_IFACE_SEL = GPIO_2_2, // WiFi interface select. 0 = SDIO (Atheros), 1 = DS WiFi (RF Micro Devices, Inc. RF9008/Mitsumi MM3218).
+
+	GPIO_CTR_DEPOP      = GPIO_3_0, // Old 3DS only (not XL). Speaker pop suppression circuit.
+	GPIO_EXTHID_IRQ     = GPIO_3_0, // N3DS/N2DS (XL) only. ZL/ZR pressed and/or C-Stick sample data ready IRQ (falling edge).
+	GPIO_IR_NXP_IRQ     = GPIO_3_1, // NXP SC16IS750 falling edge IRQ (IR module).
+	GPIO_EXTHID_WAKE    = GPIO_3_3, // N3DS/N2DS (XL) only. Wakes up the EXTHID chip from sleep if set high?
+	GPIO_IR_ROHM_TX_RC  = GPIO_3_4, // ROHM RPM841-H11 transmit pin in remote control mode (IR module).
+	GPIO_IR_ROHM_RXD    = GPIO_3_5, // ROHM RPM841-H11 receive pin (IR module).
+	GPIO_3_HEADPH_JACK  = GPIO_3_8, // Unused/other function after CODEC init.
+	GPIO_3_MCU          = GPIO_3_9,
+
+	GPIO_ATHEROS_NRST   = GPIO_3_12 // Active low reset pin for the Atheros WiFi chipset.
 } Gpio;
 
 #undef MAKE_GPIO
