@@ -23,7 +23,7 @@
 
 
 
-void wait_cycles(u32 cycles)
+void wait_cycles(s32 cycles)
 {
 	__asm__ volatile
 	(
@@ -33,7 +33,7 @@ void wait_cycles(u32 cycles)
 		"1: subs %0, %0, #2\n\t"
 		"yield\n\t"
 #endif // #ifdef __ARM9__
-		"bhi 1b"
+		"bgt 1b"
 		: "+r" (cycles)
 		:
 		: "cc"
