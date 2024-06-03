@@ -35,7 +35,7 @@ extern "C"
  *
  * @param[in]  cycles  The cycles to wait.
  */
-void wait_cycles(s32 cycles);
+void wait_cycles(u32 cycles);
 
 /**
  * @brief      Safer strcpy with checks.
