@@ -49,7 +49,7 @@ static inline u32 recvWord(const Pxi *const pxi)
 
 static inline bool getFifoError(const Pxi *const pxi)
 {
-	return (pxi->cnt & PXI_CNT_FIFO_ERROR) != 0u;
+	return !!(pxi->cnt & PXI_CNT_FIFO_ERROR);
 }
 
 static inline void sendSyncRequest(Pxi *const pxi)

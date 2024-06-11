@@ -149,12 +149,12 @@ static void setPort(Tmio *const regs, const TmioPort *const port)
 
 bool TMIO_cardDetected(void)
 {
-	return getTmioRegs(port2Controller(TMIO_CARD_PORT))->sd_status & STATUS_DETECT;
+	return !!(getTmioRegs(port2Controller(TMIO_CARD_PORT))->sd_status & STATUS_DETECT);
 }
 
 bool TMIO_cardWritable(void)
 {
-	return getTmioRegs(port2Controller(TMIO_CARD_PORT))->sd_status & STATUS_NO_WRPROT;
+	return !!(getTmioRegs(port2Controller(TMIO_CARD_PORT))->sd_status & STATUS_NO_WRPROT);
 }
 
 void TMIO_powerupSequence(TmioPort *const port)
