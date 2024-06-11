@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -129,9 +129,8 @@ u32 MCU_getIrqs(u32 mask)
 // TODO: Rewrite using events (needs timeout support).
 u32 MCU_waitIrqs(u32 mask)
 {
-	u32 irqs;
-
-	while((irqs = MCU_getIrqs(mask)) == 0u)
+	const u32 irqs = MCU_getIrqs(mask);
+	while(irqs == 0u)
 	{
 		__wfi();
 	}
@@ -207,7 +206,8 @@ u16 MCU_getExternalHardwareStatus(void)
 	u16 status;
 
 	// Read both status regs at once.
-	if(!MCU_readRegArray(MCU_REG_EX_HW_STAT2, &status, sizeof(status))) status = 0;
+	if(!MCU_readRegArray(MCU_REG_EX_HW_STAT2, &status, sizeof(status)))
+		status = 0;
 
 	return __builtin_bswap16(status);
 }
@@ -216,7 +216,8 @@ u32 MCU_getIrqMask(void)
 {
 	u32 mask;
 
-	if(!MCU_readRegArray(MCU_REG_IRQ_MASK, &mask, sizeof(mask))) mask = 0;
+	if(!MCU_readRegArray(MCU_REG_IRQ_MASK, &mask, sizeof(mask)))
+		mask = 0;
 
 	return mask;
 }
@@ -396,7 +397,8 @@ u16 MCU_getRtcTick(void)
 	u16 tick;
 
 	// Read both tick bytes at once.
-	if(!MCU_readRegArray(MCU_REG_RTC_TICK_LO, &tick, sizeof(tick))) tick = 0;
+	if(!MCU_readRegArray(MCU_REG_RTC_TICK_LO, &tick, sizeof(tick)))
+		tick = 0;
 
 	return tick;
 }
@@ -453,7 +455,8 @@ u32 MCU_getPedometerStepCount(void)
 	u32 steps;
 
 	// Read all step count bytes at once.
-	if(!MCU_readRegArray(MCU_REG_PM_COUNT_LO, &steps, 3)) steps = 0;
+	if(!MCU_readRegArray(MCU_REG_PM_COUNT_LO, &steps, 3))
+		steps = 0;
 
 	return steps & ~0xFF000000u; // Make sure byte 4 is 0.
 }
