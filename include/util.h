@@ -27,6 +27,8 @@ extern "C"
 #endif
 
 #define ARRAY_ENTRIES(a)  (sizeof(a) / sizeof(*a))
+#define BIT(n)            (1u<<(n))
+#define BIT64(n)          (UINT64_C(1)<<(n))
 
 
 
@@ -103,14 +105,28 @@ static inline u32 nextPow2(u32 val)
 /**
  * @brief      Converts a 8 bit BCD number to decimal.
  *
- * @param[in]  bcd   The BCD number.
+ * @param[in]  bcd   The BCD number in range 0x00-0x99.
  *
  * @return     Decimal representaion of bcd.
  */
-static inline u8 bcd2dec(const u8 bcd)
+static inline u32 bcd2dec(const u32 bcd)
 {
 	// https://stackoverflow.com/a/42340213
-    return bcd - 6u * (bcd>>4);
+	return bcd - 6u * (bcd>>4);
+}
+
+/**
+ * @brief      Converts a 8 bit decimal number to BCD.
+ *
+ * @param[in]  dec   The decimal number in range 0-99.
+ *
+ * @return     BCD representation of dec.
+ */
+static inline u32 dec2bcd(const u32 dec)
+{
+	// Div 10 with fixed point math.
+	// Based on bcd2dec() above.
+	return dec + 6u * ((dec * 103u)>>10);
 }
 
 /**
