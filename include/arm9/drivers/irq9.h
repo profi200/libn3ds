@@ -1,6 +1,8 @@
+#pragma once
+
 /*
  *   This file is part of libn3ds
- *   Copyright (C) 2024 derrek, profi200
+ *   Copyright (C) 2024 profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -17,35 +19,32 @@
  */
 
 #include "types.h"
-#include "arm9/drivers/irq9.h"
-#include "arm9/drivers/interrupt.h"
+#include "mem_map.h"
 
 
-IrqIsr g_irqIsrTable[32] = {0};
-
-
-
-void IRQ_init(void)
+#ifdef __cplusplus
+extern "C"
 {
-	getIrq9Regs()->ie_if = UINT64_C(0xFFFFFFFF)<<32;
+#endif
+
+#define IRQ9_REGS_BASE  (IO_AHB_BASE + 0x1000)
+
+typedef union
+{
+	struct
+	{
+		vu32 ie;  // 0x0
+		vu32 _if; // 0x4
+	};
+	vu64 ie_if; // 0x0
+} Irq9;
+static_assert(offsetof(Irq9, _if) == 4, "Error: Member _if of Irq9 is not at offset 4!");
+
+ALWAYS_INLINE Irq9* getIrq9Regs(void)
+{
+	return (Irq9*)IRQ9_REGS_BASE;
 }
 
-void IRQ_registerIsr(Interrupt id, IrqIsr isr)
-{
-	const u32 oldState = enterCriticalSection();
-
-	g_irqIsrTable[id] = isr;
-	getIrq9Regs()->ie |= BIT(id);
-
-	leaveCriticalSection(oldState);
-}
-
-void IRQ_unregisterIsr(Interrupt id)
-{
-	const u32 oldState = enterCriticalSection();
-
-	getIrq9Regs()->ie &= ~BIT(id);
-	g_irqIsrTable[id] = (IrqIsr)NULL;
-
-	leaveCriticalSection(oldState);
-}
+#ifdef __cplusplus
+} // extern "C"
+#endif
