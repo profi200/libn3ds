@@ -129,8 +129,8 @@ u32 MCU_getIrqs(u32 mask)
 // TODO: Rewrite using events (needs timeout support).
 u32 MCU_waitIrqs(u32 mask)
 {
-	const u32 irqs = MCU_getIrqs(mask);
-	while(irqs == 0u)
+	u32 irqs;
+	while((irqs = MCU_getIrqs(mask)) == 0u)
 	{
 		__wfi();
 	}
