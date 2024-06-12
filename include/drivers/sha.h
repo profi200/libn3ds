@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -63,10 +63,10 @@ ALWAYS_INLINE volatile ShaFifo* getShaFifo(Sha *const regs)
 
 
 // REG_SHA_CNT
-#define SHA_EN           (1u)     // Also used as busy flag.
-#define SHA_FINAL_ROUND  (1u<<1)  // Final round/add input padding.
-#define SHA_I_DMA_EN     (1u<<2)  // Input DMA enable.
-#define SHA_IN_BIG       (1u<<3)
+#define SHA_EN           BIT(0)  // Also used as busy flag.
+#define SHA_FINAL_ROUND  BIT(1)  // Final round/add input padding.
+#define SHA_I_DMA_EN     BIT(2)  // Input DMA enable.
+#define SHA_IN_BIG       BIT(3)
 #define SHA_IN_LITTLE    (0u)
 #define SHA_OUT_BIG      (SHA_IN_BIG)
 #define SHA_OUT_LITTLE   (SHA_IN_LITTLE)
@@ -74,9 +74,9 @@ ALWAYS_INLINE volatile ShaFifo* getShaFifo(Sha *const regs)
 #define SHA_224_MODE     (1u<<4)
 #define SHA_1_MODE       (2u<<4)
 #define SHA_MODE_MASK    (SHA_1_MODE | SHA_224_MODE | SHA_256_MODE)
-#define SHA_RB_MODE      (1u<<8)  // Readback mode.
-#define SHA_RB_FIFO_NE   (1u<<9)  // Readback mode FIFO not empty status.
-#define SHA_O_DMA_EN     (1u<<10) // Output DMA enable (readback mode).
+#define SHA_RB_MODE      BIT(8)  // Readback mode.
+#define SHA_RB_FIFO_NE   BIT(9)  // Readback mode FIFO not empty status.
+#define SHA_O_DMA_EN     BIT(10) // Output DMA enable (readback mode).
 
 
 

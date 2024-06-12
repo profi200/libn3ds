@@ -46,20 +46,20 @@ ALWAYS_INLINE I2sRegs* getI2sRegs(void)
 // Note: Bits 12-14 are only writable if the enable bit is 0.
 #define I2S1_DSP_VOL(v)   ((v) & 0x3Fu)      // DSP master volume. 32 is 100%.
 #define I2S1_LGY_VOL(v)   (((v) & 0x3Fu)<<6) // GBA and DS(i) hardware master volume. 32 is 100%.
-#define I2S1_UNK12        (1u<<12)           // Enables the microphone input? Some kind of input/output select.
+#define I2S1_UNK12        BIT(12)            // Enables the microphone input? Some kind of input/output select.
 #define I2S1_FREQ_32KHZ   (0u)               // 268111856 / 8192 = 32728.498046875 Hz.
-#define I2S1_FREQ_47KHZ   (1u<<13)           // 268111856 / 5632 = 47605.088068181818181818182 Hz.
+#define I2S1_FREQ_47KHZ   BIT(13)            // 268111856 / 5632 = 47605.088068181818181818182 Hz.
 #define I2S1_MCLK1_8MHZ   (0u)               // CODEC MCLK1. 268111856 / 32 / (1000 * 1000) = 8.3784955 MHz.
-#define I2S1_MCLK1_16MHZ  (1u<<14)           // CODEC MCLK1. 268111856 / 16 / (1000 * 1000) = 16.756991 MHz.
-#define I2S1_EN           (1u<<15)           // Enable I2S1 interface.
+#define I2S1_MCLK1_16MHZ  BIT(14)            // CODEC MCLK1. 268111856 / 16 / (1000 * 1000) = 16.756991 MHz.
+#define I2S1_EN           BIT(15)            // Enable I2S1 interface.
 
 // I2S2_CNT
 // Note: Bits 13, 14 are only writable if the enable bit is 0.
 #define I2S2_FREQ_32KHZ   (0u)     // 268111856 / 8192 = 32728.498046875 Hz.
-#define I2S2_FREQ_47KHZ   (1u<<13) // 268111856 / 5632 = 47605.088068181818181818182 Hz.
+#define I2S2_FREQ_47KHZ   BIT(13)  // 268111856 / 5632 = 47605.088068181818181818182 Hz.
 #define I2S2_MCLK2_8MHZ   (0u)     // CODEC MCLK2. 268111856 / 32 / (1000 * 1000) = 8.3784955 MHz.
-#define I2S2_MCLK2_16MHZ  (1u<<14) // CODEC MCLK2. 268111856 / 16 / (1000 * 1000) = 16.756991 MHz.
-#define I2S2_EN           (1u<<15) // Enable I2S2 interface.
+#define I2S2_MCLK2_16MHZ  BIT(14)  // CODEC MCLK2. 268111856 / 16 / (1000 * 1000) = 16.756991 MHz.
+#define I2S2_EN           BIT(15)  // Enable I2S2 interface.
 
 
 

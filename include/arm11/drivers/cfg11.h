@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -72,46 +72,46 @@ ALWAYS_INLINE Cfg11* getCfg11Regs(void)
 
 
 // REG_CFG11_NULLPAGE_CNT
-#define NULLPAGE_CNT_FAULT_EN   (1u)     // All data accesses to 0x000-0xFFF generate data aborts.
-#define NULLPAGE_CNT_ACCESSED   (1u<<16) // 0x000-0xFFF has been accessed flag. Write 0 to clear.
+#define NULLPAGE_CNT_FAULT_EN   BIT(0)  // All data accesses to 0x000-0xFFF generate data aborts.
+#define NULLPAGE_CNT_ACCESSED   BIT(16) // 0x000-0xFFF has been accessed flag. Write 0 to clear.
 
 // REG_CFG11_FIQ_MASK
 // Each bit 1 = masked/disabled.
-#define FIQ_MASK_CPU0           (1u)
-#define FIQ_MASK_CPU1           (1u<<1)
-#define FIQ_MASK_CPU2           (1u<<2) // New3DS-only.
-#define FIQ_MASK_CPU3           (1u<<3) // New3DS-only.
+#define FIQ_MASK_CPU0           BIT(0)
+#define FIQ_MASK_CPU1           BIT(1)
+#define FIQ_MASK_CPU2           BIT(2) // New3DS-only.
+#define FIQ_MASK_CPU3           BIT(3) // New3DS-only.
 
 // REG_CFG11_CDMA_CNT
-#define CDMA_CNT_MIC_EN         (1u)
-#define CDMA_CNT_NTRCARD_EN     (1u<<1)
-#define CDMA_CNT_CAM1_EN        (1u<<2)
-#define CDMA_CNT_CAM2_EN        (1u<<3)
-#define CDMA_CNT_TMIO2_EN       (1u<<4) // WiFi
-#define CDMA_CNT_TMIO3_EN       (1u<<5)
+#define CDMA_CNT_MIC_EN         BIT(0)
+#define CDMA_CNT_NTRCARD_EN     BIT(1)
+#define CDMA_CNT_CAM1_EN        BIT(2)
+#define CDMA_CNT_CAM2_EN        BIT(3)
+#define CDMA_CNT_TMIO2_EN       BIT(4) // WiFi
+#define CDMA_CNT_TMIO3_EN       BIT(5)
 
 // REG_CFG11_GPUPROT
 // When the lower FCRAM protection is set to non-zero,
 // the first 0x800000 bytes of upper FCRAM are protected.
 #define GPUPROT_FCRAM_LO(x)     (x)      // Protect lower 128 MiB of FCRAM (0x28000000-(0x800000*x)).
 #define GPUPROT_FCRAM_UP(x)     ((x)<<4) // Protect upper 128 MiB of FCRAM (0x30000000-(0x800000*x)) (New3DS-only).
-#define GPUPROT_AXIWRAM         (1u<<8)  // Protect AXI RAM.
+#define GPUPROT_AXIWRAM         BIT(8)   // Protect AXI RAM.
 #define GPUPROT_QTM(x)          ((x)<<9) // Protect QTM RAM (0x1F400000-(0x100000*x)). 2 bits. TODO: Confirm this.
 #define GPUPROT_NO_PROT         (0u)
 #define GPUPROT_PROT_ALL        (GPUPROT_QTM(3u) | GPUPROT_AXIWRAM | \
                                  GPUPROT_FCRAM_UP(15u) | GPUPROT_FCRAM_LO(15u))
 
 // REG_CFG11_WIFI_POWER
-#define WIFI_POWER_ON           (1u)
+#define WIFI_POWER_ON           BIT(0)
 
 // REG_CFG11_SPI_CNT
-#define SPI_CNT_SPI1_NEW_IF     (1u)    // New interface (NSPI).
-#define SPI_CNT_SPI2_NEW_IF     (1u<<1)
-#define SPI_CNT_SPI3_NEW_IF     (1u<<2)
+#define SPI_CNT_SPI1_NEW_IF     BIT(0) // New interface (NSPI).
+#define SPI_CNT_SPI2_NEW_IF     BIT(1)
+#define SPI_CNT_SPI3_NEW_IF     BIT(2)
 
 // REG_CFG11_GPU_N3DS_CNT
-#define GPU_N3DS_CNT_N3DS_MODE  (1u)    // Enable access to mem extensions.
-#define GPU_N3DS_CNT_TEX_FIX    (1u<<1) // Fixes some texture glitches in New3DS mode.
+#define GPU_N3DS_CNT_N3DS_MODE  BIT(0) // Enable access to mem extensions.
+#define GPU_N3DS_CNT_TEX_FIX    BIT(1) // Fixes some texture glitches in New3DS mode.
 
 // REG_CFG11_CDMA_PERIPHERALS
 // Each bit 1 = DMA requests go to CDMA2.
@@ -119,12 +119,12 @@ ALWAYS_INLINE Cfg11* getCfg11Regs(void)
 #define CDMA_PERIPHERALS_ALL    (0x3FFFFu)
 
 // REG_CFG11_BOOTROM_OVERLAY_CNT
-#define BOOTROM_OVERLAY_CNT_EN  (1u)
+#define BOOTROM_OVERLAY_CNT_EN  BIT(0)
 
 // REG_CFG11_SOCINFO
-#define SOCINFO_CTR             (1u)    // Also set on New 3DS.
-#define SOCINFO_LGR1            (1u<<1) // Never saw the daylight? Set on retail N3DS (LGR2).
-#define SOCINFO_LGR2            (1u<<2) // Set on New 3DS.
+#define SOCINFO_CTR             BIT(0) // Also set on New 3DS.
+#define SOCINFO_LGR1            BIT(1) // Never saw the daylight? Set on retail N3DS (LGR2).
+#define SOCINFO_LGR2            BIT(2) // Set on New 3DS.
 
 #ifdef __cplusplus
 } // extern "C"

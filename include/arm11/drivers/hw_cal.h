@@ -2,7 +2,7 @@
 
 /*
  *   This file is part of libn3ds
- *   Copyright (C) 2023 luigoalma, profi200
+ *   Copyright (C) 2024 luigoalma, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -33,31 +33,31 @@ extern "C"
 
 // Bitmasks for agingPassedMask field.
 // Note: agingPassedMask is u16 so bits beyond 15 are not supported.
-#define CAL_MASK_RTC_COMPENSATION  (1u<<0)
-#define CAL_MASK_LCD_FLICKER       (1u<<1)
-#define CAL_MASK_OUTER_CAMS1       (1u<<2)
-#define CAL_MASK_TOUCH             (1u<<3)
-#define CAL_MASK_CIRCLE_PAD1       (1u<<4)
-#define CAL_MASK_CODEC             (1u<<5)
-#define CAL_MASK_GYRO              (1u<<6)
-#define CAL_MASK_RTC_CORRECTION    (1u<<7)
-#define CAL_MASK_ACCELEROMETER     (1u<<8)
-#define CAL_MASK_SURROUND_SOUND    (1u<<9)
-#define CAL_MASK_ABL               (1u<<10) // LCD power save.
-#define CAL_MASK_LCD_3D            (1u<<11) // LCD stereoscopic.
-#define CAL_MASK_BACKLIGHT_PWM     (1u<<12)
-#define CAL_MASK_CIRCLE_PAD2       (1u<<13)
-#define CAL_MASK_OUTER_CAMS2       (1u<<14)
-#define CAL_MASK_ABL_LGY           (1u<<15) // LCD power save legacy.
+#define CAL_MASK_RTC_COMPENSATION  BIT(0)
+#define CAL_MASK_LCD_FLICKER       BIT(1)
+#define CAL_MASK_OUTER_CAMS1       BIT(2)
+#define CAL_MASK_TOUCH             BIT(3)
+#define CAL_MASK_CIRCLE_PAD1       BIT(4)
+#define CAL_MASK_CODEC             BIT(5)
+#define CAL_MASK_GYRO              BIT(6)
+#define CAL_MASK_RTC_CORRECTION    BIT(7)
+#define CAL_MASK_ACCELEROMETER     BIT(8)
+#define CAL_MASK_SURROUND_SOUND    BIT(9)
+#define CAL_MASK_ABL               BIT(10) // LCD power save.
+#define CAL_MASK_LCD_3D            BIT(11) // LCD stereoscopic.
+#define CAL_MASK_BACKLIGHT_PWM     BIT(12)
+#define CAL_MASK_CIRCLE_PAD2       BIT(13)
+#define CAL_MASK_OUTER_CAMS2       BIT(14)
+#define CAL_MASK_ABL_LGY           BIT(15) // LCD power save legacy.
 
-#define CAL_MASK_MCU_SLIDERS       (1u<<16)
-#define CAL_MASK_ULCD_DELAY        (1u<<17)
-#define CAL_MASK_MIC_ECHO_CANCEL   (1u<<18)
-#define CAL_MASK_C_STICK           (1u<<19)
-#define CAL_MASK_UNUSED            (1u<<20)
-#define CAL_MASK_NEW_ABL           (1u<<21) // New LCD power save.
-#define CAL_MASK_PIT               (1u<<22)
-#define CAL_MASK_QTM               (1u<<23)
+#define CAL_MASK_MCU_SLIDERS       BIT(16)
+#define CAL_MASK_ULCD_DELAY        BIT(17)
+#define CAL_MASK_MIC_ECHO_CANCEL   BIT(18)
+#define CAL_MASK_C_STICK           BIT(19)
+#define CAL_MASK_UNUSED            BIT(20)
+#define CAL_MASK_NEW_ABL           BIT(21) // New LCD power save.
+#define CAL_MASK_PIT               BIT(22)
+#define CAL_MASK_QTM               BIT(23)
 
 
 // Touchscreen calibration.

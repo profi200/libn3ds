@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ extern "C"
 
 #define LGY_MODE_TWL    (1u)
 #define LGY_MODE_AGB    (2u)
-#define LGY_MODE_START  (1u<<15)
+#define LGY_MODE_START  BIT(15)
 
 enum
 {

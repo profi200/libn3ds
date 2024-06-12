@@ -64,19 +64,19 @@ ALWAYS_INLINE I2cBus* getI2cBusRegs(const u8 busId)
 
 
 // REG_I2C_CNT
-#define I2C_STOP            (1u)
-#define I2C_START           (1u<<1)
-#define I2C_ERROR           (1u<<2)
-#define I2C_ACK             (1u<<4)
+#define I2C_STOP            BIT(0)
+#define I2C_START           BIT(1)
+#define I2C_ERROR           BIT(2)
+#define I2C_ACK             BIT(4)
 #define I2C_DIR_S           (0u)    // Direction send.
-#define I2C_DIR_R           (1u<<5) // Direction receive.
-#define I2C_IRQ_EN          (1u<<6)
-#define I2C_EN              (1u<<7)
+#define I2C_DIR_R           BIT(5)  // Direction receive.
+#define I2C_IRQ_EN          BIT(6)
+#define I2C_EN              BIT(7)
 
 // REG_I2C_CNTEX
-#define I2C_SCL_STATE_MASK  (1u)     // Read-only SCL line state?
-#define I2C_CLK_STRETCH_EN  (1u<<1)  // Enables clock stretching.
-#define I2C_UNK_CNTEX15     (1u<<15) // "LGCY" Legacy related?
+#define I2C_SCL_STATE_MASK  BIT(0)  // Read-only SCL line state?
+#define I2C_CLK_STRETCH_EN  BIT(1)  // Enables clock stretching.
+#define I2C_UNK_CNTEX15     BIT(15) // "LGCY" Legacy related?
 
 // REG_I2C_SCL
 #define I2C_DELAYS(high, low)  ((high)<<8 | (low)) // "PRD" TODO: How long and when does it delay?

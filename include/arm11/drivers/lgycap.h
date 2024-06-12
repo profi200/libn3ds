@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
+ *   This file is part of libn3ds
  *   Copyright (C) 2024 profi200
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -75,33 +75,33 @@ ALWAYS_INLINE LgyCap* getLgyCapRegs(const u8 dev)
 
 
 // REG_LGYCAP_CNT
-#define LGYCAP_EN              (1u)     // LgyCap capture enable.
-#define LGYCAP_VSCALE_EN       (1u<<1)  // Vertical hardware scaling enable.
-#define LGYCAP_HSCALE_EN       (1u<<2)  // Horizontal hardware scaling enable.
-#define LGYCAP_UNK_BIT4        (1u<<4)  // Broken spatial dither enable? Doesn't do anything.
-#define LGYCAP_UNK_BIT5        (1u<<5)  // Broken temporal dither enable? Doesn't do anything.
-#define LGYCAP_OUT_FMT_ABGR8   (0u)     // {AA, BB, GG, RR} in memory from lowest to highest address.
-#define LGYCAP_OUT_FMT_BGR8    (1u<<8)  // {BB, GG, RR} in memory from lowest to highest address.
-#define LGYCAP_OUT_FMT_A1BGR5  (2u<<8)  // {0bGGBBBBBA, 0bRRRRRGGG} in memory from lowest to highest address.
-#define LGYCAP_OUT_FMT_BGR565  (3u<<8)  // {0bGGGBBBBB, 0bRRRRRGGG} in memory from lowest to highest address.
-#define LGYCAP_ROT_NONE        (0u)     // No block rotation.
-#define LGYCAP_ROT_90CW        (1u<<10) // Rotate 8x8 blocks 90° clockwise.
-#define LGYCAP_ROT_180CW       (2u<<10) // Rotate 8x8 blocks 180° clockwise.
-#define LGYCAP_ROT_270CW       (3u<<10) // Rotate 8x8 blocks 270° clockwise.
-#define LGYCAP_OUT_SWIZZLE     (1u<<12) // Morton swizzle output.
-#define LGYCAP_DMA_EN          (1u<<15) // DMA request enable.
-#define LGYCAP_IN_FMT          (1u<<16) // Use input format but this bit does nothing?
+#define LGYCAP_EN             BIT(0)   // LgyCap capture enable.
+#define LGYCAP_VSCALE_EN      BIT(1)   // Vertical hardware scaling enable.
+#define LGYCAP_HSCALE_EN      BIT(2)   // Horizontal hardware scaling enable.
+#define LGYCAP_UNK_BIT4       BIT(4)   // Broken spatial dither enable? Doesn't do anything.
+#define LGYCAP_UNK_BIT5       BIT(5)   // Broken temporal dither enable? Doesn't do anything.
+#define LGYCAP_FMT_ABGR8      (0u)     // {AA, BB, GG, RR} in memory from lowest to highest address.
+#define LGYCAP_FMT_BGR8       (1u<<8)  // {BB, GG, RR} in memory from lowest to highest address.
+#define LGYCAP_FMT_A1BGR5     (2u<<8)  // {0bGGBBBBBA, 0bRRRRRGGG} in memory from lowest to highest address.
+#define LGYCAP_FMT_BGR565     (3u<<8)  // {0bGGGBBBBB, 0bRRRRRGGG} in memory from lowest to highest address.
+#define LGYCAP_ROT_NONE       (0u)     // No block rotation.
+#define LGYCAP_ROT_90CW       (1u<<10) // Rotate 8x8 blocks 90° clockwise.
+#define LGYCAP_ROT_180CW      (2u<<10) // Rotate 8x8 blocks 180° clockwise.
+#define LGYCAP_ROT_270CW      (3u<<10) // Rotate 8x8 blocks 270° clockwise.
+#define LGYCAP_SWIZZLE        BIT(12)  // Morton swizzled output.
+#define LGYCAP_DMA_EN         BIT(15)  // DMA request enable.
+#define LGYCAP_IN_FMT         BIT(16)  // Use input format but this bit does nothing?
 
 // REG_LGYCAP_DIM width and height
-#define LGYCAP_DIM(w, h)       (((h) - 1)<<16 | ((w) - 1))
+#define LGYCAP_DIM(w, h)      (((h) - 1)<<16 | ((w) - 1))
 
 // REG_LGYCAP_STAT and REG_LGYCAP_IRQ
 // IRQ flags in STAT reg are acknowledged on write.
-#define LGYCAP_IRQ_DMA_REQ     (1u)
-#define LGYCAP_IRQ_BUF_ERR     (1u<<1) // FIFO overrun?
-#define LGYCAP_IRQ_VBLANK      (1u<<2)
-#define LGYCAP_IRQ_MASK        (LGYCAP_IRQ_VBLANK | LGYCAP_IRQ_BUF_ERR | LGYCAP_IRQ_DMA_REQ)
-#define LGYCAP_OUT_LINE(reg)   ((reg)>>16) // STAT only. Current output scanline?
+#define LGYCAP_IRQ_DMA_REQ    BIT(0)
+#define LGYCAP_IRQ_BUF_ERR    BIT(1) // FIFO overrun?
+#define LGYCAP_IRQ_VBLANK     BIT(2)
+#define LGYCAP_IRQ_MASK       (LGYCAP_IRQ_VBLANK | LGYCAP_IRQ_BUF_ERR | LGYCAP_IRQ_DMA_REQ)
+#define LGYCAP_OUT_LINE(reg)  ((reg)>>16) // STAT only. Current output scanline?
 
 
 typedef struct

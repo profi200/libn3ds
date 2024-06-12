@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -67,10 +67,10 @@ void PDN_core123Init(void)
 	{
 		getGiccRegs()->ctrl = 1;
 		for(u32 i = 0; i < 4; i++) gicd->enable_clear[i] = 0xFFFFFFFFu; // Disable all interrupts.
-		gicd->pending_clear[2] = 1u<<24; // Clear interrupt ID 88.
-		gicd->pri[22] = 0;               // Id 88 highest priority.
-		gicd->target[22] = 1;            // Id 88 target core 0.
-		gicd->enable_set[2] = 1u<<24;    // Enable interrupt ID 88.
+		gicd->pending_clear[2] = BIT(24); // Clear interrupt ID 88.
+		gicd->pri[22] = 0;                // Id 88 highest priority.
+		gicd->target[22] = 1;             // Id 88 target core 0.
+		gicd->enable_set[2] = BIT(24);    // Enable interrupt ID 88.
 
 		// Certain bootloaders leave the ack bit set. Clear it.
 		Pdn *const pdn = getPdnRegs();
@@ -92,7 +92,7 @@ void PDN_core123Init(void)
 			wait_cycles(403);
 
 			PDN_setSocmode(socmode);
-			gicd->pending_clear[2] = 1u<<24; // Clear interrupt ID 88.
+			gicd->pending_clear[2] = BIT(24); // Clear interrupt ID 88.
 
 			// Fixes for the GPU to work in non-CTR mode.
 			cfg11->gpu_n3ds_cnt = GPU_N3DS_CNT_TEX_FIX | GPU_N3DS_CNT_N3DS_MODE;
@@ -115,7 +115,7 @@ void PDN_core123Init(void)
 			if(socmode != tmpSocmode)
 			{
 				PDN_setSocmode(tmpSocmode);
-				gicd->pending_clear[2] = 1u<<24; // Clear interrupt ID 88.
+				gicd->pending_clear[2] = BIT(24); // Clear interrupt ID 88.
 			}
 
 			cfg11->bootrom_overlay_cnt = BOOTROM_OVERLAY_CNT_EN;
@@ -140,7 +140,7 @@ void PDN_core123Init(void)
 			if(socmode != tmpSocmode) PDN_setSocmode(socmode);
 		}
 
-		gicd->enable_clear[2] = 1u<<24; // Clear interrupt ID 88.
+		gicd->enable_clear[2] = BIT(24); // Clear interrupt ID 88.
 
 		// Wakeup core 2/3 and let them jump to their entrypoint.
 		IRQ_softInterrupt(2, 0b0100);
@@ -150,7 +150,7 @@ void PDN_core123Init(void)
 		if((pdn->lgr_socmode & SOCMODE_MASK) != SOCMODE_CTR_268MHZ)
 		{
 			PDN_setSocmode(SOCMODE_CTR_268MHZ);
-			gicd->enable_clear[2] = 1u<<24; // Clear interrupt ID 88.
+			gicd->enable_clear[2] = BIT(24); // Clear interrupt ID 88.
 		}
 #endif
 	}

@@ -108,15 +108,15 @@ typedef struct PrintConsole
 	bool consoleInitialised; ///< True if the console is initialized
 }PrintConsole;
 
-#define CONSOLE_COLOR_BOLD	(1<<0) ///< Bold text
-#define CONSOLE_COLOR_FAINT	(1<<1) ///< Faint text
-#define CONSOLE_ITALIC		(1<<2) ///< Italic text
-#define CONSOLE_UNDERLINE	(1<<3) ///< Underlined text
-#define CONSOLE_BLINK_SLOW	(1<<4) ///< Slow blinking text
-#define CONSOLE_BLINK_FAST	(1<<5) ///< Fast blinking text
-#define CONSOLE_COLOR_REVERSE	(1<<6) ///< Reversed color text
-#define CONSOLE_CONCEAL		(1<<7) ///< Concealed text
-#define CONSOLE_CROSSED_OUT	(1<<8) ///< Crossed out text
+#define CONSOLE_COLOR_BOLD     BIT(0) ///< Bold text
+#define CONSOLE_COLOR_FAINT    BIT(1) ///< Faint text
+#define CONSOLE_ITALIC         BIT(2) ///< Italic text
+#define CONSOLE_UNDERLINE      BIT(3) ///< Underlined text
+#define CONSOLE_BLINK_SLOW     BIT(4) ///< Slow blinking text
+#define CONSOLE_BLINK_FAST     BIT(5) ///< Fast blinking text
+#define CONSOLE_COLOR_REVERSE  BIT(6) ///< Reversed color text
+#define CONSOLE_CONCEAL        BIT(7) ///< Concealed text
+#define CONSOLE_CROSSED_OUT    BIT(8) ///< Crossed out text
 
 /// Console debug devices supported by libnds.
 typedef enum {

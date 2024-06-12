@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -237,7 +237,7 @@ static u32 initIdentState(SdmmcDev *const dev, const u8 devType, u32 *const rcaO
 // Extracts up to 32 bits from a u32[4] array.
 static inline u32 extractBits(const u32 resp[4], const u32 start, const u32 size)
 {
-	const u32 mask = (size < 32 ? 1u<<size : 0u) - 1;
+	const u32 mask = (size < 32 ? BIT(size) : 0u) - 1;
 	const u32 off = 3 - (start / 32);
 	const u32 shift = start & 31u;
 
@@ -368,7 +368,7 @@ static u32 initTranState(SdmmcDev *const dev, const u8 devType, const u32 rca, c
 		if(res != 0) return SDMMC_ERR_SET_BUS_WIDTH;
 		TMIO_setBusWidth(port, 4);
 
-		if(dev->ccc & 1u<<10) // Class 10 command support.
+		if(dev->ccc & BIT(10)) // Class 10 command support.
 		{
 			// Set 64 bytes block length for SWITCH_FUNC status.
 			TMIO_setBlockLen(port, 64);
@@ -383,7 +383,7 @@ static u32 initTranState(SdmmcDev *const dev, const u8 devType, const u32 rca, c
 			TMIO_setBlockLen(port, 512);
 
 			// [415:400] Support Bits of Functions in Function Group 1.
-			if(switchStat[63u - 400 / 8] & 1u<<1) // Is group 1, function 1 "High-Speed" supported?
+			if(switchStat[63u - 400 / 8] & BIT(1)) // Is group 1, function 1 "High-Speed" supported?
 			{
 				// High-Speed (max. 50 MHz at 3.3V) supported. Switch to highest supported clock.
 				TMIO_setClock(port, HS_CLOCK);
@@ -483,7 +483,7 @@ u32 SDMMC_setSleepMode(const u8 devNum, const bool enabled)
 		if(IS_DEV_MMC(devType))
 		{
 			// Switch (e)MMC into sleep mode.
-			res = TMIO_sendCommand(port, MMC_SLEEP_AWAKE, rca | 1u<<15);
+			res = TMIO_sendCommand(port, MMC_SLEEP_AWAKE, rca | BIT(15));
 			if(res != 0) return SDMMC_ERR_SLEEP_AWAKE;
 			// TODO: Power down eMMC. This is confirmed working on 3DS.
 		}
@@ -574,8 +574,8 @@ u32 SDMMC_lockUnlock(const u8 devNum, const u8 mode, const u8 *const pwd, const 
 			res = SDMMC_ERR_LOCK_UNLOCK_FAIL;
 
 		// Update lock status.
-		const u8 prot = dev->prot & ~(1u<<3);
-		dev->prot = prot | (status>>22 & 1u<<3);
+		const u8 prot = dev->prot & ~BIT(3);
+		dev->prot = prot | (status>>22 & BIT(3));
 	} while(0);
 
 	return res;

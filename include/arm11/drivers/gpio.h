@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -52,10 +52,10 @@ extern "C"
 
 
 #define GPIO_INPUT           (0u)
-#define GPIO_OUTPUT          (1u)
+#define GPIO_OUTPUT          BIT(0)
 #define GPIO_NO_IRQ          (0u)
-#define GPIO_IRQ_FALLING     (1u<<2 | 0u)
-#define GPIO_IRQ_RISING      (1u<<2 | 1u<<1)
+#define GPIO_IRQ_FALLING     (BIT(2) | 0u)
+#define GPIO_IRQ_RISING      (BIT(2) | BIT(1))
 
 
 // bits 3-7 pin number, bits 0-3 reg index.

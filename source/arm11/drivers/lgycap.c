@@ -1,5 +1,5 @@
 /*
- *   This file is part of open_agb_firm
+ *   This file is part of libn3ds
  *   Copyright (C) 2024 profi200
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -155,7 +155,7 @@ static void setScalerMatrix(LgyCapScaler *const scaler, const u32 len, const u32
 static inline u32 getPixelSize(const u32 lgyfb_cnt)
 {
 	const u32 fmt = (lgyfb_cnt>>8) & 3u;
-	return (fmt == (LGYCAP_OUT_FMT_BGR565>>8) ? 2 : 4 - fmt);
+	return (fmt == (LGYCAP_FMT_BGR565>>8) ? 2 : 4 - fmt);
 }
 
 KHandle LGYCAP_init(const LgyCapDev dev, const LgyCapCfg *const cfg)

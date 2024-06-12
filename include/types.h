@@ -2,7 +2,7 @@
 
 /*
  *   This file is part of libn3ds
- *   Copyright (C) 2023 derrek, profi200
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -31,6 +31,9 @@
 #define UNUSED         [[maybe_unused]]
 #define USED           __attribute__((used))
 #define WEAK           __attribute__((weak))
+
+#define BIT(n)         (1u<<(n))
+#define BIT64(n)       (UINT64_C(1)<<(n))
 
 
 #ifdef __cplusplus

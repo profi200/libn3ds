@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -62,38 +62,38 @@ ALWAYS_INLINE Pxi* getPxiRegs(void)
 // Note: SENT and RECV in REG_PXI_SYNC do not count
 //       the amount of bytes sent or received through the FIFOs!
 //       They are simply CPU read-/writable fields.
-#define PXI_SYNC_RECVD                  (REG_PXI_SYNC & 0xFFu)
-#define PXI_SYNC_SENT(sent)             ((REG_PXI_SYNC & ~(0xFFu<<8)) | (sent)<<8)
+#define PXI_SYNC_RECVD                 (REG_PXI_SYNC & 0xFFu)
+#define PXI_SYNC_SENT(sent)            ((REG_PXI_SYNC & ~(0xFFu<<8)) | (sent)<<8)
 #ifdef __ARM9__
-#define PXI_SYNC_IRQ                    (1u<<29) // Trigger interrupt on ARM11.
-#define PXI_SYNC_IRQ2                   (1u<<30) // Another, separate interrupt trigger for ARM11.
+#define PXI_SYNC_IRQ                   BIT(29) // Trigger interrupt on ARM11.
+#define PXI_SYNC_IRQ2                  BIT(30) // Another, separate interrupt trigger for ARM11.
 #elif __ARM11__
 // 29 unused unlike ARM9 side.
-#define PXI_SYNC_IRQ                    (1u<<30) // Trigger interrupt on ARM9.
+#define PXI_SYNC_IRQ                   BIT(30) // Trigger interrupt on ARM9.
 #endif // #ifdef __ARM9__
-#define PXI_SYNC_IRQ_EN                 (1u<<31) // Enable interrupt(s) from remote CPU.
+#define PXI_SYNC_IRQ_EN                BIT(31) // Enable interrupt(s) from remote CPU.
 
 // REG_PXI_SYNC_IRQ (byte 3 of REG_PXI_SYNC)
 #ifdef __ARM9__
-#define PXI_SYNC_IRQ_IRQ                (1u<<5) // Trigger interrupt on ARM11.
-#define PXI_SYNC_IRQ_IRQ2               (1u<<6) // Another, separate interrupt trigger for ARM11.
+#define PXI_SYNC_IRQ_IRQ               BIT(5) // Trigger interrupt on ARM11.
+#define PXI_SYNC_IRQ_IRQ2              BIT(6) // Another, separate interrupt trigger for ARM11.
 #elif __ARM11__
 // 29 unused unlike ARM9 side.
-#define PXI_SYNC_IRQ_IRQ                (1u<<6) // Trigger interrupt on ARM9.
+#define PXI_SYNC_IRQ_IRQ               BIT(6) // Trigger interrupt on ARM9.
 #endif // #ifdef __ARM9__
-#define PXI_SYNC_IRQ_IRQ_EN             (1u<<7) // Enable interrupt(s) from remote CPU.
+#define PXI_SYNC_IRQ_IRQ_EN            BIT(7) // Enable interrupt(s) from remote CPU.
 
 // REG_PXI_CNT
 // Status bits: 0 = no, 1 = yes.
-#define PXI_CNT_SEND_EMPTY              (1u<<0)  // Send FIFO empty status.
-#define PXI_CNT_SEND_FULL               (1u<<1)  // Send FIFO full status.
-#define PXI_CNT_SEND_NOT_FULL_IRQ_EN    (1u<<2)  // Send FIFO not full interrupt enable. TODO: Test the behavior.
-#define PXI_CNT_FLUSH_SEND              (1u<<3)  // Flush send FIFO.
-#define PXI_CNT_RECV_EMPTY              (1u<<8)  // Receive FIFO empty status.
-#define PXI_CNT_RECV_FULL               (1u<<9)  // Receive FIFO full status.
-#define PXI_CNT_RECV_NOT_EMPTY_IRQ_EN   (1u<<10) // Receive FIFO not empty interrupt enable. TODO: Test the behavior.
-#define PXI_CNT_FIFO_ERROR              (1u<<14) // Receive FIFO underrun or send FIFO overrun error flag. Acknowledge by writing 1.
-#define PXI_CNT_EN_FIFOS                (1u<<15) // Enables REG_PXI_SEND and REG_PXI_RECV FIFOs.
+#define PXI_CNT_SEND_EMPTY             BIT(0)  // Send FIFO empty status.
+#define PXI_CNT_SEND_FULL              BIT(1)  // Send FIFO full status.
+#define PXI_CNT_SEND_NOT_FULL_IRQ_EN   BIT(2)  // Send FIFO not full interrupt enable. TODO: Test the behavior.
+#define PXI_CNT_FLUSH_SEND             BIT(3)  // Flush send FIFO.
+#define PXI_CNT_RECV_EMPTY             BIT(8)  // Receive FIFO empty status.
+#define PXI_CNT_RECV_FULL              BIT(9)  // Receive FIFO full status.
+#define PXI_CNT_RECV_NOT_EMPTY_IRQ_EN  BIT(10) // Receive FIFO not empty interrupt enable. TODO: Test the behavior.
+#define PXI_CNT_FIFO_ERROR             BIT(14) // Receive FIFO underrun or send FIFO overrun error flag. Acknowledge by writing 1.
+#define PXI_CNT_EN_FIFOS               BIT(15) // Enables REG_PXI_SEND and REG_PXI_RECV FIFOs.
 
 
 

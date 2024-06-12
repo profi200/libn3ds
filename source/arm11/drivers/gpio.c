@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
 
 
 #define GPIO_EDGE_FALLING  (0u)
-#define GPIO_EDGE_RISING   (1u<<1)
-#define GPIO_IRQ_ENABLE    (1u<<2)
+#define GPIO_EDGE_RISING   BIT(1)
+#define GPIO_IRQ_ENABLE    BIT(2)
 
 
 static vu16 *const g_datRegs[5] = {(vu16*)&REG_GPIO1_DAT, (vu16*)&REG_GPIO2_DAT,
@@ -38,22 +38,22 @@ void GPIO_config(Gpio gpio, u8 cfg)
 	// GPIO1 and GPIO3_DAT2 are not configurable.
 	if(regIdx == 1)
 	{
-		u32 reg = REG_GPIO2 & ~((1u<<24 | 1u<<16 | 1u<<8)<<pinNum);
+		u32 reg = REG_GPIO2 & ~((BIT(24) | BIT(16) | BIT(8))<<pinNum);
 
-		if(cfg & GPIO_OUTPUT)      reg |= (1u<<8)<<pinNum;  // Direction.
-		if(cfg & GPIO_EDGE_RISING) reg |= (1u<<16)<<pinNum; // IRQ edge.
-		if(cfg & GPIO_IRQ_ENABLE)  reg |= (1u<<24)<<pinNum; // IRQ enable.
+		if(cfg & GPIO_OUTPUT)      reg |= BIT(8)<<pinNum;  // Direction.
+		if(cfg & GPIO_EDGE_RISING) reg |= BIT(16)<<pinNum; // IRQ edge.
+		if(cfg & GPIO_IRQ_ENABLE)  reg |= BIT(24)<<pinNum; // IRQ enable.
 
 		REG_GPIO2 = reg;
 	}
 	else if(regIdx == 3)
 	{
-		u32 reg  = REG_GPIO3_H1 & ~((1u<<16)<<pinNum);
-		u32 reg2 = REG_GPIO3_H2 & ~((1u<<16 | 1u)<<pinNum);
+		u32 reg  = REG_GPIO3_H1 & ~(BIT(16)<<pinNum);
+		u32 reg2 = REG_GPIO3_H2 & ~((BIT(16) | BIT(0))<<pinNum);
 
-		if(cfg & GPIO_OUTPUT)      reg  |= (1u<<16)<<pinNum; // Direction.
-		if(cfg & GPIO_EDGE_RISING) reg2 |= 1u<<pinNum;       // IRQ edge.
-		if(cfg & GPIO_IRQ_ENABLE)  reg2 |= (1u<<16)<<pinNum; // IRQ enable.
+		if(cfg & GPIO_OUTPUT)      reg  |= BIT(16)<<pinNum; // Direction.
+		if(cfg & GPIO_EDGE_RISING) reg2 |= BIT(pinNum);     // IRQ edge.
+		if(cfg & GPIO_IRQ_ENABLE)  reg2 |= BIT(16)<<pinNum; // IRQ enable.
 
 		REG_GPIO3_H1 = reg;
 		REG_GPIO3_H2 = reg2;
@@ -67,7 +67,7 @@ u8 GPIO_read(Gpio gpio)
 
 	if(regIdx > 4) return 0;
 
-	return *g_datRegs[regIdx]>>pinNum & 1u;
+	return *g_datRegs[regIdx]>>pinNum & BIT(0);
 }
 
 void GPIO_write(Gpio gpio, u8 val)
@@ -78,7 +78,7 @@ void GPIO_write(Gpio gpio, u8 val)
 	if(regIdx == 0 || regIdx > 4) return;
 
 	u16 tmp = *g_datRegs[regIdx];
-	tmp = (tmp & ~(1u<<pinNum)) | (u16)val<<pinNum;
+	tmp = (tmp & ~BIT(pinNum)) | (u16)val<<pinNum;
 	*g_datRegs[regIdx] = tmp;
 }
 

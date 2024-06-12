@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -69,11 +69,11 @@ static void updateMcuHidState(void)
 
 	u32 tmp = g_extraKeys;
 	tmp |= state & (KEY_POWER | KEY_POWER_HELD | KEY_HOME); // Power button pressed/held, HOME button pressed
-	if(state & 1u<<3) tmp &= ~KEY_HOME;                     // HOME released
+	if(state & BIT(3)) tmp &= ~KEY_HOME;                    // HOME released
 	tmp |= state>>1 & (KEY_WIFI | KEY_SHELL);               // WiFi switch, shell closed
-	if(state & 1u<<6) tmp &= ~KEY_SHELL;                    // Shell opened
+	if(state & BIT(6)) tmp &= ~KEY_SHELL;                   // Shell opened
 	tmp |= state>>10 & KEY_BAT_CHARGING;                    // Battery started charging
-	if(state & 1u<<14) tmp &= ~KEY_BAT_CHARGING;            // Battery stopped charging
+	if(state & BIT(14)) tmp &= ~KEY_BAT_CHARGING;           // Battery stopped charging
 	tmp |= state>>16 & KEY_VOL_SLIDER;                      // Volume slider update
 	g_extraKeys = tmp;
 }
@@ -87,7 +87,7 @@ static u32 rawCodec2Hid(void)
 	// Touchscreen
 	// TODO: Calibration
 	const u16 tx = __builtin_bswap16(adc.touchX[0]);
-	u32 fakeKeys = (~tx & 1u<<12)<<8; // KEY_TOUCH
+	u32 fakeKeys = (~tx & BIT(12))<<8; // KEY_TOUCH
 	g_tPos.x = tx * 320u / 4096u;
 	g_tPos.y = __builtin_bswap16(adc.touchY[0]) * 240u / 4096u;
 

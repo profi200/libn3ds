@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ void IRQ_registerIsr(Interrupt id, IrqIsr isr)
 	const u32 oldState = enterCriticalSection();
 
 	g_irqIsrTable[id] = isr;
-	REG_IRQ_IE |= 1u<<id;
+	REG_IRQ_IE |= BIT(id);
 
 	leaveCriticalSection(oldState);
 }
@@ -50,7 +50,7 @@ void IRQ_unregisterIsr(Interrupt id)
 {
 	const u32 oldState = enterCriticalSection();
 
-	REG_IRQ_IE &= ~(1u<<id);
+	REG_IRQ_IE &= ~BIT(id);
 	g_irqIsrTable[id] = (IrqIsr)NULL;
 
 	leaveCriticalSection(oldState);

@@ -1,5 +1,5 @@
 /*
- *   This file is part of open_agb_firm
+ *   This file is part of libn3ds
  *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -55,7 +55,7 @@ static u32 setupSaveType(u16 saveType)
 	lgy9->gba_save_type = saveType;
 
 	static const u8 saveSizeShiftLut[16] = {9, 9, 13, 13, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17, 15, 0};
-	const u32 saveSize = (1u<<saveSizeShiftLut[saveType & SAVE_TYPE_MASK]) & ~1u;
+	const u32 saveSize = BIT(saveSizeShiftLut[saveType & SAVE_TYPE_MASK]) & ~BIT(0);
 	g_saveSize = saveSize;
 
 	// Flash chip erase, flash sector erase, flash program, EEPROM write.

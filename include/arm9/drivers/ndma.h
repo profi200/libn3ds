@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -60,8 +60,8 @@ ALWAYS_INLINE NdmaCh* getNdmaChRegs(u8 c)
 
 
 // REG_NDMA_GCNT
-#define NDMA_REG_READBACK    (1u) // Show internal state on REG_NDMAx_SAD/DAD/TCNT/WCNT. 3DS mode only.
-#define NDMA_ROUND_ROBIN(n)  (1u<<31 | (intLog2(n) + 1)<<16) // DSP DMA/CPU cycles (power of 2). Maximum 16384.
+#define NDMA_REG_READBACK    BIT(0)                           // Show internal state on REG_NDMAx_SAD/DAD/TCNT/WCNT. 3DS mode only.
+#define NDMA_ROUND_ROBIN(n)  (BIT(31) | (intLog2(n) + 1)<<16) // DSP DMA/CPU cycles (power of 2). Maximum 16384.
 #define NDMA_HIGHEST_PRIO    (0u)
 
 // REG_NDMA_BCNT
@@ -78,18 +78,18 @@ ALWAYS_INLINE NdmaCh* getNdmaChRegs(u8 c)
 #define NDMA_DAD_INC         (0u)     // Destination address increment.
 #define NDMA_DAD_DEC         (1u<<10) // Destination address decrement.
 #define NDMA_DAD_FIX         (2u<<10) // Destination address fixed.
-#define NDMA_DAD_RELOAD      (1u<<12) // Reload destination address on logical block end (REG_NDMAx_WCNT).
+#define NDMA_DAD_RELOAD      BIT(12)  // Reload destination address on logical block end (REG_NDMAx_WCNT).
 #define NDMA_SAD_INC         (0u)     // Source address increment.
 #define NDMA_SAD_DEC         (1u<<13) // Source address decrement.
 #define NDMA_SAD_FIX         (2u<<13) // Source address fixed.
 #define NDMA_SAD_FILL        (3u<<13) // Source is REG_NDMAx_FDATA.
-#define NDMA_SAD_RELOAD      (1u<<15) // Reload source address on logical block end (REG_NDMAx_WCNT).
+#define NDMA_SAD_RELOAD      BIT(15)  // Reload source address on logical block end (REG_NDMAx_WCNT).
 #define NDMA_BURST_SHIFT     (16u)
 #define NDMA_BURST(n)        (intLog2(n)<<NDMA_BURST_SHIFT) // Burst length is 2ⁿ words. Maximum 32768. Must be power of 2.
 #define NDMA_TCNT_MODE       (0u)     // REG_NDMAx_TCNT mode.
-#define NDMA_REPEAT_MODE     (1u<<29) // Repeat transfer infinitely.
-#define NDMA_IRQ_EN          (1u<<30) // IRQ enable.
-#define NDMA_EN              (1u<<31) // Channel enable/active.
+#define NDMA_REPEAT_MODE     BIT(29)  // Repeat transfer infinitely.
+#define NDMA_IRQ_EN          BIT(30)  // IRQ enable.
+#define NDMA_EN              BIT(31)  // Channel enable/active.
 
 
 enum

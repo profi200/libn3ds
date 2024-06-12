@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -95,8 +95,8 @@ typedef enum
 // Note: Keep this synchronized with MCU backlight bits.
 typedef enum
 {
-	GFX_BL_BOT   = 1u<<2,
-	GFX_BL_TOP   = 1u<<4,
+	GFX_BL_BOT   = BIT(2),
+	GFX_BL_TOP   = BIT(4),
 	GFX_BL_BOTH  = GFX_BL_TOP | GFX_BL_BOT
 } GfxBl;
 

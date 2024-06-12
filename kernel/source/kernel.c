@@ -1,5 +1,5 @@
 /*
- *   This file is part of open_agb_firm
+ *   This file is part of libn3ds
  *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -87,7 +87,7 @@ void kernelInit(uint8_t priority)
 	mainT->prio  = priority;
 
 	g_curTask = mainT;
-	g_readyBitmap = 1u<<1; // The idle task has priority 1 and is always ready.
+	g_readyBitmap = BIT(1); // The idle task has priority 1 and is always ready.
 	listPush(&g_runQueues[1], &idleT->node);
 	g_numTasks = 2;
 }
@@ -122,7 +122,7 @@ KHandle createTask(size_t stackSize, uint8_t priority, TaskFunc entry, void *tas
 
 	kernelLock();
 	listPush(&g_runQueues[priority], &newT->node);
-	g_readyBitmap |= 1u<<priority;
+	g_readyBitmap |= BIT(priority);
 	g_numTasks++;
 	kernelUnlock();
 
@@ -179,7 +179,7 @@ bool waitQueueWakeN(ListNode *waitQueue, u32 wakeCount, KRes res, bool reschedul
 		TaskCb *const curTask = g_curTask;
 		const u8 curPrio = curTask->prio;
 		listPushTail(&runQueues[curPrio], &curTask->node);
-		readyBitmap = 1u<<curPrio;
+		readyBitmap = BIT(curPrio);
 	}
 
 	do
@@ -198,7 +198,7 @@ bool waitQueueWakeN(ListNode *waitQueue, u32 wakeCount, KRes res, bool reschedul
 		 */
 		//TaskCb *task = LIST_ENTRY(listPopHead(waitQueue), TaskCb, node);
 		TaskCb *task = LIST_ENTRY(listPop(waitQueue), TaskCb, node);
-		readyBitmap |= 1u<<task->prio;
+		readyBitmap |= BIT(task->prio);
 		task->res = res;
 		listPushTail(&runQueues[task->prio], &task->node);
 	} while(!listEmpty(waitQueue) && --wakeCount);
@@ -239,7 +239,7 @@ static KRes scheduler(TaskState curTaskState)
 		}
 
 		listPush(&runQueues[curPrio], &curTask->node);
-		readyBitmap |= 1u<<curPrio;
+		readyBitmap |= BIT(curPrio);
 	}
 	else if(UNLIKELY(curTaskState == TASK_STATE_DEAD))
 	{
@@ -248,7 +248,7 @@ static KRes scheduler(TaskState curTaskState)
 	}
 
 	TaskCb *newTask = LIST_ENTRY(listPop(&runQueues[readyPrio]), TaskCb, node);
-	if(listEmpty(&runQueues[readyPrio])) readyBitmap &= ~(1u<<readyPrio);
+	if(listEmpty(&runQueues[readyPrio])) readyBitmap &= ~BIT(readyPrio);
 	g_readyBitmap = readyBitmap;
 
 	TaskCb *oldTask = curTask;

@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -101,32 +101,32 @@ ALWAYS_INLINE CsndCap* getCsndCapRegs(u8 ch)
 
 // REG_CSND_CNT
 // Settings for all channels (including capture).
-#define CSND_CNT_MUTE          (1u)
+#define CSND_CNT_MUTE          BIT(0)
 // Bits 1-13 unused.
-#define CSND_CNT_RS_FILTER_EN  (1u<<14) // Resample filter.
-#define CSND_CNT_EN            (1u<<15)
+#define CSND_CNT_RS_FILTER_EN  BIT(14) // Resample filter.
+#define CSND_CNT_EN            BIT(15)
 
 // REG_CSND_CH_CNT
 #define CSND_CH_DUTY(d)        (d)      // For PSG (channel 8-13) only. In 12.5% units. 0 = high/12.5%.
-#define CSND_CH_LERP           (1u<<6)  // Linear interpolation.
-#define CSND_CH_HOLD           (1u<<7)  // Hold last sample after one shot.
-#define CSND_CH_RPT_MANUAL     (0u<<10)
+#define CSND_CH_LERP           BIT(6)   // Linear interpolation.
+#define CSND_CH_HOLD           BIT(7)   // Hold last sample after one shot.
+#define CSND_CH_RPT_MANUAL     (0u)
 #define CSND_CH_RPT_LOOP       (1u<<10)
 #define CSND_CH_RPT_ONE_SHOT   (2u<<10)
-#define CSND_CH_FMT_PCM8       (0u<<12) // Signed PCM8.
+#define CSND_CH_FMT_PCM8       (0u)     // Signed PCM8.
 #define CSND_CH_FMT_PCM16      (1u<<12) // Signed PCM16 little endian.
 #define CSND_CH_FMT_IMA_ADPCM  (2u<<12)
 #define CSND_CH_FMT_PSG_NOISE  (3u<<12)
-#define CSND_CH_PLAYING        (1u<<14)
-#define CSND_CH_START          (1u<<15)
+#define CSND_CH_PLAYING        BIT(14)
+#define CSND_CH_START          BIT(15)
 
 // REG_CSND_CAP_CNT
 #define CSND_CAP_RPT_LOOP      (0u)
-#define CSND_CAP_RPT_ONE_SHOT  (1u)
-#define CSND_CAP_FMT_PCM16     (0u)     // Signed PCM16 little endian.
-#define CSND_CAP_FMT_PCM8      (1u<<1)  // Signed PCM8.
-#define CSND_CAP_UNK2          (1u<<2)
-#define CSND_CAP_START         (1u<<15)
+#define CSND_CAP_RPT_ONE_SHOT  BIT(0)
+#define CSND_CAP_FMT_PCM16     (0u)    // Signed PCM16 little endian.
+#define CSND_CAP_FMT_PCM8      BIT(1)  // Signed PCM8.
+#define CSND_CAP_UNK2          BIT(2)
+#define CSND_CAP_START         BIT(15)
 
 
 // Sample rate/frequency helpers.

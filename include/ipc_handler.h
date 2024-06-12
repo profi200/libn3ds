@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ extern "C"
 #endif
 
 #define IPC_MAX_PARAMS               (15)
-#define IPC_CMD_RESP_FLAG            (1u<<15)
+#define IPC_CMD_RESP_FLAG            BIT(15)
 #define IPC_CMD_ID_MASK(cmd)         ((cmd)>>8)      // Max 127.
 #define IPC_CMD_SEND_BUFS_MASK(cmd)  ((cmd)>>6 & 3u) // Max 3.
 #define IPC_CMD_RECV_BUFS_MASK(cmd)  ((cmd)>>4 & 3u) // Max 3.

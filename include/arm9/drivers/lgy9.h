@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -68,13 +68,13 @@ ALWAYS_INLINE Lgy9* getLgy9Regs(void)
 
 // REG_LGY9_GBA_SAVE_MAP
 #define LGY9_SAVE_MAP_7              (0u)
-#define LGY9_SAVE_MAP_9              (1u)
+#define LGY9_SAVE_MAP_9              BIT(0)
 
 // REG_LGY9_GBA_RTC_CNT
-#define LGY9_RTC_CNT_WR              (1u)     // Write date and time.
-#define LGY9_RTC_CNT_RD              (1u<<1)  // Read date and time.
-#define LGY9_RTC_CNT_WR_ERR          (1u<<14) // Write error (wrong date/time).
-#define LGY9_RTC_CNT_BUSY            (1u<<15)
+#define LGY9_RTC_CNT_WR              BIT(0)  // Write date and time.
+#define LGY9_RTC_CNT_RD              BIT(1)  // Read date and time.
+#define LGY9_RTC_CNT_WR_ERR          BIT(14) // Write error (wrong date/time).
+#define LGY9_RTC_CNT_BUSY            BIT(15)
 
 // REG_LGY9_GBA_RTC_BCD_DATE
 // Shifts
@@ -112,13 +112,13 @@ ALWAYS_INLINE Lgy9* getLgy9Regs(void)
 #define LGY9_RTC_TOFFS_INTAE_SHIFT   (30u)
 #define LGY9_RTC_TOFFS_UNK31_SHIFT   (31u)
 // Bits
-#define LGY9_RTC_TOFFS_POWER_LOST    (1u<<LGY9_RTC_TOFFS_POWER_SHIFT)  // RTC power lost flag (Seiko/GBA RO, 3DS RW/set once). The RTC will generate IRQs when this is set which can trigger cart removal detection in some games.
+#define LGY9_RTC_TOFFS_POWER_LOST    BIT(LGY9_RTC_TOFFS_POWER_SHIFT)   // RTC power lost flag (Seiko/GBA RO, 3DS RW/set once). The RTC will generate IRQs when this is set which can trigger cart removal detection in some games.
 #define LGY9_RTC_TOFFS_12H           (0u)                              // Format 12h fomrat.
-#define LGY9_RTC_TOFFS_24H           (1u<<LGY9_RTC_TOFFS_12H24H_SHIFT) // Format 24h fomrat.
-#define LGY9_RTC_TOFFS_INTFE_1       (1u<<LGY9_RTC_TOFFS_INTFE_SHIFT)  // 0 = alarm/per-minute edge IRQ, 1 = 50% duty cycle (minute) or frequency (if INTME/INTAE = 0) IRQ.
-#define LGY9_RTC_TOFFS_INTME_1       (1u<<LGY9_RTC_TOFFS_INTME_SHIFT)  // 0 = other modes, 1 = per-minute IRQ.
-#define LGY9_RTC_TOFFS_INTAE_1       (1u<<LGY9_RTC_TOFFS_INTAE_SHIFT)  // 0 = alarm IRQ disabled, 1 = alarm IRQ enabled (if INTME/INTFE = 0).
-#define LGY9_RTC_TOFFS_UNK31         (1u<<LGY9_RTC_TOFFS_UNK31_SHIFT)  // Unknown. Maybe time/date offset format (decimal or BCD)?
+#define LGY9_RTC_TOFFS_24H           BIT(LGY9_RTC_TOFFS_12H24H_SHIFT)  // Format 24h fomrat.
+#define LGY9_RTC_TOFFS_INTFE_1       BIT(LGY9_RTC_TOFFS_INTFE_SHIFT)   // 0 = alarm/per-minute edge IRQ, 1 = 50% duty cycle (minute) or frequency (if INTME/INTAE = 0) IRQ.
+#define LGY9_RTC_TOFFS_INTME_1       BIT(LGY9_RTC_TOFFS_INTME_SHIFT)   // 0 = other modes, 1 = per-minute IRQ.
+#define LGY9_RTC_TOFFS_INTAE_1       BIT(LGY9_RTC_TOFFS_INTAE_SHIFT)   // 0 = alarm IRQ disabled, 1 = alarm IRQ enabled (if INTME/INTFE = 0).
+#define LGY9_RTC_TOFFS_UNK31         BIT(LGY9_RTC_TOFFS_UNK31_SHIFT)   // Unknown. Maybe time/date offset format (decimal or BCD)?
 // Masks
 #define LGY9_RTC_TOFFS_S_MASK        (0x7F<<LGY9_RTC_TOFFS_S_SHIFT)    // Seconds offset mask. Not on Seiko chip.
 #define LGY9_RTC_TOFFS_MIN_MASK      (0x7F<<LGY9_RTC_TOFFS_MIN_SHIFT)  // Minutes offset mask. Not on Seiko chip.

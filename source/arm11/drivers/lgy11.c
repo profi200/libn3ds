@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -39,13 +39,13 @@ static void lgySleepIsr(u32 intSource)
 		// Workaround for The Legend of Zelda - A Link to the Past.
 		// This game doesn't set the IRQ enable bit so we force it
 		// on the 3DS side. Unknown if other games have this bug.
-		REG_HID_PADCNT = lgy11->padcnt | 1u<<14;
+		REG_HID_PADCNT = lgy11->padcnt | BIT(14);
 	}
 	else // IRQ_HID_PADCNT
 	{
 		// TODO: Synchronize with LCD VBlank.
 		REG_HID_PADCNT = 0;
-		lgy11->sleep |= 1u; // Acknowledge and wakeup.
+		lgy11->sleep |= BIT(0); // Acknowledge and wakeup.
 	}
 }
 
@@ -60,7 +60,7 @@ static void powerDownFcramForLegacy(u8 mode)
 	Pdn *const pdn = getPdnRegs();
 	if(mode == LGY_MODE_AGB)
 	{
-		*((vu32*)0x10201000) &= ~1u;                  // Bug fix for the GBA cart emu?
+		*((vu32*)0x10201000) &= ~BIT(0);              // Bug fix for the GBA cart emu?
 		pdn->fcram_cnt = PDN_FCRAM_CNT_CLK_EN;        // Set reset low (active) but keep clock on.
 	}
 	pdn->fcram_cnt = PDN_FCRAM_CNT_NORST;             // Take it out of reset but disable clock.
@@ -109,7 +109,7 @@ Result LGY_prepareGbaMode(bool directBoot, u16 saveType, const char *const saveP
 	powerDownFcramForLegacy(LGY_MODE_AGB);
 
 	// Setup IRQ handlers and sleep mode handling.
-	getLgy11Regs()->sleep = 1u<<15;
+	getLgy11Regs()->sleep = BIT(15);
 	IRQ_registerIsr(IRQ_LGY_SLEEP, 14, 0, lgySleepIsr);
 	IRQ_registerIsr(IRQ_HID_PADCNT, 14, 0, lgySleepIsr);
 

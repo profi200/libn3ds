@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ static u32 findUnusedFileSlot(void)
 	u32 i = 0;
 	do
 	{
-		if((g_fsState.fBitmap & 1u<<i) == 0) break;
+		if((g_fsState.fBitmap & BIT(i)) == 0) break;
 	} while(++i < FS_MAX_FILES);
 
 	return i;
@@ -70,7 +70,7 @@ static u32 findUnusedDirSlot(void)
 	u32 i = 0;
 	do
 	{
-		if((g_fsState.dBitmap & 1u<<i) == 0) break;
+		if((g_fsState.dBitmap & BIT(i)) == 0) break;
 	} while(++i < FS_MAX_DIRS);
 
 	return i;
@@ -120,7 +120,7 @@ Result fOpen(FHandle *const hOut, const char *const path, u8 mode)
 	Result res = fres2Res(f_open(&g_fsState.fTable[slot], path, mode));
 	if(res == RES_OK)
 	{
-		g_fsState.fBitmap |= 1u<<slot;
+		g_fsState.fBitmap |= BIT(slot);
 		g_fsState.fHandles++;
 		*hOut = (FHandle)slot;
 	}
@@ -186,7 +186,7 @@ Result fClose(FHandle h)
 		return RES_FR_INVALID_OBJECT;
 
 	Result res = fres2Res(f_close(&g_fsState.fTable[h]));
-	g_fsState.fBitmap &= ~(1u<<h);
+	g_fsState.fBitmap &= ~BIT(h);
 	g_fsState.fHandles--;
 
 	return res;
@@ -211,7 +211,7 @@ Result fOpenDir(DHandle *const hOut, const char *const path)
 	Result res = fres2Res(f_opendir(&g_fsState.dTable[slot], path));
 	if(res == RES_OK)
 	{
-		g_fsState.dBitmap |= 1u<<slot;
+		g_fsState.dBitmap |= BIT(slot);
 		g_fsState.dHandles++;
 		*hOut = (DHandle)slot;
 	}
@@ -245,7 +245,7 @@ Result fCloseDir(DHandle h)
 		return RES_FR_INVALID_OBJECT;
 
 	Result res = fres2Res(f_closedir(&g_fsState.dTable[h]));
-	g_fsState.dBitmap &= ~(1u<<h);
+	g_fsState.dBitmap &= ~BIT(h);
 	g_fsState.dHandles--;
 
 	return res;

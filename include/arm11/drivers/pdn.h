@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -67,68 +67,68 @@ ALWAYS_INLINE Pdn* getPdnRegs(void)
 
 
 // REG_PDN_CNT
-#define PDN_CNT_SLEEP                   (1u)     // Set this bit to enter sleep mode.
-#define PDN_CNT_VRAM_OFF                (1u<<15) // Set when VRAM is powered off.
+#define PDN_CNT_SLEEP                   BIT(0)  // Set this bit to enter sleep mode.
+#define PDN_CNT_VRAM_OFF                BIT(15) // Set when VRAM is powered off.
 
 // REG_PDN_WAKE_ENABLE and REG_PDN_WAKE_REASON
-#define PDN_WAKE_PADCNT                 (1u)
-#define PDN_WAKE_SHELL_OPENED           (1u<<3)
-#define PDN_WAKE_HEADPH_NOT_PLUGGED_IN  (1u<<4) // Really?
-#define PDN_WAKE_UNK6                   (1u<<6) // DSi mode related.
-#define PDN_WAKE_SDIO1                  (1u<<7)
-#define PDN_WAKE_SDIO2                  (1u<<8)
-#define PDN_WAKE_SDIO3                  (1u<<16)
+#define PDN_WAKE_PADCNT                 BIT(0)
+#define PDN_WAKE_SHELL_OPENED           BIT(3)
+#define PDN_WAKE_HEADPH_NOT_PLUGGED_IN  BIT(4)  // Really?
+#define PDN_WAKE_UNK6                   BIT(6)  // DSi mode related.
+#define PDN_WAKE_SDIO1                  BIT(7)
+#define PDN_WAKE_SDIO2                  BIT(8)
+#define PDN_WAKE_SDIO3                  BIT(16)
 // 17-28 maybe GPIO3 0-11?
-#define PDN_WAKE_GPIO_3_9               (1u<<26)
-#define PDN_WAKE_GAMECARD_INSERT        (1u<<29) // ?
-#define PDN_WAKE_TOUCHPEN_DOWN          (1u<<30)
-#define PDN_WAKE_UNK31                  (1u<<31) // Also shell related?
+#define PDN_WAKE_GPIO_3_9               BIT(26)
+#define PDN_WAKE_GAMECARD_INSERT        BIT(29) // ?
+#define PDN_WAKE_TOUCHPEN_DOWN          BIT(30)
+#define PDN_WAKE_UNK31                  BIT(31) // Also shell related?
 
 // Aliases for above GPIO wake bits.
 #define PDN_WAKE_MCU                    (PDN_WAKE_GPIO_3_9)
 
 // REG_PDN_GPU_CNT
 // Note: The resets are active low.
-#define PDN_GPU_CNT_NORST_REGS          (1u)    // And more?
-#define PDN_GPU_CNT_NORST_PSC           (1u<<1) // ?
-#define PDN_GPU_CNT_NORST_GEOSHADER     (1u<<2) // ?
-#define PDN_GPU_CNT_NORST_RASTERIZER    (1u<<3) // ?
-#define PDN_GPU_CNT_NORST_PPF           (1u<<4)
-#define PDN_GPU_CNT_NORST_PDC           (1u<<5) // ?
-#define PDN_GPU_CNT_NORST_PDC2          (1u<<6) // Maybe pixel pipeline or so?
+#define PDN_GPU_CNT_NORST_REGS          BIT(0)  // And more?
+#define PDN_GPU_CNT_NORST_PSC           BIT(1)  // ?
+#define PDN_GPU_CNT_NORST_GEOSHADER     BIT(2)  // ?
+#define PDN_GPU_CNT_NORST_RASTERIZER    BIT(3)  // ?
+#define PDN_GPU_CNT_NORST_PPF           BIT(4)
+#define PDN_GPU_CNT_NORST_PDC           BIT(5)  // ?
+#define PDN_GPU_CNT_NORST_PDC2          BIT(6)  // Maybe pixel pipeline or so?
 #define PDN_GPU_CNT_NORST_ALL           (PDN_GPU_CNT_NORST_PDC2 | PDN_GPU_CNT_NORST_PDC | \
                                          PDN_GPU_CNT_NORST_PPF | PDN_GPU_CNT_NORST_RASTERIZER | \
                                          PDN_GPU_CNT_NORST_GEOSHADER | PDN_GPU_CNT_NORST_PSC | \
                                          PDN_GPU_CNT_NORST_REGS)
-#define PDN_GPU_CNT_CLK_EN              (1u<<16)
+#define PDN_GPU_CNT_CLK_EN              BIT(16)
 
 // REG_PDN_VRAM_CNT
-#define PDN_VRAM_CNT_CLK_EN             (1u)
+#define PDN_VRAM_CNT_CLK_EN             BIT(0)
 
 // REG_PDN_LCD_CNT
-#define PDN_LCD_CNT_PWR_MGR_OFF         (1u) // Power management off?
+#define PDN_LCD_CNT_PWR_MGR_OFF         BIT(0) // Power management off?
 
 // REG_PDN_FCRAM_CNT
 // Note: Reset is active low.
-#define PDN_FCRAM_CNT_NORST             (1u)
-#define PDN_FCRAM_CNT_CLK_EN            (1u<<1)
-#define PDN_FCRAM_CNT_CLK_EN_ACK        (1u<<2) // Gets set or unset depending on CLK_E.
+#define PDN_FCRAM_CNT_NORST             BIT(0)
+#define PDN_FCRAM_CNT_CLK_EN            BIT(1)
+#define PDN_FCRAM_CNT_CLK_EN_ACK        BIT(2) // Gets set or unset depending on CLK_E.
 
 // REG_PDN_I2S_CNT
-#define PDN_I2S_CNT_I2S_CLK1_EN         (1u)    // ? Unused?
-#define PDN_I2S_CNT_I2S_CLK2_EN         (1u<<1)
+#define PDN_I2S_CNT_I2S_CLK1_EN         BIT(0) // ? Unused?
+#define PDN_I2S_CNT_I2S_CLK2_EN         BIT(1)
 
 // REG_PDN_CAM_CNT
-#define PDN_CAM_CNT_CLK_EN              (1u)
+#define PDN_CAM_CNT_CLK_EN              BIT(0)
 
 // REG_PDN_DSP_CNT
 // Note: Reset is active low.
-#define PDN_DSP_CNT_NORST               (1u)
-#define PDN_DSP_CNT_CLK_EN              (1u<<1)
+#define PDN_DSP_CNT_NORST               BIT(0)
+#define PDN_DSP_CNT_CLK_EN              BIT(1)
 
 // REG_PDN_G1_CNT
 // TODO: Active low or high?
-#define PDN_G1_CNT_NORST                (1u)
+#define PDN_G1_CNT_NORST                BIT(0)
 
 // REG_PDN_LGR_SOCMODE
 typedef enum
@@ -142,18 +142,18 @@ typedef enum
 	SOCMODE_MASK        = 7u
 } PdnSocmode;
 
-#define PDN_LGR_SOCMODE_ACK             (1u<<15)
+#define PDN_LGR_SOCMODE_ACK             BIT(15)
 
 // REG_PDN_LGR_CNT
-#define PDN_LGR_CNT_WRAM_EXT_EN         (1u)    // QTM WRAM enable.
-#define PDN_LGR_CNT_L2C_EN              (1u<<8) // L2C L2 cache enable.
+#define PDN_LGR_CNT_WRAM_EXT_EN         BIT(0) // QTM WRAM enable.
+#define PDN_LGR_CNT_L2C_EN              BIT(8) // L2C L2 cache enable.
 
 // REGs_PDN_LGR_CPU_CNT
 // Note: Reset is active low.
-#define LGR_CPU_CNT_NORST               (1u)    // Core 2/3 only. Reset and instruction overlay enable.
-#define LGR_CPU_CNT_D_OVERL_EN          (1u<<1) // Core 2/3 only. Data overlay enable. Also used to signal a core booted.
-#define LGR_CPU_CNT_RST_STAT            (1u<<4) // Reset status.
-#define LGR_CPU_CNT_UNK                 (1u<<5) // Something ready?
+#define LGR_CPU_CNT_NORST               BIT(0) // Core 2/3 only. Reset and instruction overlay enable.
+#define LGR_CPU_CNT_D_OVERL_EN          BIT(1) // Core 2/3 only. Data overlay enable. Also used to signal a core booted.
+#define LGR_CPU_CNT_RST_STAT            BIT(4) // Reset status.
+#define LGR_CPU_CNT_UNK                 BIT(5) // Something ready?
 
 
 

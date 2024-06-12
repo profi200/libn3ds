@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -104,7 +104,7 @@ ALWAYS_INLINE Dma330* getDma330Regs(void)
 // REG_DMA330_DSR
 #define DSR_WAKE_EVNT_SHIFT       (4u)
 #define DSR_WAKE_EVNT_MASK        (0x1Fu<<DSR_WAKEUP_EVNT_SHIFT)
-#define DSR_DNS                   (1u<<9) // DMA Manager is non-secure.
+#define DSR_DNS                   BIT(9) // DMA Manager is non-secure.
 
 enum
 {
@@ -119,51 +119,51 @@ enum
 };
 
 // REG_DMA330_INTEN
-#define INTEN_SEL_IRQ(n)          (1u<<(n)) // Select IRQ instead of event.
+#define INTEN_SEL_IRQ(n)          BIT(n) // Select IRQ instead of event.
 
 // REG_DMA330_INT_EVENT_RIS
-#define INT_EVENT_RIS_ACTIVE(n)   (1u<<(n)) // Interrupt or event N is active.
+#define INT_EVENT_RIS_ACTIVE(n)   BIT(n) // Interrupt or event N is active.
 
 // REG_DMA330_INTMIS
-#define INTMIS_IRQ_ACTIVE(n)      (1u<<(n)) // Interrupt N is active.
+#define INTMIS_IRQ_ACTIVE(n)      BIT(n) // Interrupt N is active.
 
 // REG_DMA330_INTCLR
-#define INTCLR_IRQ_CLR(n)         (1u<<(n)) // Clear interrupt N.
+#define INTCLR_IRQ_CLR(n)         BIT(n) // Clear interrupt N.
 
 // REG_DMA330_FSRD
-#define FSRD_FAULTING             (1u) // DMA manager is in faulting state.
+#define FSRD_FAULTING             BIT(0) // DMA manager is in faulting state.
 
 // REG_DMA330_FSRC
-#define FSRC_FAULTING(n)          (1u<<(n)) // DMA channel is in faulting or faulting completing state.
+#define FSRC_FAULTING(n)          BIT(n) // DMA channel is in faulting or faulting completing state.
 
 // REG_DMA330_FTRD
-#define FTRD_UNDEF_INSTR          (1u)
-#define FTRD_OPERAND_INVALID      (1u<<1)
-#define FTRD_DMAGO_ERR            (1u<<4)  // Starting a secure channel from a non-secure state.
-#define FTRD_MGR_EVNT_ERR         (1u<<5)  // Waiting for or creating secure events/interrupts in no-secure state.
-#define FTRD_INSTR_FETCH_ERR      (1u<<16)
-#define FTRD_DBG_INSTR            (1u<<30) // The erroneous instruction came from the debug interface.
+#define FTRD_UNDEF_INSTR          BIT(0)
+#define FTRD_OPERAND_INVALID      BIT(1)
+#define FTRD_DMAGO_ERR            BIT(4)  // Starting a secure channel from a non-secure state.
+#define FTRD_MGR_EVNT_ERR         BIT(5)  // Waiting for or creating secure events/interrupts in no-secure state.
+#define FTRD_INSTR_FETCH_ERR      BIT(16)
+#define FTRD_DBG_INSTR            BIT(30) // The erroneous instruction came from the debug interface.
 
 // REG_DMA330_FTR0-7
-#define FTR_UNDEF_INSTR           (1u)
-#define FTR_OPERAND_INVALID       (1u<<1)
-#define FTR_CH_EVNT_ERR           (1u<<5)  // Waiting for or creating secure events/interrupts in no-secure state.
-#define FTR_CH_PERIPH_ERR         (1u<<6)  // Accessing secure periphals in non-secure state (DMAWFP, DMALDP, DMASTP, DMAFLUSHP).
-#define FTR_CH_RDWR_ERR           (1u<<7)  // Secure read or write in non-secure state.
-#define FTR_CH_MFIFO_ERR          (1u<<12) // MFIFO too small to hold or store the data (DMALD, DMAST).
-#define FTR_CH_ST_DATA_UNAVAIL    (1u<<13) // Not enough data in the MFIFO for DMAST to complete.
-#define FTR_INSTR_FETCH_ERR       (1u<<16)
-#define FTR_DATA_WRITE_ERR        (1u<<17)
-#define FTR_DATA_READ_ERR         (1u<<18)
-#define FTR_DBG_INSTR             (1u<<30) // The erroneous instruction came from the debug interface.
-#define FTR_LOCKUP_ERR            (1u<<31) // Channel locked up because of resource starvation.
+#define FTR_UNDEF_INSTR           BIT(0)
+#define FTR_OPERAND_INVALID       BIT(1)
+#define FTR_CH_EVNT_ERR           BIT(5)  // Waiting for or creating secure events/interrupts in no-secure state.
+#define FTR_CH_PERIPH_ERR         BIT(6)  // Accessing secure periphals in non-secure state (DMAWFP, DMALDP, DMASTP, DMAFLUSHP).
+#define FTR_CH_RDWR_ERR           BIT(7)  // Secure read or write in non-secure state.
+#define FTR_CH_MFIFO_ERR          BIT(12) // MFIFO too small to hold or store the data (DMALD, DMAST).
+#define FTR_CH_ST_DATA_UNAVAIL    BIT(13) // Not enough data in the MFIFO for DMAST to complete.
+#define FTR_INSTR_FETCH_ERR       BIT(16)
+#define FTR_DATA_WRITE_ERR        BIT(17)
+#define FTR_DATA_READ_ERR         BIT(18)
+#define FTR_DBG_INSTR             BIT(30) // The erroneous instruction came from the debug interface.
+#define FTR_LOCKUP_ERR            BIT(31) // Channel locked up because of resource starvation.
 
 // REG_DMA330_CSR0-7
 #define CSR_WAKE_EVNT_SHIFT       (4u)
 #define CSR_WAKE_EVNT_MASK        (0x1Fu<<CSR_WAKEUP_EVNT_SHIFT)
-#define CSR_DMAWFP_B_NS           (1u<<14) // DMAWFP executed with burst operand set.
-#define CSR_DMAWFP_PERIPH         (1u<<15) // DMAWFP executed with periph operand set.
-#define CSR_CNS                   (1u<<21) // DMA channel is non-secure.
+#define CSR_DMAWFP_B_NS           BIT(14) // DMAWFP executed with burst operand set.
+#define CSR_DMAWFP_PERIPH         BIT(15) // DMAWFP executed with periph operand set.
+#define CSR_CNS                   BIT(21) // DMA channel is non-secure.
 
 enum
 {
@@ -183,7 +183,7 @@ enum
 };
 
 // REG_DMA330_CCR0-7
-#define CCR_SRC_INC               (1u)
+#define CCR_SRC_INC               BIT(0)
 #define CCR_SRC_BURST_SIZE_SHIFT  (1u)
 #define CCR_SRC_BURST_SIZE_MASK   (0x7u<<CCR_SRC_BURST_SIZE_SHIFT)
 #define CCR_SRC_BURST_LEN_SHIFT   (4u)
@@ -193,7 +193,7 @@ enum
 #define CCR_SRC_CACHE_CTRL_SHIFT  (11u)
 #define CCR_SRC_CACHE_CTRL_MASK   (0x7u<<CCR_SRC_CACHE_CTRL_SHIFT)
 
-#define CCR_DST_INC               (1u<<14)
+#define CCR_DST_INC               BIT(14)
 #define CCR_DST_BURST_SIZE_SHIFT  (15u)
 #define CCR_DST_BURST_SIZE_MASK   (0x7u<<CCR_DST_BURST_SIZE_SHIFT)
 #define CCR_DST_BURST_LEN_SHIFT   (18u)
@@ -207,14 +207,14 @@ enum
 #define CCR_END_SWP_SIZE_MASK     (0x7u<<CCR_END_SWP_SIZE_SHIFT)
 
 // REG_DMA330_DBGSTATUS
-#define DBGSTATUS_BUSY            (1u)
+#define DBGSTATUS_BUSY            BIT(0)
 
 // REG_DMA330_DBGCMD
 #define DBGCMD_EXECUTE            (0u)
 
 // REG_DMA330_DBGINST0
-#define DBGINST0_THR_MGR          (0u) // Select DMA manager thread.
-#define DBGINST0_THR_CH           (1u) // Select DMA channel thread (also needs a channel number).
+#define DBGINST0_THR_MGR          (0u)   // Select DMA manager thread.
+#define DBGINST0_THR_CH           BIT(0) // Select DMA channel thread (also needs a channel number).
 #define DBGINST0(b10, ch, t)      ((b10)<<16 | (ch)<<8 | (t)) // b10 = byte 1 and 0, ch = channel num, t = thread.
 // DBGINST1 stores the remaining 4 instruction bytes.
 

@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -60,14 +60,12 @@ void LGY11_switchMode(void);
 
 static inline void LGY11_setInputState(const u16 pressed)
 {
-	Lgy11 *const lgy11 = getLgy11Regs();
-	lgy11->pad_val = ~pressed;
+	getLgy11Regs()->pad_val = ~pressed;
 }
 
 static inline void LGY11_selectInput(const u16 inputSelect)
 {
-	Lgy11 *const lgy11 = getLgy11Regs();
-	lgy11->pad_sel = inputSelect;
+	getLgy11Regs()->pad_sel = inputSelect;
 }
 
 void LGY11_deinit(void);

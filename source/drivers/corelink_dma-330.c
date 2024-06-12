@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 #define IRQ_LINES  (12u)
 #endif // ifdef __ARM11__
 
-#define INTEN_VAL  ((1u<<IRQ_LINES) - 1) // Not 32 bit safe!
+#define INTEN_VAL  (BIT(IRQ_LINES) - 1) // Not 32 bit safe!
 
 
 

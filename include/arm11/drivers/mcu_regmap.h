@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -110,44 +110,44 @@ typedef enum
 
 
 // MCU_REG_IRQ and MCU_REG_IRQ_MASK.
-#define MCU_IRQ_POWER_PRESS        (1u)     // Power button pressed for 200 ms.
-#define MCU_IRQ_POWER_HELD         (1u<<1)  // Power button held for 3 seconds.
-#define MCU_IRQ_HOME_PRESS         (1u<<2)  // HOME button pressed for 40 ms.
-#define MCU_IRQ_HOME_RELEASE       (1u<<3)  // HOME button released.
-#define MCU_IRQ_WIFI_PRESS         (1u<<4)  // WiFi button pressed for 40 ms.
-#define MCU_IRQ_SHELL_CLOSE        (1u<<5)  // Shell has been closed.
-#define MCU_IRQ_SHELL_OPEN         (1u<<6)  // Shell has been opened.
-#define MCU_IRQ_WATCHDOG           (1u<<7)  // MCU has been reset by the watchdog.
-#define MCU_IRQ_CHARGER_UNPLUG     (1u<<8)  // Charger has been unplugged.
-#define MCU_IRQ_CHARGER_PLUG       (1u<<9)  // Charger has been plugged in.
-#define MCU_IRQ_RTC_ALARM          (1u<<10) // RTC alarm.
-#define MCU_IRQ_ACC_RW_DONE        (1u<<11) // Accelerometer I2C read/write done.
-#define MCU_IRQ_ACC_DATA_READY     (1u<<12) // Accelerometer X/Y/Z sample data ready.
-#define MCU_IRQ_LOW_BATT           (1u<<13) // Low battery warning IRQ triggered at 10, 5 and 0%. TODO: gbatek says 11, 6 and 1%.
-#define MCU_IRQ_BATT_CHARGE_STOP   (1u<<14) // Battery charging stopped.
-#define MCU_IRQ_BATT_CHARGE_START  (1u<<15) // Battery charging started.
-#define MCU_IRQ_TWL_RESET          (1u<<16) // DS powerman register 0x10 bit 0 = 1 or TWL MCU register 0x11 = 1 (reset).
-#define MCU_IRQ_TWL_PWROFF         (1u<<17) // DS powerman register 0x10 bit 6 = 1. Poweroff request?
-#define MCU_IRQ_TWL_BOT_BL_OFF     (1u<<18) // DS powerman register 0x10 bit 2 = 0. Bottom LCD backlight off request?
-#define MCU_IRQ_TWL_BOT_BL_ON      (1u<<19) // DS powerman register 0x10 bit 2 = 1. Bottom LCD backlight on request?
-#define MCU_IRQ_TWL_TOP_BL_OFF     (1u<<20) // DS powerman register 0x10 bit 3 = 0. Top LCD backlight off request?
-#define MCU_IRQ_TWL_TOP_BL_ON      (1u<<21) // DS powerman register 0x10 bit 3 = 1. Top LCD backlight on request?
-#define MCU_IRQ_VOL_SLIDER_CHANGE  (1u<<22) // Volume slider position changed.
-#define MCU_IRQ_TWL_MCU_VER_READ   (1u<<23) // TWL MCU version register (0x00) read.
-#define MCU_IRQ_LCD_POWER_OFF      (1u<<24) // LCDs have been powered off.
-#define MCU_IRQ_LCD_POWER_ON       (1u<<25) // LCDs have been powered on.
-#define MCU_IRQ_BOT_BL_OFF         (1u<<26) // Bottom LCD backlight has been powered off.
-#define MCU_IRQ_BOT_BL_ON          (1u<<27) // Bottom LCD backlight has been powered on.
-#define MCU_IRQ_TOP_BL_OFF         (1u<<28) // Top LCD backlight has been powered off.
-#define MCU_IRQ_TOP_BL_ON          (1u<<29) // Top LCD backlight has been powered on.
+#define MCU_IRQ_POWER_PRESS        BIT(0)  // Power button pressed for 200 ms.
+#define MCU_IRQ_POWER_HELD         BIT(1)  // Power button held for 3 seconds.
+#define MCU_IRQ_HOME_PRESS         BIT(2)  // HOME button pressed for 40 ms.
+#define MCU_IRQ_HOME_RELEASE       BIT(3)  // HOME button released.
+#define MCU_IRQ_WIFI_PRESS         BIT(4)  // WiFi button pressed for 40 ms.
+#define MCU_IRQ_SHELL_CLOSE        BIT(5)  // Shell has been closed.
+#define MCU_IRQ_SHELL_OPEN         BIT(6)  // Shell has been opened.
+#define MCU_IRQ_WATCHDOG           BIT(7)  // MCU has been reset by the watchdog.
+#define MCU_IRQ_CHARGER_UNPLUG     BIT(8)  // Charger has been unplugged.
+#define MCU_IRQ_CHARGER_PLUG       BIT(9)  // Charger has been plugged in.
+#define MCU_IRQ_RTC_ALARM          BIT(10) // RTC alarm.
+#define MCU_IRQ_ACC_RW_DONE        BIT(11) // Accelerometer I2C read/write done.
+#define MCU_IRQ_ACC_DATA_READY     BIT(12) // Accelerometer X/Y/Z sample data ready.
+#define MCU_IRQ_LOW_BATT           BIT(13) // Low battery warning IRQ triggered at 10, 5 and 0%. TODO: gbatek says 11, 6 and 1%.
+#define MCU_IRQ_BATT_CHARGE_STOP   BIT(14) // Battery charging stopped.
+#define MCU_IRQ_BATT_CHARGE_START  BIT(15) // Battery charging started.
+#define MCU_IRQ_TWL_RESET          BIT(16) // DS powerman register 0x10 bit 0 = 1 or TWL MCU register 0x11 = 1 (reset).
+#define MCU_IRQ_TWL_PWROFF         BIT(17) // DS powerman register 0x10 bit 6 = 1. Poweroff request?
+#define MCU_IRQ_TWL_BOT_BL_OFF     BIT(18) // DS powerman register 0x10 bit 2 = 0. Bottom LCD backlight off request?
+#define MCU_IRQ_TWL_BOT_BL_ON      BIT(19) // DS powerman register 0x10 bit 2 = 1. Bottom LCD backlight on request?
+#define MCU_IRQ_TWL_TOP_BL_OFF     BIT(20) // DS powerman register 0x10 bit 3 = 0. Top LCD backlight off request?
+#define MCU_IRQ_TWL_TOP_BL_ON      BIT(21) // DS powerman register 0x10 bit 3 = 1. Top LCD backlight on request?
+#define MCU_IRQ_VOL_SLIDER_CHANGE  BIT(22) // Volume slider position changed.
+#define MCU_IRQ_TWL_MCU_VER_READ   BIT(23) // TWL MCU version register (0x00) read.
+#define MCU_IRQ_LCD_POWER_OFF      BIT(24) // LCDs have been powered off.
+#define MCU_IRQ_LCD_POWER_ON       BIT(25) // LCDs have been powered on.
+#define MCU_IRQ_BOT_BL_OFF         BIT(26) // Bottom LCD backlight has been powered off.
+#define MCU_IRQ_BOT_BL_ON          BIT(27) // Bottom LCD backlight has been powered on.
+#define MCU_IRQ_TOP_BL_OFF         BIT(28) // Top LCD backlight has been powered off.
+#define MCU_IRQ_TOP_BL_ON          BIT(29) // Top LCD backlight has been powered on.
 
 // MCU_REG_LCD_PWR
-#define MCU_LCD_PWR_OFF            (1u)           // Power off both LCDs. Also powers off backlights.
-#define MCU_LCD_PWR_ON             (1u<<1)        // Power on both LCDs.
-#define MCU_LCD_PWR_BOT_BL_OFF     (1u<<2)        // Turn bottom LCD backlight off.
-#define MCU_LCD_PWR_BOT_BL_ON      (1u<<3)        // Turn bottom LCD backlight on.
-#define MCU_LCD_PWR_TOP_BL_OFF     (1u<<4)        // Turn top LCD backlight off.
-#define MCU_LCD_PWR_TOP_BL_ON      (1u<<5)        // Turn top LCD backlight on.
+#define MCU_LCD_PWR_OFF            BIT(0)         // Power off both LCDs. Also powers off backlights.
+#define MCU_LCD_PWR_ON             BIT(1)         // Power on both LCDs.
+#define MCU_LCD_PWR_BOT_BL_OFF     BIT(2)         // Turn bottom LCD backlight off.
+#define MCU_LCD_PWR_BOT_BL_ON      BIT(3)         // Turn bottom LCD backlight on.
+#define MCU_LCD_PWR_TOP_BL_OFF     BIT(4)         // Turn top LCD backlight off.
+#define MCU_LCD_PWR_TOP_BL_ON      BIT(5)         // Turn top LCD backlight on.
 #define MCU_LCD_PWR_2_IRQ(p)       ((u32)(p)<<24) // Converts LCD power bits to MCU IRQ format.
 
 // MCU_REG_PWR_LED
@@ -191,10 +191,10 @@ static_assert(sizeof(InfoLedPattern) == 100);
 // MCU_REG_ACC_CFG
 typedef enum
 {
-	ACC_CFG_ALL_OFF       = 0u, // Accelerometer and pedometer off.
-	ACC_CFG_ACC_ON_PM_OFF = 1u, // Accelerometer on and pedometer off.
-	ACC_CFG_ACC_OFF_PM_ON = 2u, // Accelerometer off and pedometer on.
-	ACC_CFG_ACC_ON_PM_ON  = 3u  // Accelerometer on and pedometer on.
+	ACC_CFG_ALL_OFF       = 0u,             // Accelerometer and pedometer off.
+	ACC_CFG_ACC_ON_PM_OFF = BIT(0),         // Accelerometer on and pedometer off.
+	ACC_CFG_ACC_OFF_PM_ON = BIT(1),         // Accelerometer off and pedometer on.
+	ACC_CFG_ACC_ON_PM_ON  = BIT(1) | BIT(0) // Accelerometer on and pedometer on.
 } AccCfg;
 
 #ifdef __cplusplus

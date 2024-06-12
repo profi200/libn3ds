@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -197,8 +197,8 @@ enum
 
 // PSC fill register defines.
 // REG_GX_PSC_FILL_CNT
-#define PSC_FILL_EN              (1u)
-#define PSC_FILL_IRQ_MASK        (1u<<1)
+#define PSC_FILL_EN              BIT(0)
+#define PSC_FILL_IRQ_MASK        BIT(1)
 #define PSC_FILL_16_BITS         (0u)
 #define PSC_FILL_24_BITS         (1u<<8)
 #define PSC_FILL_32_BITS         (2u<<8)
@@ -206,21 +206,21 @@ enum
 
 // REG_GX_PSC_VRAM
 // Bit 0 unknown.
-#define PSC_VRAM_BANK0_DIS       (1u<<8)
-#define PSC_VRAM_BANK1_DIS       (1u<<9)
-#define PSC_VRAM_BANK2_DIS       (1u<<10)
-#define PSC_VRAM_BANK3_DIS       (1u<<11)
+#define PSC_VRAM_BANK0_DIS       BIT(8)
+#define PSC_VRAM_BANK1_DIS       BIT(9)
+#define PSC_VRAM_BANK2_DIS       BIT(10)
+#define PSC_VRAM_BANK3_DIS       BIT(11)
 #define PSC_VRAM_BANK_DIS_ALL    (PSC_VRAM_BANK3_DIS | PSC_VRAM_BANK2_DIS | PSC_VRAM_BANK1_DIS | PSC_VRAM_BANK0_DIS)
 // Bits 16-17 unknown. Setting both causes a huge performance drop when copying from VRAM A to B via PPF.
 
 // REG_GX_PSC_IRQ_STAT
 // Bit 0 and 1 exist. Unknown purpose.
-#define IRQ_STAT_PSC0            (1u<<26) // PSC fill 0 IRQ active.
-#define IRQ_STAT_PSC1            (1u<<27) // PSC fill 1 IRQ active.
-#define IRQ_STAT_PDC0            (1u<<28) // PDC0 IRQ active.
-#define IRQ_STAT_PDC1            (1u<<29) // PDC1 IRQ active.
-#define IRQ_STAT_PPF             (1u<<30) // PPF IRQ active.
-#define IRQ_STAT_P3D             (1u<<31) // P3D IRQ active.
+#define IRQ_STAT_PSC0            BIT(26) // PSC fill 0 IRQ active.
+#define IRQ_STAT_PSC1            BIT(27) // PSC fill 1 IRQ active.
+#define IRQ_STAT_PDC0            BIT(28) // PDC0 IRQ active.
+#define IRQ_STAT_PDC1            BIT(29) // PDC1 IRQ active.
+#define IRQ_STAT_PPF             BIT(30) // PPF IRQ active.
+#define IRQ_STAT_P3D             BIT(31) // P3D IRQ active.
 #define IRQ_STAT_ALL             (IRQ_STAT_P3D | IRQ_STAT_PPF | IRQ_STAT_PDC1 | IRQ_STAT_PDC0 | IRQ_STAT_PSC1 | IRQ_STAT_PSC0)
 
 // PDC register defines.
@@ -229,9 +229,9 @@ enum
 
 // REG_GX_PDC_SIGNAL_POL
 #define PDC_SIGNAL_POL_H_ACT_LO  (0u)
-#define PDC_SIGNAL_POL_H_ACT_HI  (1u)
+#define PDC_SIGNAL_POL_H_ACT_HI  BIT(0)
 #define PDC_SIGNAL_POL_V_ACT_LO  (0u)
-#define PDC_SIGNAL_POL_V_ACT_HI  (1u<<4)
+#define PDC_SIGNAL_POL_V_ACT_HI  BIT(4)
 
 // REG_GX_PDC_FB_FMT
 // TODO: DMA bursts need more testing.
@@ -241,7 +241,7 @@ enum
 #define PDC_FB_OUT_AA            (1u<<4)   // Interleaves with itself.
 #define PDC_FB_OUT_AB            (2u<<4)   // Interleaves buffer A with B.
 #define PDC_FB_OUT_BA            (3u<<4)   // Interleaves buffer B with A.
-#define PDC_FB_DOUBLE_V          (1u<<6)   // Double vertical resolution. Not the same as AA output mode.
+#define PDC_FB_DOUBLE_V          BIT(6)    // Double vertical resolution. Not the same as AA output mode.
 #define PDC_FB_BURST_4           (0u)      // Bytes per burst: RGB8:  -, Other:  4.
 #define PDC_FB_BURST_6_8         (1u<<8)   // Bytes per burst: RGB8:  6, Other:  8.
 #define PDC_FB_BURST_16          (2u<<8)   // Bytes per burst: RGB8:  -, Other: 16.
@@ -249,20 +249,20 @@ enum
 #define PDC_FB_DMA_INT(i)        ((i)<<16) // DMA interval setting? Unit unknown.
 
 // REG_GX_PDC_CNT
-#define PDC_CNT_EN               (1u)     // Enables the display controller.
-#define PDC_CNT_NO_IRQ_H         (1u<<8)  // Disables H(Blank?) IRQs.
-#define PDC_CNT_NO_IRQ_V         (1u<<9)  // Disables VBlank IRQs.
-#define PDC_CNT_NO_IRQ_ERR       (1u<<10) // Disables error IRQs. FIFO?
+#define PDC_CNT_EN               BIT(0)  // Enables the display controller.
+#define PDC_CNT_NO_IRQ_H         BIT(8)  // Disables H(Blank?) IRQs.
+#define PDC_CNT_NO_IRQ_V         BIT(9)  // Disables VBlank IRQs.
+#define PDC_CNT_NO_IRQ_ERR       BIT(10) // Disables error IRQs. FIFO?
 #define PDC_CNT_NO_IRQ_ALL       (PDC_CNT_NO_IRQ_ERR | PDC_CNT_NO_IRQ_V | PDC_CNT_NO_IRQ_H)
-#define PDC_CNT_OUT_EN           (1u<<16) // Output enable?
+#define PDC_CNT_OUT_EN           BIT(16) // Output enable?
 
 // REG_GX_PDC_SWAP
-#define PDC_SWAP_NEXT_MASK       (1u)     // Next framebuffer.
-#define PDC_SWAP_CUR_MASK        (1u<<4)  // Currently displaying framebuffer?
-#define PDC_SWAP_RST_FIFO        (1u<<8)  // Internal DMA FIFO reset/clear?
-#define PDC_SWAP_IRQ_ACK_H       (1u<<16) // Acknowledges H(Blank?) IRQ.
-#define PDC_SWAP_IRQ_ACK_V       (1u<<17) // Acknowledges VBlank IRQ.
-#define PDC_SWAP_IRQ_ACK_ERR     (1u<<18) // Acknowledges error IRQ. FIFO?
+#define PDC_SWAP_NEXT_MASK       BIT(0)  // Next framebuffer.
+#define PDC_SWAP_CUR_MASK        BIT(4)  // Currently displaying framebuffer?
+#define PDC_SWAP_RST_FIFO        BIT(8)  // Internal DMA FIFO reset/clear?
+#define PDC_SWAP_IRQ_ACK_H       BIT(16) // Acknowledges H(Blank?) IRQ.
+#define PDC_SWAP_IRQ_ACK_V       BIT(17) // Acknowledges VBlank IRQ.
+#define PDC_SWAP_IRQ_ACK_ERR     BIT(18) // Acknowledges error IRQ. FIFO?
 #define PDC_SWAP_IRQ_ACK_ALL     (PDC_SWAP_IRQ_ACK_ERR | PDC_SWAP_IRQ_ACK_V | PDC_SWAP_IRQ_ACK_H)
 
 // PPF register defines.
@@ -271,23 +271,23 @@ enum
 
 // REG_GX_PPF_FLAGS
 #define PPF_NO_FLIP              (0u)
-#define PPF_V_FLIP               (1u)
+#define PPF_V_FLIP               BIT(0)
 #define PPF_OUT_LINEAR           (0u)
-#define PPF_OUT_TILED            (1u<<1)
-#define PPF_CROP_EN              (1u<<2)
-#define PPF_TEXCOPY              (1u<<3)
-#define PPF_NO_TILED_2_LINEAR    (1u<<5)     // Raw copy together with PPF_OUT_LINEAR.
+#define PPF_OUT_TILED            BIT(1)
+#define PPF_CROP_EN              BIT(2)
+#define PPF_TEXCOPY              BIT(3)
+#define PPF_NO_TILED_2_LINEAR    BIT(5)      // Raw copy together with PPF_OUT_LINEAR.
 #define PPF_I_FMT(fmt)           ((fmt)<<8)
 #define PPF_O_FMT(fmt)           ((fmt)<<12)
 #define PPF_8X8_TILES            (0u)
-#define PPF_32X32_TILES          (1u<<16)
+#define PPF_32X32_TILES          BIT(16)
 #define PPF_NO_AA                (0u)
 #define PPF_AA_X                 (1u<<24)
 #define PPF_AA_XY                (2u<<24)
 
 // REG_GX_PPF_CNT
-#define PPF_EN                   (1u)
-#define PPF_IRQ_MASK             (1u<<8)
+#define PPF_EN                   BIT(0)
+#define PPF_IRQ_MASK             BIT(8)
 
 #ifdef __cplusplus
 } // extern "C"

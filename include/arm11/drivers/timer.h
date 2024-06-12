@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -52,13 +52,13 @@ ALWAYS_INLINE Timer* getTimerRegs(void)
 
 
 // REG_TIMER_CNT/REG_WD_CNT
-#define TIMER_EN           (1u)
+#define TIMER_EN           BIT(0)
 #define TIMER_SINGLE_SHOT  (0u)
-#define TIMER_AUTO_RELOAD  (1u<<1)
-#define TIMER_IRQ_EN       (1u<<2)
-#define WD_TIMER_MODE      (0u)    // Watchdog only. Watchdog in timer mode.
-#define WD_WD_MODE         (1u<<3) // Watchdog only. Watchdog in watchdog mode.
-#define TIMER_PRESC_SHIFT  (8u)    // Shift helper for the prescalers.
+#define TIMER_AUTO_RELOAD  BIT(1)
+#define TIMER_IRQ_EN       BIT(2)
+#define WD_TIMER_MODE      (0u)   // Watchdog only. Watchdog in timer mode.
+#define WD_WD_MODE         BIT(3) // Watchdog only. Watchdog in watchdog mode.
+#define TIMER_PRESC_SHIFT  (8u)   // Shift helper for the prescalers.
 
 // REG_WD_DISABLE
 #define WD_DISABLE_MAGIC1  (0x12345678u)

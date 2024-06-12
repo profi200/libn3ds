@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -62,34 +62,34 @@ typedef enum
 
 	// Not a real clock setting. Bitwise or (|) with clock
 	// to set chip select high after transfer.
-	SPIC_CLK_CS_HIGH = 1u<<3
+	SPIC_CLK_CS_HIGH = BIT(3)
 } SpicClk;
 
 #define SPIC_BUS_1BIT        (0u)
-#define SPIC_BUS_4BIT        (1u<<12)
-#define SPIC_DIR_R           (0u)     // Direction receive.
-#define SPIC_DIR_S           (1u<<13) // Direction send.
-#define SPIC_EN              (1u<<15) // Enable.
+#define SPIC_BUS_4BIT        BIT(12)
+#define SPIC_DIR_R           (0u)    // Direction receive.
+#define SPIC_DIR_S           BIT(13) // Direction send.
+#define SPIC_EN              BIT(15) // Enable.
 
 // REG_SPIC_CS
 #define SPIC_CS_HIGH         (0u)
 
 // SPIC_FIFO_STAT
-#define SPIC_FIFO_BUSY       (1u)
+#define SPIC_FIFO_BUSY       BIT(0)
 
 // REG_SPIC_AUTOPOLL
 // Shifts.
-#define SPIC_AP_TMOUT_SHIFT  (16u) // Auto poll register timeout shift.
-#define SPIC_AP_OFF_SHIFT    (24u) // Auto poll register bit offset shift.
-#define SPIC_AP_BIT_SHIFT    (30u) // Auto poll register compare bit shift.
+#define SPIC_AP_TMOUT_SHIFT  (16u)   // Auto poll register timeout shift.
+#define SPIC_AP_OFF_SHIFT    (24u)   // Auto poll register bit offset shift.
+#define SPIC_AP_BIT_SHIFT    (30u)   // Auto poll register compare bit shift.
 
-#define SPIC_AP_START        (1u<<31) // Auto poll start.
+#define SPIC_AP_START        BIT(31) // Auto poll start.
 
 // REG_SPIC_INT_MASK Bit set = disabled.
 // REG_SPIC_INT_STAT Status and acknowledge.
-#define SPIC_INT_TRAN_END    (1u)    // Transfer end. Also fires on each auto poll try.
-#define SPIC_INT_AP_MATCH    (1u<<1) // Auto poll bit match.
-#define SPIC_INT_AP_TMOUT    (1u<<2) // Auto poll timeout.
+#define SPIC_INT_TRAN_END    BIT(0) // Transfer end. Also fires on each auto poll try.
+#define SPIC_INT_AP_MATCH    BIT(1) // Auto poll bit match.
+#define SPIC_INT_AP_TMOUT    BIT(2) // Auto poll timeout.
 
 
 // cmd     Is the command byte to send.

@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -94,16 +94,16 @@ enum
 };
 
 #define NSPI_BUS_1BIT        (0u)
-#define NSPI_BUS_4BIT        (1u<<12)
-#define NSPI_DIR_R           (0u)     // Direction receive.
-#define NSPI_DIR_S           (1u<<13) // Direction send.
-#define NSPI_EN              (1u<<15) // Enable.
+#define NSPI_BUS_4BIT        BIT(12)
+#define NSPI_DIR_R           (0u)    // Direction receive.
+#define NSPI_DIR_S           BIT(13) // Direction send.
+#define NSPI_EN              BIT(15) // Enable.
 
 // REG_NSPI_CS
 #define NSPI_CS_HIGH         (0u)
 
 // NSPI_FIFO_STAT
-#define NSPI_FIFO_BUSY       (1u)
+#define NSPI_FIFO_BUSY       BIT(0)
 
 // REG_NSPI_AUTOPOLL
 // Shifts.
@@ -111,13 +111,13 @@ enum
 #define NSPI_AP_OFF_SHIFT    (24u) // Auto poll register bit offset shift.
 #define NSPI_AP_BIT_SHIFT    (30u) // Auto poll register compare bit shift.
 
-#define NSPI_AP_START        (1u<<31) // Auto poll start.
+#define NSPI_AP_START        BIT(31) // Auto poll start.
 
 // REG_NSPI_INT_MASK Bit set = disabled.
 // REG_NSPI_INT_STAT Status and acknowledge.
-#define NSPI_INT_TRAN_END    (1u)    // Transfer end. Also fires on each auto poll try.
-#define NSPI_INT_AP_MATCH    (1u<<1) // Auto poll bit match.
-#define NSPI_INT_AP_TMOUT    (1u<<2) // Auto poll timeout.
+#define NSPI_INT_TRAN_END    BIT(0) // Transfer end. Also fires on each auto poll try.
+#define NSPI_INT_AP_MATCH    BIT(1) // Auto poll bit match.
+#define NSPI_INT_AP_TMOUT    BIT(2) // Auto poll timeout.
 
 // TODO: Implement old SPI interfaces.
 // Old interface clocks.
@@ -143,7 +143,7 @@ typedef enum
 
 	// Not a real device. Bitwise or (|) with device number
 	// to set chip select high after transfer.
-	NSPI_DEV_CS_HIGH    = 1u<<7
+	NSPI_DEV_CS_HIGH    = BIT(7)
 } SpiDevice;
 
 

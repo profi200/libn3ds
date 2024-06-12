@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -56,11 +56,11 @@ ALWAYS_INLINE Scu* getScuRegs(void)
 
 
 // REG_SCU_CTRL
-#define SCU_EN                  (1u)            // SCU is enabled, coherency is maintained between MP11 CPUs Level 1 data side caches.
-#define SCU_ACS(n)              (1u<<((n) + 1)) // CPUn can write to SCU-specific registers.
-#define SCU_INT_ALIAS_ACS(n)    (1u<<((n) + 5)) // CPUn can access aliased interrupt interface registers in the offset range 0x0200 to 0x050FF of the MPCore private memory region.
-#define SCU_TMR_ALIAS_ACS(n)    (1u<<((n) + 9)) // CPUn can access aliased timer and watchdog registers in the offset range 0x0700 to 0x0A0FF of the MPCore private memory region.
-#define SCU_PARITY_CHK_EN       (1u<<13)        // SCU parity checking enable bit.
+#define SCU_EN                  BIT(0)       // SCU is enabled, coherency is maintained between MP11 CPUs Level 1 data side caches.
+#define SCU_ACS(n)              BIT((n) + 1) // CPUn can write to SCU-specific registers.
+#define SCU_INT_ALIAS_ACS(n)    BIT((n) + 5) // CPUn can access aliased interrupt interface registers in the offset range 0x0200 to 0x050FF of the MPCore private memory region.
+#define SCU_TMR_ALIAS_ACS(n)    BIT((n) + 9) // CPUn can access aliased timer and watchdog registers in the offset range 0x0700 to 0x0A0FF of the MPCore private memory region.
+#define SCU_PARITY_CHK_EN       BIT(13)      // SCU parity checking enable bit.
 #define SCU_CTRL_RST_VAL        (SCU_TMR_ALIAS_ACS(3u) | SCU_TMR_ALIAS_ACS(2u) | \
                                  SCU_TMR_ALIAS_ACS(1u) | SCU_TMR_ALIAS_ACS(0u) | \
                                  SCU_INT_ALIAS_ACS(3u) | SCU_INT_ALIAS_ACS(2u) | \
@@ -73,7 +73,7 @@ ALWAYS_INLINE Scu* getScuRegs(void)
 #define SCU_CPU_NUM_3           (2u)                // 3 MP11 CPUs, CPU0-CPU2.
 #define SCU_CPU_NUM_4           (3u)                // 4 MP11 CPUs, CPU0-CPU3.
 #define SCU_CPU_NUM_MASK        (SCU_CPU_NUM_4)
-#define SCU_SMP(n)              (1u<<((n) + 4))     // MP11 CPUn is in SMP mode taking part in coherency.
+#define SCU_SMP(n)              BIT((n) + 4)        // MP11 CPUn is in SMP mode taking part in coherency.
 #define SCU_TRAM_16KB_64I(n)    (0u)                // CPUn 16KB cache, 64 indexes per tag RAM.
 #define SCU_TRAM_32KB_128I(n)   (1u<<((n) * 2 + 8)) // CPUn 32KB cache, 128 indexes per tag RAM.
 #define SCU_TRAM_64KB_256I(n)   (2u<<((n) * 2 + 8)) // CPUn 64KB cache, 256 indexes per tag RAM.

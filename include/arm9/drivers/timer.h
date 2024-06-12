@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -50,9 +50,9 @@ ALWAYS_INLINE Timer* getTimerRegs(u8 timer)
 #define TIMER_PRESC_64      (1u)
 #define TIMER_PRESC_256     (2u)
 #define TIMER_PRESC_1024    (3u)
-#define TIMER_COUNT_UP      (1u<<2) // Increment on previous timer overflow.
-#define TIMER_IRQ_EN        (1u<<6)
-#define TIMER_EN            (1u<<7)
+#define TIMER_COUNT_UP      BIT(2) // Increment on previous timer overflow.
+#define TIMER_IRQ_EN        BIT(6)
+#define TIMER_EN            BIT(7)
 
 // Convenience macros for calculating ticks from frequency. Based on libnds.
 #define TIMER_FREQ(f)       (-TIMER_BASE_FREQ / (f))

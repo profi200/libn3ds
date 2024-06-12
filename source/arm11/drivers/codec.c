@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 Sergi Granell (xerpi), Paul LaMendola (paulguy), derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 Sergi Granell (xerpi), Paul LaMendola (paulguy), derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -75,7 +75,7 @@ static void readRegArray(const u16 pageReg, void *buf, const u32 size)
 	switchPage(pageReg);
 
 	alignas(4) u8 inBuf[4];
-	inBuf[0] = pageReg<<1 | 1u; // Bit 0: 0 = write, 1 = read.
+	inBuf[0] = pageReg<<1 | BIT(0); // Bit 0: 0 = write, 1 = read.
 	NSPI_sendRecv(NSPI_DEV_CS_HIGH | NSPI_DEV_CTR_CODEC, inBuf, buf, 1, size);
 }
 
@@ -571,7 +571,7 @@ void CODEC_deinit(void)
 	TIMER_sleepMs(30);
 	for(u32 i = 0; i < 64; i++)
 	{
-		if(readReg(CDC_REG_100_34) & 1u) break;
+		if(readReg(CDC_REG_100_34) & BIT(0)) break;
 		TIMER_sleepMs(1);
 	}
 
@@ -610,7 +610,7 @@ void CODEC_wakeup(void)
 	TIMER_sleepMs(40);
 	for(u32 i = 0; i < 40; i++)
 	{
-		if(!(readReg(CDC_REG_100_34) & 1u)) break;
+		if(!(readReg(CDC_REG_100_34) & BIT(0))) break;
 		TIMER_sleepMs(1);
 	}
 	maskReg(CDC_REG_100_118, 0xC0, 0xC0);

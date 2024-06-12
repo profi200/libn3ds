@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -71,10 +71,10 @@ enum
 
 // Bit definition for SdmmcInfo.prot.
 // Each bit 1 = protected.
-#define SDMMC_PROT_SLIDER    (1u)    // SD card write protection slider.
-#define SDMMC_PROT_TEMP      (1u<<1) // Temporary write protection (CSD).
-#define SDMMC_PROT_PERM      (1u<<2) // Permanent write protection (CSD).
-#define SDMMC_PROT_PASSWORD  (1u<<3) // (e)MMC/SD card is password protected.
+#define SDMMC_PROT_SLIDER    BIT(0) // SD card write protection slider.
+#define SDMMC_PROT_TEMP      BIT(1) // Temporary write protection (CSD).
+#define SDMMC_PROT_PERM      BIT(2) // Permanent write protection (CSD).
+#define SDMMC_PROT_PASSWORD  BIT(3) // (e)MMC/SD card is password protected.
 
 typedef struct
 {
@@ -99,11 +99,11 @@ typedef struct
 } MmcCommand;
 
 // Mode bits for SDMMC_lockUnlock().
-#define SDMMC_LK_CLR_PWD  (1u<<1) // Clear password.
-#define SDMMC_LK_UNLOCK   (0u)    // Unlock.
-#define SDMMC_LK_LOCK     (1u<<2) // Lock.
-#define SDMMC_LK_ERASE    (1u<<3) // Force erase a locked (e)MMC/SD card.
-#define SDMMC_LK_COP      (1u<<4) // SD cards only. Card Ownership Protection operation.
+#define SDMMC_LK_CLR_PWD  BIT(1) // Clear password.
+#define SDMMC_LK_UNLOCK   (0u)   // Unlock.
+#define SDMMC_LK_LOCK     BIT(2) // Lock.
+#define SDMMC_LK_ERASE    BIT(3) // Force erase a locked (e)MMC/SD card.
+#define SDMMC_LK_COP      BIT(4) // SD cards only. Card Ownership Protection operation.
 
 
 

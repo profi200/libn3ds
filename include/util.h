@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -27,8 +27,6 @@ extern "C"
 #endif
 
 #define ARRAY_ENTRIES(a)  (sizeof(a) / sizeof(*a))
-#define BIT(n)            (1u<<(n))
-#define BIT64(n)          (UINT64_C(1)<<(n))
 
 
 
@@ -99,7 +97,7 @@ static inline u32 nextPow2(u32 val)
 
 	// Warning: Allowed range is 2 - 2147483648.
 	// Everything else is undefined behavior.
-	return 1u<<(32u - __builtin_clzl(val - 1));
+	return BIT(32u - __builtin_clzl(val - 1));
 }
 
 /**

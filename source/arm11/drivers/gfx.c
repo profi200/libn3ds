@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -448,13 +448,13 @@ void GFX_setDoubleBuffering(const GfxLcd lcd, const bool dBuf)
 {
 	// TODO: We may have to set PDC swap here too so exception printing works.
 	GfxState *const state = &g_gfxState;
-	state->swapMask = (state->swapMask & ~(1u<<lcd)) | dBuf<<lcd;
+	state->swapMask = (state->swapMask & ~BIT(lcd)) | dBuf<<lcd;
 }
 
 void* GFX_getBuffer(const GfxLcd lcd, const GfxSide side)
 {
 	GfxState *const state = &g_gfxState;
-	u32 idx = (state->swap ^ state->swapMask)>>lcd & 1u;
+	u32 idx = (state->swap ^ state->swapMask)>>lcd & BIT(0);
 	idx = idx * 2 + side;
 
 	return state->lcds[lcd].bufs[idx];
@@ -648,7 +648,7 @@ bool GFX_setupExceptionFrameBuffer(void)
 	// Override frame buffer.
 	// Setup a single bottom LCD frame buffer and use the RGB565 format.
 	GfxState *const state = &g_gfxState;
-	state->swapMask                   &= ~(1u<<GFX_LCD_BOT);
+	state->swapMask                   &= ~BIT(GFX_LCD_BOT);
 	state->lcds[GFX_LCD_BOT].bufs[0]   = (u8*)VRAM_BASE;
 	state->lcds[GFX_LCD_BOT].bufs[1]   = (u8*)VRAM_BASE;
 	state->lcds[GFX_LCD_BOT].fb_fmt    = PDC_FB_DMA_INT(8u) | PDC_FB_BURST_24_32 |

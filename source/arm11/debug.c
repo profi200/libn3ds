@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ static void exceptionInfoLedBlink(const u16 frameMs, const bool smooth, const u3
 
 	for(unsigned i = 0; i < 32; i++)
 	{
-		const u32 c = ((patt & 1u) == 1 ? color : 0u);
+		const u32 c = ((patt & BIT(0)) == 1 ? color : 0u);
 		p.r[i] = c;
 		p.g[i] = c>>8;
 		p.b[i] = c>>16;

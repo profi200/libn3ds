@@ -1,5 +1,5 @@
 /*
- *   This file is part of open_agb_firm
+ *   This file is part of libn3ds
  *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -50,7 +50,7 @@
 #define POLI_WRITE_BACK_NO_ALLOC_BUFFERED    (0b11u) // Behaves as write-back write-allocate.
 
 // Make custom normal memory attributes.
-#define CUSTOM_ATTR(outer, inner)            (1u<<12 | (outer)<<10 | (inner))
+#define CUSTOM_ATTR(outer, inner)            (BIT(12) | (outer)<<10 | (inner))
 
 // Converts the attribute bits from L1 format to L2 format.
 // Required for mmuMapPages().
@@ -90,7 +90,7 @@ static void mmuMapSupersections(u32 va, u32 pa, u32 num, u8 access, bool xn, u32
 		const u32 l1Ss = (va + i)>>20;
 		for(u32 n = 0; n < 16; n++)
 		{
-			l1Table[l1Ss + n] = (pa + i) | 1u<<18 | access<<10 | xn<<4 | attr<<2 | 0b10u;
+			l1Table[l1Ss + n] = (pa + i) | BIT(18) | access<<10 | xn<<4 | attr<<2 | 0b10u;
 		}
 	}
 }

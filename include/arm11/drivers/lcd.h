@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -93,12 +93,12 @@ ALWAYS_INLINE LcdRegs* getLcdRegs(void)
 
 
 // REG_LCD_PARALLAX_CNT
-#define PARALLAX_CNT_PWM0_EN    (1u)     // PWM0 enable.
-#define PARALLAX_CNT_PWM0_UNK   (1u<<1)  // Turns PWM0 automatically on and off?
-#define PARALLAX_CNT_PWM0_INV   (1u<<2)  // Swaps PWM0 on/off timings.
-#define PARALLAX_CNT_PWM1_EN    (1u<<16) // PWM1 enable. TODO: Or is this rather a selection bit (1 PWM out at a time)?
-#define PARALLAX_CNT_PWM1_UNK   (1u<<17) // Turns PWM1 automatically on and off?
-#define PARALLAX_CNT_PWM1_INV   (1u<<18) // Swaps PWM1 on/off timings.
+#define PARALLAX_CNT_PWM0_EN    BIT(0)  // PWM0 enable.
+#define PARALLAX_CNT_PWM0_UNK   BIT(1)  // Turns PWM0 automatically on and off?
+#define PARALLAX_CNT_PWM0_INV   BIT(2)  // Swaps PWM0 on/off timings.
+#define PARALLAX_CNT_PWM1_EN    BIT(16) // PWM1 enable. TODO: Or is this rather a selection bit (1 PWM out at a time)?
+#define PARALLAX_CNT_PWM1_UNK   BIT(17) // Turns PWM1 automatically on and off?
+#define PARALLAX_CNT_PWM1_INV   BIT(18) // Swaps PWM1 on/off timings.
 
 // REG_LCD_PARALLAX_PWM
 #define PARALLAX_PWM_TIMING(on, off)  ((on)<<16 | (off)) // PWM on/off time. For each "(N+1)*0.9µs".
@@ -106,34 +106,34 @@ ALWAYS_INLINE LcdRegs* getLcdRegs(void)
 // REG_LCD_STATUS
 
 // REG_LCD_SIGNAL_CNT
-#define SIGNAL_CNT_LCD0_DIS     (1u)     // Disables top LCD control signals.
-#define SIGNAL_CNT_LCD1_DIS     (1u<<16) // Disables bottom LCD control signals.
+#define SIGNAL_CNT_LCD0_DIS     BIT(0)  // Disables top LCD control signals.
+#define SIGNAL_CNT_LCD1_DIS     BIT(16) // Disables bottom LCD control signals.
 #define SIGNAL_CNT_BOTH_DIS     (SIGNAL_CNT_LCD1_DIS | SIGNAL_CNT_LCD0_DIS)
 
 // REG_LCD_RST
-#define LCD_RST_RST             (0u) // LCD controllers under eset.
-#define LCD_RST_NORST           (1u) // LCD controllers out of reset.
+#define LCD_RST_RST             (0u)   // LCD controllers under eset.
+#define LCD_RST_NORST           BIT(0) // LCD controllers out of reset.
 
 // REG_LCD_ABL_CNT
-#define ABL_EN                  (1u)
-#define ABL_SPATIAL_DITHER_EN   (1u<<8)
-#define ABL_TEMPORAL_DITHER_EN  (1u<<9)
+#define ABL_EN                  BIT(0)
+#define ABL_SPATIAL_DITHER_EN   BIT(8)
+#define ABL_TEMPORAL_DITHER_EN  BIT(9)
 
 // REG_LCD_ABL_FILL
 #define ABL_FILL_RGB(r, g, b)   ((b)<<16 | (g)<<8 | (r))
-#define ABL_FILL_EN             (1u<<24)
+#define ABL_FILL_EN             BIT(24)
 
 // REG_LCD_ABL_BL_PWM_CNT
 #define BL_PWM_DENOMINATOR(d)    ((d) & 0x3FFu)
 #define BL_PWM_DENOMINATOR_MASK  (0x3FFu)
 #define BL_PWM_PRESCALER(p)      (((p) & 15u)<<12)
 #define BL_PWM_PRESCALER_MASK    (15u<<12)
-#define BL_PWM_EN                (1u<<16)
+#define BL_PWM_EN                BIT(16)
 // TODO: Bits 16-18 belong together. Find out their purpose. PWM counter maybe?
-#define BL_PWM_UNK19             (1u<<19)            // N3DS only.
+#define BL_PWM_UNK19             BIT(19)             // N3DS only.
 #define BL_PWM_UNK20(x)          (((x) & 15u)<<20)   // N3DS only.
 #define BL_PWM_UNK24(x)          (((x) & 0x7Fu)<<24) // N3DS only.
-#define BL_PWM_UNK31             (1u<<31)            // N3DS only. Doubles PWM frequency?
+#define BL_PWM_UNK31             BIT(31)             // N3DS only. Doubles PWM frequency?
 
 
 

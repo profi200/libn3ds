@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -137,14 +137,14 @@ static bool startTransfer(const u8 devAddr, const u32 regAddr, const bool read, 
 			// Select device in read mode for read transfer.
 			if(read)
 			{
-				sendByte(i2cBus, devAddr | 1u, I2C_START, event);
+				sendByte(i2cBus, devAddr | BIT(0), I2C_START, event);
 				if(!checkAck(i2cBus)) continue;
 			}
 		}
 		else
 		{
 			// Select device and start.
-			sendByte(i2cBus, (read ? devAddr | 1u : devAddr), I2C_START, event);
+			sendByte(i2cBus, (read ? devAddr | BIT(0) : devAddr), I2C_START, event);
 			if(!checkAck(i2cBus)) continue;
 		}
 

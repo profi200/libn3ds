@@ -1,5 +1,5 @@
 /*
- *   This file is part of open_agb_firm
+ *   This file is part of libn3ds
  *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -26,11 +26,11 @@
 
 // Level high active keeps firing until acknowledged (on the periphal side).
 // Rising edge sensitive only fires on rising edges.
-#define ICONF_RSVD   (0u) // Unused/reserved.
-#define ICONF_L_NN   (0u) // Level high active, N-N software model.
-#define ICONF_L_1N   (1u) // Level high active, 1-N software model.
-#define ICONF_E_NN   (2u) // Rising edge sinsitive, N-N software model.
-#define ICONF_E_1N   (3u) // Rising edge sinsitive, 1-N software model.
+#define ICONF_RSVD  (0u) // Unused/reserved.
+#define ICONF_L_NN  (0u) // Level high active, N-N software model.
+#define ICONF_L_1N  (1u) // Level high active, 1-N software model.
+#define ICONF_E_NN  (2u) // Rising edge sensitive, N-N software model.
+#define ICONF_E_1N  (3u) // Rising edge sensitive, 1-N software model.
 #define MAKE_ICONF(c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15) \
                   ((c15)<<30 | (c14)<<28 | (c13)<<26 | (c12)<<24 | (c11)<<22 | \
                    (c10)<<20 | (c9)<<18 | (c8)<<16 | (c7)<<14 | (c6)<<12 | \
@@ -156,7 +156,7 @@ void IRQ_init(void)
 void IRQ_registerIsr(Interrupt id, u8 prio, u8 cpuMask, IrqIsr isr)
 {
 	const u32 cpuId = __getCpuId();
-	if(!cpuMask) cpuMask = 1u<<cpuId;
+	if(!cpuMask) cpuMask = BIT(cpuId);
 
 	const u32 oldState = enterCriticalSection();
 
@@ -175,19 +175,19 @@ void IRQ_registerIsr(Interrupt id, u8 prio, u8 cpuMask, IrqIsr isr)
 	gicd->target[idx] = tmp | (u32)cpuMask<<shift;
 
 	// Enable it.
-	gicd->enable_set[id / 32] = 1u<<(id % 32);
+	gicd->enable_set[id / 32] = BIT(id % 32);
 
 	leaveCriticalSection(oldState);
 }
 
 void IRQ_enable(Interrupt id)
 {
-	getGicdRegs()->enable_set[id / 32] = 1u<<(id % 32);
+	getGicdRegs()->enable_set[id / 32] = BIT(id % 32);
 }
 
 void IRQ_disable(Interrupt id)
 {
-	getGicdRegs()->enable_clear[id / 32] = 1u<<(id % 32);
+	getGicdRegs()->enable_clear[id / 32] = BIT(id % 32);
 }
 
 void IRQ_softInterrupt(Interrupt id, u8 cpuMask)
@@ -216,7 +216,7 @@ void IRQ_unregisterIsr(Interrupt id)
 {
 	const u32 oldState = enterCriticalSection();
 
-	getGicdRegs()->enable_clear[id / 32] = 1u<<(id % 32);
+	getGicdRegs()->enable_clear[id / 32] = BIT(id % 32);
 
 	g_irqIsrTable[(id < 32 ? 32 * __getCpuId() + id : 96u + id)] = (IrqIsr)NULL;
 

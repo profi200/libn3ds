@@ -230,12 +230,12 @@ bool MCU_setIrqMask(u32 mask)
 // TODO: Possibly combine power off and reboot?
 void MCU_sysPowerOff(void)
 {
-	I2C_writeRegIntSafe(I2C_DEV_CTR_MCU, MCU_REG_SYS_PWR, 1u);
+	I2C_writeRegIntSafe(I2C_DEV_CTR_MCU, MCU_REG_SYS_PWR, BIT(0));
 }
 
 void MCU_sysReboot(void)
 {
-	I2C_writeRegIntSafe(I2C_DEV_CTR_MCU, MCU_REG_SYS_PWR, 1u<<2);
+	I2C_writeRegIntSafe(I2C_DEV_CTR_MCU, MCU_REG_SYS_PWR, BIT(2));
 }
 
 bool MCU_setTwlIrq(u8 bits)
