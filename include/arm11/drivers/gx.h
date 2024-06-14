@@ -174,11 +174,11 @@ ALWAYS_INLINE GxRegs* getGxRegs(void)
 // Universal enums/defines.
 enum
 {
-	GX_RGBA8  = 0u,
-	GX_BGR8   = 1u,
-	GX_R5G6B5 = 2u,
-	GX_RGB5A1 = 3u,
-	GX_RGBA4  = 4u
+	GX_ABGR8  = 0u, // {0xAA, 0xBB, 0xGG, 0xRR} in memory from lowest to highest address.
+	GX_BGR8   = 1u, // {0xBB, 0xGG, 0xRR} in memory from lowest to highest address.
+	GX_BGR565 = 2u, // {0bGGGBBBBB, 0bRRRRRGGG} in memory from lowest to highest address.
+	GX_A1BGR5 = 3u, // {0bGGBBBBBA, 0bRRRRRGGG} in memory from lowest to highest address.
+	GX_ABGR4  = 4u  // {0bBBBBAAAA, 0bRRRRGGGG} in memory from lowest to highest address.
 };
 
 // REG_GX_GPU_CLK
@@ -242,10 +242,10 @@ enum
 #define PDC_FB_OUT_AB            (2u<<4)   // Interleaves buffer A with B.
 #define PDC_FB_OUT_BA            (3u<<4)   // Interleaves buffer B with A.
 #define PDC_FB_DOUBLE_V          BIT(6)    // Double vertical resolution. Not the same as AA output mode.
-#define PDC_FB_BURST_4           (0u)      // Bytes per burst: RGB8:  -, Other:  4.
-#define PDC_FB_BURST_6_8         (1u<<8)   // Bytes per burst: RGB8:  6, Other:  8.
-#define PDC_FB_BURST_16          (2u<<8)   // Bytes per burst: RGB8:  -, Other: 16.
-#define PDC_FB_BURST_24_32       (3u<<8)   // Bytes per burst: RGB8: 24, Other: 32.
+#define PDC_FB_BURST_4           (0u)      // Bytes per burst: BGR8:  -, Other:  4.
+#define PDC_FB_BURST_6_8         (1u<<8)   // Bytes per burst: BGR8:  6, Other:  8.
+#define PDC_FB_BURST_16          (2u<<8)   // Bytes per burst: BGR8:  -, Other: 16.
+#define PDC_FB_BURST_24_32       (3u<<8)   // Bytes per burst: BGR8: 24, Other: 32.
 #define PDC_FB_DMA_INT(i)        ((i)<<16) // DMA interval setting? Unit unknown.
 
 // REG_GX_PDC_CNT

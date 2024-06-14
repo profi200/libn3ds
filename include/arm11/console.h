@@ -164,7 +164,7 @@ PrintConsole *consoleGet(void);
 
 /**
  * @brief Returns the currently used foreground color.
- * @return The foreground color in RGB565.
+ * @return The foreground color in BGR565.
  */
 u16 consoleGetFgColor(void);
 
@@ -183,7 +183,7 @@ void consoleSetCursor(PrintConsole* console, int x, int y);
 
 void drawConsoleWindow(PrintConsole* console, int thickness, u8 colorIndex);
 
-u16 consoleGetRGB565Color(u8 colorIndex);
+u16 consoleGetBGR565Color(u8 colorIndex);
 
 ssize_t con_write(UNUSED struct _reent *r,UNUSED void *fd,const char *ptr, size_t len);
 

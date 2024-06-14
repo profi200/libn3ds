@@ -11,9 +11,9 @@
 
 int main(void)
 {
-	GFX_init(GFX_BGR8, GFX_RGB565);
-	GFX_setBrightness(1, 32);
-	consoleInit(SCREEN_BOT, NULL);
+	GFX_init(GFX_BGR8, GFX_BGR565, GFX_TOP_2D);
+	GFX_setLcdLuminance(80);
+	consoleInit(GFX_LCD_BOT, NULL);
 	CSND_init();
 
 	ee_puts("Sound test");

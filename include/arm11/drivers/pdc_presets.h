@@ -92,7 +92,7 @@ static const PdcPreset g_pdcPresets[NUM_PDC_PRESETS] =
 		.pic_dim       = PDC_RANGE(240, 400), // Not actually a range.
 		.pic_border_h  = PDC_RANGE(209, 449),
 		.pic_border_v  = PDC_RANGE(2, 402),
-		//.fb_stride     = 960, // 240 * 4 (RGBA8).
+		//.fb_stride     = 960, // 240 * 4 (ABGR8).
 		.latch_pos     = PDC_RANGE(0, 0)
 	},
 	{ // Top screen in 2D mode 240x800.
@@ -121,7 +121,7 @@ static const PdcPreset g_pdcPresets[NUM_PDC_PRESETS] =
 		.pic_dim       = PDC_RANGE(240, 800), // Not actually a range.
 		.pic_border_h  = PDC_RANGE(209, 449),
 		.pic_border_v  = PDC_RANGE(2, 802),
-		//.fb_stride     = 960, // 240 * 4 (RGBA8).
+		//.fb_stride     = 960, // 240 * 4 (ABGR8).
 		.latch_pos     = PDC_RANGE(0, 0)
 	},
 	{ // Top screen in 3D mode (stereo 240x400).
@@ -150,7 +150,7 @@ static const PdcPreset g_pdcPresets[NUM_PDC_PRESETS] =
 		.pic_dim       = PDC_RANGE(240, 400), // Not actually a range.
 		.pic_border_h  = PDC_RANGE(209, 449),
 		.pic_border_v  = PDC_RANGE(2, 802),
-		//.fb_stride     = 960, // 240 * 4 (RGBA8).
+		//.fb_stride     = 960, // 240 * 4 (ABGR8).
 		.latch_pos     = PDC_RANGE(0, 0)
 	},
 	{ // Bottom screen 240x320.
@@ -179,7 +179,7 @@ static const PdcPreset g_pdcPresets[NUM_PDC_PRESETS] =
 		.pic_dim       = PDC_RANGE(240, 320), // Not actually a range.
 		.pic_border_h  = PDC_RANGE(209, 449),
 		.pic_border_v  = PDC_RANGE(82, 402),
-		//.fb_stride     = 960, // 240 * 4 (RGBA8).
+		//.fb_stride     = 960, // 240 * 4 (ABGR8).
 		.latch_pos     = PDC_RANGE(0, 0)
 	}
 };

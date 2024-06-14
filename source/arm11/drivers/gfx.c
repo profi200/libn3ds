@@ -343,7 +343,7 @@ void GFX_init(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode)
 	// Note: Nintendos code does a 128x128 display transfer.
 	// Note: 32x32 display transfer with same flags/format will always hang.
 	//GX_displayTransfer((u32*)VRAM_BASE, PPF_DIM(128, 128), (u32*)(VRAM_BASE + 0x8000), PPF_DIM(128, 128),
-	//                   PPF_O_FMT(GX_RGBA4) | PPF_I_FMT(GX_RGBA4) | PPF_NO_TILED_2_LINEAR);
+	//                   PPF_O_FMT(GX_ABGR4) | PPF_I_FMT(GX_ABGR4) | PPF_NO_TILED_2_LINEAR);
 	GX_textureCopy((u32*)VRAM_BASE, 0, (u32*)(VRAM_BASE + 16), 0, 16);
 
 	// Allocate our frame buffers.
@@ -506,7 +506,7 @@ void GX_memoryFill(u32 *buf0a, u32 buf0v, u32 buf0Sz, u32 val0, u32 *buf1a, u32 
 }
 
 // Example: GX_displayTransfer(in, 160u<<16 | 240u, out, 160u<<16 | 240u, 2u<<12 | 2u<<8);
-// Copy and unswizzle GBA sized frame in RGB565.
+// Copy and unswizzle GBA sized frame in BGR565.
 void GX_displayTransfer(const u32 *const src, const u32 inDim, u32 *const dst, const u32 outDim, const u32 flags)
 {
 	if(src == NULL || dst == NULL) return;
@@ -652,8 +652,8 @@ bool GFX_setupExceptionFrameBuffer(void)
 	state->lcds[GFX_LCD_BOT].bufs[0]   = (u8*)VRAM_BASE;
 	state->lcds[GFX_LCD_BOT].bufs[1]   = (u8*)VRAM_BASE;
 	state->lcds[GFX_LCD_BOT].fb_fmt    = PDC_FB_DMA_INT(8u) | PDC_FB_BURST_24_32 |
-	                                     PDC_FB_OUT_A | PDC_FB_FMT(GFX_R5G6B5);
-	state->lcds[GFX_LCD_BOT].fb_stride = LCD_WIDTH_BOT * GFX_getPixelSize(GFX_R5G6B5);
+	                                     PDC_FB_OUT_A | PDC_FB_FMT(GFX_BGR565);
+	state->lcds[GFX_LCD_BOT].fb_stride = LCD_WIDTH_BOT * GFX_getPixelSize(GFX_BGR565);
 
 	// Setup PDC.
 	LCD_setForceBlack(true, false);

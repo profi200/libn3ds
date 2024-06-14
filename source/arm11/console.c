@@ -16,32 +16,32 @@
 
 //set up the palette for color printing
 static u16 colorTable[] = {
-	RGB8_2_565(  0,  0,  0),	// faint black
-	RGB8_2_565(255,  0,  0),	// bright red
-	RGB8_2_565(  0,255,  0),	// bright green
-	RGB8_2_565(255,255,  0),	// bright yellow
-	RGB8_2_565(  0,  0,255),	// bright blue
-	RGB8_2_565(255,  0,255),	// bright magenta
-	RGB8_2_565(  0,255,255),	// bright cyan
-	RGB8_2_565(255,255,255),	// bright white
+	BGR8_2_565(  0,  0,  0),	// faint black
+	BGR8_2_565(255,  0,  0),	// bright red
+	BGR8_2_565(  0,255,  0),	// bright green
+	BGR8_2_565(255,255,  0),	// bright yellow
+	BGR8_2_565(  0,  0,255),	// bright blue
+	BGR8_2_565(255,  0,255),	// bright magenta
+	BGR8_2_565(  0,255,255),	// bright cyan
+	BGR8_2_565(255,255,255),	// bright white
 
-	RGB8_2_565( 64, 64, 64),	// almost black
-	RGB8_2_565(224,  0,  0),	// accent red
-	RGB8_2_565( 64,255, 64),	// accent green
-	RGB8_2_565(255,255, 32),	// accent yellow
-	RGB8_2_565( 64, 64,255),	// accent blue
-	RGB8_2_565(255,  0,255),	// bright magenta
-	RGB8_2_565(  0,255,255),	// bright cyan
-	RGB8_2_565(192,192,192),	// almost white
+	BGR8_2_565( 64, 64, 64),	// almost black
+	BGR8_2_565(224,  0,  0),	// accent red
+	BGR8_2_565( 64,255, 64),	// accent green
+	BGR8_2_565(255,255, 32),	// accent yellow
+	BGR8_2_565( 64, 64,255),	// accent blue
+	BGR8_2_565(255,  0,255),	// bright magenta
+	BGR8_2_565(  0,255,255),	// bright cyan
+	BGR8_2_565(192,192,192),	// almost white
 
-	RGB8_2_565(128,128,128),	// bright black
-	RGB8_2_565( 64,  0,  0),	// faint red
-	RGB8_2_565(  0, 64,  0),	// faint green
-	RGB8_2_565( 64, 64,  0),	// faint yellow
-	RGB8_2_565(  0,  0, 64),	// faint blue
-	RGB8_2_565( 64,  0, 64),	// faint magenta
-	RGB8_2_565(  0, 64, 64),	// faint cyan
-	RGB8_2_565( 96, 96, 96),	// faint white
+	BGR8_2_565(128,128,128),	// bright black
+	BGR8_2_565( 64,  0,  0),	// faint red
+	BGR8_2_565(  0, 64,  0),	// faint green
+	BGR8_2_565( 64, 64,  0),	// faint yellow
+	BGR8_2_565(  0,  0, 64),	// faint blue
+	BGR8_2_565( 64,  0, 64),	// faint magenta
+	BGR8_2_565(  0, 64, 64),	// faint cyan
+	BGR8_2_565( 96, 96, 96),	// faint white
 };
 
 PrintConsole defaultConsole =
@@ -526,7 +526,7 @@ PrintConsole* consoleInit(GfxLcd lcd, PrintConsole* console) {
 
 	console->consoleInitialised = 1;
 
-	//gfxSetScreenFormat(lcd,GSP_RGB565_OES);
+	//gfxSetScreenFormat(lcd,GSP_BGR565_OES);
 	GFX_setDoubleBuffering(lcd, false);
 
 	console->frameBuffer = (u16*)GFX_getBuffer(lcd, GFX_SIDE_LEFT);
@@ -793,7 +793,7 @@ void consoleSetCursor(PrintConsole* console, int x, int y) {
 	console->cursorY = y;
 }
 
-u16 consoleGetRGB565Color(u8 colorIndex) {
+u16 consoleGetBGR565Color(u8 colorIndex) {
 	if(colorIndex >= ARRAY_ENTRIES(colorTable))
 		return 0;
 	return colorTable[colorIndex];

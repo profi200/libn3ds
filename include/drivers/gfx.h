@@ -19,6 +19,7 @@
  */
 
 #include "types.h"
+#include "rgb_conv.h"
 
 
 #ifdef __cplusplus
@@ -33,17 +34,17 @@ extern "C"
 #define LCD_WIDTH_BOT        (240u)
 #define LCD_HEIGHT_BOT       (320u)
 
-#define RGB8_2_565(r, g, b)  (((((r)>>3) & 0x1F)<<11) | ((((g)>>2) & 0x3F)<<5) | (((b)>>3) & 0x1F))
+#define BGR8_2_565(r, g, b)  ((((249u * (r) + 1024)>>11)<<11) | (((253u * (g) + 512)>>10)<<5) | ((249u * (b) + 1024)>>11))
 
 
 // Pixel formats.
 typedef enum
 {
-	GFX_RGBA8  = 0u,
-	GFX_BGR8   = 1u,
-	GFX_R5G6B5 = 2u,
-	GFX_RGB5A1 = 3u,
-	GFX_RGBA4  = 4u
+	GFX_ABGR8  = 0u, // {0xAA, 0xBB, 0xGG, 0xRR} in memory from lowest to highest address.
+	GFX_BGR8   = 1u, // {0xBB, 0xGG, 0xRR} in memory from lowest to highest address.
+	GFX_BGR565 = 2u, // {0bGGGBBBBB, 0bRRRRRGGG} in memory from lowest to highest address.
+	GFX_A1BGR5 = 3u, // {0bGGBBBBBA, 0bRRRRRGGG} in memory from lowest to highest address.
+	GFX_ABGR4  = 4u  // {0bBBBBAAAA, 0bRRRRGGGG} in memory from lowest to highest address.
 } GfxFmt;
 
 typedef enum
@@ -60,7 +61,7 @@ typedef enum
 
 static inline u8 GFX_getPixelSize(const GfxFmt fmt)
 {
-	if(fmt == GFX_RGBA8)
+	if(fmt == GFX_ABGR8)
 	{
 		return 4;
 	}
@@ -69,7 +70,7 @@ static inline u8 GFX_getPixelSize(const GfxFmt fmt)
 		return 3;
 	}
 
-	return 2; // R5G6B5, RGB5A1, RGBA4.
+	return 2; // BGR565, A1BGR5, ABGR4.
 }
 
 

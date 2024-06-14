@@ -80,8 +80,8 @@ ALWAYS_INLINE LgyCap* getLgyCapRegs(const u8 dev)
 #define LGYCAP_HSCALE_EN      BIT(2)   // Horizontal hardware scaling enable.
 #define LGYCAP_UNK_BIT4       BIT(4)   // Broken spatial dither enable? Doesn't do anything.
 #define LGYCAP_UNK_BIT5       BIT(5)   // Broken temporal dither enable? Doesn't do anything.
-#define LGYCAP_FMT_ABGR8      (0u)     // {AA, BB, GG, RR} in memory from lowest to highest address.
-#define LGYCAP_FMT_BGR8       (1u<<8)  // {BB, GG, RR} in memory from lowest to highest address.
+#define LGYCAP_FMT_ABGR8      (0u)     // {0xAA, 0xBB, 0xGG, 0xRR} in memory from lowest to highest address.
+#define LGYCAP_FMT_BGR8       (1u<<8)  // {0xBB, 0xGG, 0xRR} in memory from lowest to highest address.
 #define LGYCAP_FMT_A1BGR5     (2u<<8)  // {0bGGBBBBBA, 0bRRRRRGGG} in memory from lowest to highest address.
 #define LGYCAP_FMT_BGR565     (3u<<8)  // {0bGGGBBBBB, 0bRRRRRGGG} in memory from lowest to highest address.
 #define LGYCAP_ROT_NONE       (0u)     // No block rotation.
