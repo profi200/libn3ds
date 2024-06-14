@@ -100,10 +100,10 @@ ALWAYS_INLINE void __##name(u32 reg)                        \
 // Program status register.
 MAKE_INTR_GET_REG(1, getCpsr, "mrs %0, cpsr")
 MAKE_INTR_SET_REG(1, setCpsr_c, "msr cpsr_c, %0", "memory")
-MAKE_INTR_SET_REG(1, setCpsr, "msr cpsr_cxsf, %0", "memory")
+MAKE_INTR_SET_REG(1, setCpsr, "msr cpsr_cxsf, %0", "cc", "memory")
 MAKE_INTR_GET_REG(1, getSpsr, "mrs %0, spsr")
 MAKE_INTR_SET_REG(1, setSpsr_c, "msr spsr_c, %0", "memory")
-MAKE_INTR_SET_REG(1, setSpsr, "msr spsr_cxsf, %0", "memory")
+MAKE_INTR_SET_REG(1, setSpsr, "msr spsr_cxsf, %0", "cc", "memory")
 
 // Control Register.
 MAKE_INTR_GET_REG(1, getCr, "mrc p15, 0, %0, c1, c0, 0")

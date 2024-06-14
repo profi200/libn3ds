@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 
 #include "types.h"
 #include "arm9/drivers/interrupt.h"
+#include "arm.h"
 #include "arm9/drivers/timer.h"
 #include "arm9/drivers/ndma.h"
 #include "drivers/corelink_dma-330.h"
@@ -29,7 +30,7 @@
 void WEAK __systemInit(void)
 {
 	IRQ_init();
-	leaveCriticalSection(0); // Enables interrupts.
+	__setCpsr_c(__getCpsr() & ~PSR_I); // Enables interrupts.
 	TIMER_init();
 	NDMA_init();
 	DMA330_init();

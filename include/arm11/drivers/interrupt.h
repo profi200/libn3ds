@@ -193,18 +193,27 @@ void IRQ_setPriority(Interrupt id, u8 prio);
  */
 void IRQ_unregisterIsr(Interrupt id);
 
-
 #if !__thumb__
+/**
+ * @brief      Saves the CPU state and disables IRQs.
+ *
+ * @return     The CPU state before IRQ disable.
+ */
 static inline u32 enterCriticalSection(void)
 {
-	const u32 tmp = __getCpsr();
+	const u32 cpsr = __getCpsr();
 	__cpsid(i);
-	return tmp & PSR_I;
+	return cpsr;
 }
 
-static inline void leaveCriticalSection(u32 oldState)
+/**
+ * @brief      Restores a saved CPU state. Whenever IRQs are enabled again depends on the state.
+ *
+ * @param[in]  savedState  The CPU state to restore.
+ */
+static inline void leaveCriticalSection(const u32 savedState)
 {
-	__setCpsr_c((__getCpsr() & ~PSR_I) | oldState);
+	__setCpsr_c(savedState);
 }
 #endif
 
