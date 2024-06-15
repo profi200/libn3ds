@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -122,7 +122,7 @@ typedef enum
 	IRQ_PERF_MONITOR2 = 122u, // Unconfirmed. Core 2 performance monitor. Triggers on any counter overflow.
 	IRQ_PERF_MONITOR3 = 123u, // Unconfirmed. Core 3 performance monitor. Triggers on any counter overflow.
 
-	// Aliases
+	// Aliases.
 	IRQ_SHELL_OPENED  = IRQ_GPIO_1_2_HIGH,
 	IRQ_SHELL_CLOSED  = IRQ_GPIO_1_2_LOW,  // Triggers on GPIO_1_2 low.
 	IRQ_TOUCHSCREEN   = IRQ_GPIO_1_1,      // Triggers on touchscreen pen down.
@@ -133,9 +133,9 @@ typedef enum
 } Interrupt;
 
 
-// IRQ interrupt service routine type.
+// IRQ interrupt service routine pointer type.
 // intSource: bit 10-12 CPU source ID (0 except for interrupt ID 0-15),
-// bit 0-9 interrupt ID
+//            bit 0-9 interrupt ID.
 typedef void (*IrqIsr)(u32 intSource);
 
 
@@ -146,52 +146,53 @@ typedef void (*IrqIsr)(u32 intSource);
 void IRQ_init(void);
 
 /**
- * @brief      Registers a interrupt service routine and enables the specified interrupt.
+ * @brief      Registers an interrupt service routine and enables the IRQ.
  *
- * @param[in]  id       The interrupt ID. Must be <128.
- * @param[in]  prio     The priority. 0 = highest, 14 = lowest, 15 = disabled.
- * @param[in]  cpuMask  The CPU mask. Each of the 4 bits stands for 1 core.
- *                      0 means current CPU.
- * @param[in]  isr      The interrupt service routine to call.
+ * @param[in]  id      The interrupt ID. Must be one of the above IDs.
+ * @param[in]  prio    The priority. 0 highest, 14 lowest, 15 behaves like disabled IRQ.
+ * @param[in]  target  The target CPU. Bit 0 is CPU0, 1 is CPU1 ect.
+ *                     0 is auto/this CPU. Set only 1 of the first 4 bits.
+ * @param[in]  isr     The interrupt service routine to call.
  */
-void IRQ_registerIsr(Interrupt id, u8 prio, u8 cpuMask, IrqIsr isr);
+void IRQ_registerIsr(const Interrupt id, const u32 prio, u32 target, const IrqIsr isr);
 
 /**
- * @brief      Reenables a previously disabled but registered interrupt.
+ * @brief      Enables a disabled but registered interrupt.
  *
- * @param[in]  id    The interrupt ID. Must be <128.
+ * @param[in]  id    The interrupt ID. Must be one of the above IDs.
  */
-void IRQ_enable(Interrupt id);
+void IRQ_enable(const Interrupt id);
 
 /**
- * @brief      Disables a previously registered interrupt temporarily.
+ * @brief      Disables a registered interrupt.
  *
- * @param[in]  id    The interrupt ID. Must be <128.
+ * @param[in]  id    The interrupt ID. Must be one of the above IDs.
  */
-void IRQ_disable(Interrupt id);
+void IRQ_disable(const Interrupt id);
 
 /**
- * @brief      Triggers a software interrupt for the specified CPUs.
+ * @brief      Triggers an interrupt (IPI) on the target CPUs.
  *
- * @param[in]  id       The interrupt ID. Must be <16.
- * @param[in]  cpuMask  The CPU mask. Each of the 4 bits stands for 1 core.
+ * @param[in]  id      The interrupt ID. Must be one of the IPI IDs (<16).
+ * @param[in]  target  The target CPUs. Bit 0 is CPU0, 1 is CPU1 ect.
+ *                     Only use the first 4 bits.
  */
-void IRQ_softInterrupt(Interrupt id, u8 cpuMask);
+void IRQ_softInterrupt(const Interrupt id, const u32 target);
 
 /**
- * @brief      Sets the priority of an interrupt.
+ * @brief      Sets the priority of a registered interrupt.
  *
- * @param[in]  id    The interrupt ID. Must be <128.
- * @param[in]  prio  The priority. 0 = highest, 14 = lowest, 15 = disabled
+ * @param[in]  id    The interrupt ID. Must be one of the above IDs.
+ * @param[in]  prio  The priority. 0 = highest, 14 = lowest, 15 = disabled.
  */
-void IRQ_setPriority(Interrupt id, u8 prio);
+void IRQ_setPriority(const Interrupt id, const u32 prio);
 
 /**
- * @brief      Unregisters the interrupt service routine and disables the specified interrupt.
+ * @brief      Unregisters the interrupt service routine and disables the IRQ.
  *
- * @param[in]  id    The interrupt ID. Must be <128.
+ * @param[in]  id    The interrupt ID. Must be one of the above IDs.
  */
-void IRQ_unregisterIsr(Interrupt id);
+void IRQ_unregisterIsr(const Interrupt id);
 
 #if !__thumb__
 /**

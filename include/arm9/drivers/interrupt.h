@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -62,31 +62,45 @@ typedef enum
 } Interrupt;
 
 
-// IRQ interrupt service routine type.
-// id: contains the interrupt ID
+// IRQ interrupt service routine pointer type.
+// id is the interrupt ID.
 typedef void (*IrqIsr)(u32 id);
 
 
 
 /**
- * @brief      Initializes interrupts.
+ * @brief      Initializes the interrupt controller.
  */
 void IRQ_init(void);
 
 /**
- * @brief      Registers a interrupt service routine and enables the specified interrupt.
+ * @brief      Registers an interrupt service routine and enables the IRQ.
  *
- * @param[in]  id    The interrupt ID. Must be <32.
+ * @param[in]  id    The interrupt ID. Must be one of the above IDs.
  * @param[in]  isr   The interrupt service routine to call.
  */
-void IRQ_registerIsr(Interrupt id, IrqIsr isr);
+void IRQ_registerIsr(const Interrupt id, const IrqIsr isr);
 
 /**
- * @brief      Unregisters the interrupt service routine and disables the specified interrupt.
+ * @brief      Enables a disabled but registered interrupt.
  *
- * @param[in]  id    The interrupt ID. Must be <32.
+ * @param[in]  id    The interrupt ID. Must be one of the above IDs.
  */
-void IRQ_unregisterIsr(Interrupt id);
+void IRQ_enable(const Interrupt id);
+
+/**
+ * @brief      Disables a registered interrupt.
+ *
+ * @param[in]  id    The interrupt ID. Must be one of the above IDs.
+ */
+void IRQ_disable(const Interrupt id);
+
+/**
+ * @brief      Unregisters the interrupt service routine and disables the IRQ.
+ *
+ * @param[in]  id    The interrupt ID. Must be one of the above IDs.
+ */
+void IRQ_unregisterIsr(const Interrupt id);
 
 #if !__thumb__
 /**

@@ -27,25 +27,72 @@ IrqIsr g_irqIsrTable[32] = {0};
 
 void IRQ_init(void)
 {
+	// Disable and acknowledge all IRQs at once.
 	getIrq9Regs()->ie_if = UINT64_C(0xFFFFFFFF)<<32;
 }
 
-void IRQ_registerIsr(Interrupt id, IrqIsr isr)
+void IRQ_registerIsr(const Interrupt id, const IrqIsr isr)
 {
-	const u32 oldState = enterCriticalSection();
+	// Get the IRQ register pointer.
+	Irq9 *const irq = getIrq9Regs();
 
+	// Save state and disable all IRQs on this CPU.
+	const u32 savedState = enterCriticalSection();
+
+	// Set ISR function pointer.
 	g_irqIsrTable[id] = isr;
-	getIrq9Regs()->ie |= BIT(id);
 
-	leaveCriticalSection(oldState);
+	// Enable the IRQ.
+	irq->ie |= BIT(id);
+
+	// Restore state.
+	leaveCriticalSection(savedState);
 }
 
-void IRQ_unregisterIsr(Interrupt id)
+void IRQ_enable(const Interrupt id)
 {
-	const u32 oldState = enterCriticalSection();
+	// Get the IRQ register pointer.
+	Irq9 *const irq = getIrq9Regs();
 
-	getIrq9Regs()->ie &= ~BIT(id);
+	// Save state and disable all IRQs on this CPU.
+	const u32 savedState = enterCriticalSection();
+
+	// Enable the IRQ.
+	irq->ie |= BIT(id);
+
+	// Restore state.
+	leaveCriticalSection(savedState);
+}
+
+void IRQ_disable(const Interrupt id)
+{
+	// Get the IRQ register pointer.
+	Irq9 *const irq = getIrq9Regs();
+
+	// Save state and disable all IRQs on this CPU.
+	const u32 savedState = enterCriticalSection();
+
+	// Disable the IRQ.
+	irq->ie &= ~BIT(id);
+
+	// Restore state.
+	leaveCriticalSection(savedState);
+}
+
+void IRQ_unregisterIsr(const Interrupt id)
+{
+	// Get the IRQ register pointer.
+	Irq9 *const irq = getIrq9Regs();
+
+	// Save state and disable all IRQs on this CPU.
+	const u32 savedState = enterCriticalSection();
+
+	// Disable the IRQ.
+	irq->ie &= ~BIT(id);
+
+	// Invalidate the ISR function pointer.
 	g_irqIsrTable[id] = (IrqIsr)NULL;
 
-	leaveCriticalSection(oldState);
+	// Restore state.
+	leaveCriticalSection(savedState);
 }

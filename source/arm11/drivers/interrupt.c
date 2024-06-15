@@ -150,75 +150,100 @@ void IRQ_init(void)
 	gicc->binpoint = 3;    // All priority bits are compared for pre-emption.
 	gicc->ctrl     = 1;    // Enable the interrupt interface for this CPU.
 
-	getCfg11Regs()->fiq_mask = FIQ_MASK_CPU3 | FIQ_MASK_CPU2 | FIQ_MASK_CPU1 | FIQ_MASK_CPU0; // Disable FIQs.
+	// Disable all FIQs. We don't use them.
+	getCfg11Regs()->fiq_mask = FIQ_MASK_CPU3 | FIQ_MASK_CPU2 | FIQ_MASK_CPU1 | FIQ_MASK_CPU0;
 }
 
-void IRQ_registerIsr(Interrupt id, u8 prio, u8 cpuMask, IrqIsr isr)
+// TODO: If target is not 0 or doesn't match the executing CPU this will set the wrong ISR table entry for IDs <32.
+//       Nothing bad will happen but the ISR won't be called.
+void IRQ_registerIsr(const Interrupt id, const u32 prio, u32 target, const IrqIsr isr)
 {
+	// If CPU target is set to 0 set the executing CPU as target.
 	const u32 cpuId = __getCpuId();
-	if(!cpuMask) cpuMask = BIT(cpuId);
+	if(target == 0) target = BIT(cpuId);
 
-	const u32 oldState = enterCriticalSection();
+	// Get the interrupt distributor register pointer.
+	Gicd *const gicd = getGicdRegs();
 
+	// Save state and disable all IRQs on this CPU.
+	const u32 savedState = enterCriticalSection();
+
+	// Set ISR function pointer.
 	g_irqIsrTable[(id < 32 ? 32 * cpuId + id : 96u + id)] = isr;
 
-	// Priority
-	Gicd *const gicd = getGicdRegs();
+	// Set IRQ priority.
 	const u32 idx = id / 4;
 	u32 shift = (id % 4 * 8) + 4;
 	u32 tmp = gicd->pri[idx] & ~(0xFu<<shift);
-	gicd->pri[idx] = tmp | (u32)prio<<shift;
+	gicd->pri[idx] = tmp | prio<<shift;
 
-	// Target
+	// Set IRQ target.
 	shift = id % 4 * 8;
 	tmp = gicd->target[idx] & ~(0xFu<<shift);
-	gicd->target[idx] = tmp | (u32)cpuMask<<shift;
+	gicd->target[idx] = tmp | target<<shift;
 
-	// Enable it.
+	// Enable the IRQ.
 	gicd->enable_set[id / 32] = BIT(id % 32);
 
-	leaveCriticalSection(oldState);
+	// Restore state.
+	leaveCriticalSection(savedState);
 }
 
-void IRQ_enable(Interrupt id)
+void IRQ_enable(const Interrupt id)
 {
+	// Enable the IRQ.
 	getGicdRegs()->enable_set[id / 32] = BIT(id % 32);
 }
 
-void IRQ_disable(Interrupt id)
+void IRQ_disable(const Interrupt id)
 {
+	// Disable the IRQ.
 	getGicdRegs()->enable_clear[id / 32] = BIT(id % 32);
 }
 
-void IRQ_softInterrupt(Interrupt id, u8 cpuMask)
+void IRQ_softInterrupt(const Interrupt id, const u32 target)
 {
-	getGicdRegs()->softint = (u32)cpuMask<<16 | id;
+	// Trigger a software interrupt (IPI) for the CPUs in the target bitmap.
+	getGicdRegs()->softint = target<<16 | id;
 }
 
-void IRQ_setPriority(Interrupt id, u8 prio)
+void IRQ_setPriority(const Interrupt id, const u32 prio)
 {
-	const u32 oldState = enterCriticalSection();
-
+	// Get the interrupt distributor register pointer.
 	Gicd *const gicd = getGicdRegs();
+
+	// Save state and disable all IRQs on this CPU.
+	const u32 savedState = enterCriticalSection();
+
+	// Set IRQ priority.
 	const u32 idx = id / 4;
 	const u32 shift = (id % 4 * 8) + 4;
-	u32 tmp = gicd->pri[idx] & ~(0xFu<<shift);
-	gicd->pri[idx] = tmp | (u32)prio<<shift;
+	const u32 tmp = gicd->pri[idx] & ~(0xFu<<shift);
+	gicd->pri[idx] = tmp | prio<<shift;
 
-	leaveCriticalSection(oldState);
+	// Restore state.
+	leaveCriticalSection(savedState);
 }
 
-// TODO: The reg write is atomic.
-//       The ISR table write could be moved somewhere else by the compiler. Signal fence is enough?
-//       Without critical section the ISR for this exact IRQ could re-enable it between the 2 writes.
-//       Could be fixed by doing an acquire fence + doing the table write first.
-void IRQ_unregisterIsr(Interrupt id)
+// Note: The reg write is atomic however if the ISR for this IRQ uses IRQ_disable() + IRQ_enable()
+//       this IRQ could enable itself again without critical section protecting the table write.
+void IRQ_unregisterIsr(const Interrupt id)
 {
-	const u32 oldState = enterCriticalSection();
+	// Get the interrupt distributor register pointer.
+	Gicd *const gicd = getGicdRegs();
 
-	getGicdRegs()->enable_clear[id / 32] = BIT(id % 32);
+	// Get the CPU id.
+	const u32 cpuId = __getCpuId();
 
-	g_irqIsrTable[(id < 32 ? 32 * __getCpuId() + id : 96u + id)] = (IrqIsr)NULL;
+	// Save state and disable all IRQs on this CPU.
+	const u32 savedState = enterCriticalSection();
 
-	leaveCriticalSection(oldState);
+	// Disable the IRQ.
+	gicd->enable_clear[id / 32] = BIT(id % 32);
+
+	// Invalidate the ISR function pointer.
+	g_irqIsrTable[(id < 32 ? 32 * cpuId + id : 96u + id)] = (IrqIsr)NULL;
+
+	// Restore state.
+	leaveCriticalSection(savedState);
 }
