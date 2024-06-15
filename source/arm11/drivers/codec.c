@@ -351,11 +351,7 @@ static void soundInit(const CodecCalBase *const cal)
 	I2sRegs *const i2s = getI2sRegs();
 	i2s->i2s1_cnt = 0;
 	i2s->i2s2_cnt = 0;
-#ifndef LIBN3DS_LEGACY
-	i2s->i2s1_cnt = I2S1_EN | I2S1_MCLK1_16MHZ | I2S1_FREQ_32KHZ | I2S1_LGY_VOL(0) | I2S1_DSP_VOL(32);
-#else
 	i2s->i2s1_cnt = I2S1_EN | I2S1_MCLK1_16MHZ | I2S1_FREQ_32KHZ | I2S1_LGY_VOL(32) | I2S1_DSP_VOL(0);
-#endif
 	i2s->i2s2_cnt = I2S2_EN | I2S2_MCLK2_16MHZ | I2S2_FREQ_47KHZ;
 
 	// Speaker driver powerup time?
