@@ -109,7 +109,7 @@ typedef enum
 
 
 /**
- * @brief      Initializes the I²C buses. Call this only once.
+ * @brief      Initializes the I²C buses. For libn3ds internal usage only.
  */
 void I2C_init(void);
 
@@ -161,6 +161,7 @@ bool I2C_write(const I2cDevice devId, const u32 regAddr, const u8 data);
 
 /**
  * @brief      Writes data from a buffer to an array of registers via I²C without interrupts.
+ *             For libn3ds internal usage only.
  *
  * @param[in]  devId    The device ID. Use the enum above.
  * @param[in]  regAddr  The register address.
@@ -173,6 +174,7 @@ bool I2C_writeRegArrayIntSafe(const I2cDevice devId, const u8 regAddr, const voi
 
 /**
  * @brief      Writes a byte to a register via I²C without interrupts.
+ *             For libn3ds internal usage only.
  *
  * @param[in]  devId    The device ID. Use the enum above.
  * @param[in]  regAddr  The register address.

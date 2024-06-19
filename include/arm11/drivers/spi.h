@@ -156,7 +156,7 @@ typedef enum
 
 
 /**
- * @brief      Initializes the SPI buses. Call this only once.
+ * @brief      Initializes the SPI buses. For libn3ds internal usage only.
  */
 void NSPI_init(void);
 

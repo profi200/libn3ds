@@ -63,7 +63,7 @@ ALWAYS_INLINE Timer* getTimerRegs(u8 timer)
 
 
 /**
- * @brief      Resets/initializes the timer hardware. Should not be called manually.
+ * @brief      Resets/initializes the timer hardware. For libn3ds internal usage only.
  */
 void TIMER_init(void);
 

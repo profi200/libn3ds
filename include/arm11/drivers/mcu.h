@@ -84,7 +84,7 @@ typedef enum
 // TODO: For most functions check if the return value on error makes sense.
 
 /**
- * @brief      Initializes the MCU driver.
+ * @brief      Initializes the MCU driver. For libn3ds internal usage only.
  */
 void MCU_init(void);
 

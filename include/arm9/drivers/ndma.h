@@ -138,7 +138,7 @@ enum
 
 
 /**
- * @brief      Initializes all NDMA channels.
+ * @brief      Initializes all NDMA channels. For libn3ds internal usage only.
  */
 void NDMA_init(void);
 

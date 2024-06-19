@@ -98,7 +98,7 @@ typedef struct
 
 
 
-void hidInit(void);
+void hidInit(void); // For libn3ds internal usage only.
 void hidScanInput(void);
 u32 hidKeysHeld(void);
 u32 hidKeysDown(void);

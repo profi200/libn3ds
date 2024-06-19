@@ -69,7 +69,7 @@ typedef void (*IrqIsr)(u32 id);
 
 
 /**
- * @brief      Initializes the interrupt controller.
+ * @brief      Initializes the interrupt controller. For libn3ds internal usage only.
  */
 void IRQ_init(void);
 

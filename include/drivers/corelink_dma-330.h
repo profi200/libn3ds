@@ -220,7 +220,7 @@ enum
 
 
 
-void DMA330_init(void);
+void DMA330_init(void); // For libn3ds internal usage only.
 u8 DMA330_run(u8 ch, const u8 *const prog);
 u8 DMA330_status(u8 ch);
 void DMA330_ackIrq(u8 eventIrq);

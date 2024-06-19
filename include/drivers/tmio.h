@@ -326,12 +326,12 @@ typedef struct
 
 
 /**
- * @brief      Initializes the tmio driver.
+ * @brief      Initializes the tmio driver. For libn3ds internal usage only.
  */
 void TMIO_init(void);
 
 /**
- * @brief      Deinitializes the tmio driver.
+ * @brief      Deinitializes the tmio driver. For libn3ds internal usage only.
  */
 void TMIO_deinit(void);
 

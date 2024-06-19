@@ -97,6 +97,7 @@ ALWAYS_INLINE Pxi* getPxiRegs(void)
 
 
 
+// All of the below functions for libn3ds internal usage only.
 void PXI_init(void);
 void PXI_deinit(void);
 u32 PXI_sendCmd(u32 cmd, const u32 *buf, u32 words);
