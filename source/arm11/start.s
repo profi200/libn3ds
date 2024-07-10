@@ -101,7 +101,7 @@ BEGIN_ASM_FUNC _start no_section
 	ldr r1, =__bss_end__
 	sub r2, r1, r0
 	mov r1, #0
-	bl clear32
+	blx clear32
 	@ Setup newlib heap
 	ldr r0, =A11_HEAP_END
 	ldr r1, =fake_heap_end
@@ -113,6 +113,7 @@ _start_skip_bss_init_array:
 	ldrh r2, =PM_CCNT_IRQ | PM_PMN1_IRQ | PM_PMN0_IRQ | PM_CCNT_RST | PM_PMN01_RST
 	mcr p15, 0, r2, c15, c12, 0 @ Write Performance Monitor Control Register
 	blx setupMmu
+	bl mapDspRam
 	bl setupVfp
 	cpsie a
 	blx __systemInit
@@ -162,6 +163,19 @@ BEGIN_ASM_FUNC setupVfp no_section
 	fmxr fpexc, r0              @ Write Floating-point exception register
 	fmxr fpscr, r1              @ Write Floating-Point Status and Control Register
 	bx lr
+END_ASM_FUNC
+
+
+BEGIN_ASM_FUNC mapDspRam no_section
+	ldr  r2, =0x10140000
+	ldrd r0, r1, mapDspRam_cnt_val
+	strd r0, r1, [r2]              @ REG_DSP_RAM_CODE_CNT.
+	strd r0, r1, [r2, #8]          @ REG_DSP_RAM_DATA_CNT.
+	bx lr
+.pool
+.align 3
+mapDspRam_cnt_val:
+.8byte 0x9C9894908C888480          @ Map all of DSP RAM contiguous with the ARM CPUs as master.
 END_ASM_FUNC
 
 

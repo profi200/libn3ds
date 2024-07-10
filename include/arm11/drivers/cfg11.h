@@ -31,37 +31,37 @@ extern "C"
 
 typedef struct
 {
-	vu8 sharedwram_32k_code[8]; // 0x000
-	vu8 sharedwram_32k_data[8]; // 0x008
+	vu64 dsp_ram_code_cnt;    // 0x000 8 u8 registers combined.
+	vu64 dsp_ram_data_cnt;    // 0x008 8 u8 registers combined.
 	u8 _0x10[0xf0];
-	vu32 nullpage_cnt;          // 0x100
-	vu8 fiq_mask;               // 0x104
-	vu8 unk105;                 // 0x105 Debug related? Mask?
+	vu32 nullpage_cnt;        // 0x100
+	vu8 fiq_mask;             // 0x104
+	vu8 unk105;               // 0x105 Debug related? Mask?
 	u8 _0x106[2];
-	vu8 unk108;                 // 0x108 LGY gamecard related?
+	vu8 unk108;               // 0x108 LGY gamecard related?
 	u8 _0x109[3];
-	vu8 cdma_cnt;               // 0x10C
+	vu8 cdma_cnt;             // 0x10C
 	u8 _0x10d[3];
-	vu8 unk110;                 // 0x110 VRAM related?
+	vu8 unk110;               // 0x110 VRAM related?
 	u8 _0x111[0x2f];
-	vu16 gpuprot;               // 0x140
+	vu16 gpuprot;             // 0x140
 	u8 _0x142[0x3e];
-	vu8 wifi_power;             // 0x180 Used for flight mode?
+	vu8 wifi_power;           // 0x180 Used for flight mode?
 	u8 _0x181[0x3f];
-	vu16 spi_cnt;               // 0x1C0
+	vu16 spi_cnt;             // 0x1C0
 	u8 _0x1c2[0x3e];
-	vu32 unk200;                // 0x200 GPIO3 related? 8x4 bits.
+	vu32 unk200;              // 0x200 GPIO3 related? 8x4 bits.
 	u8 _0x204[0x1fc];
-	vu8 gpu_n3ds_cnt;           // 0x400 New3DS-only.
+	vu8 gpu_n3ds_cnt;         // 0x400 New3DS-only.
 	u8 _0x401[0xf];
-	vu32 cdma_peripherals;      // 0x410 New3DS-only.
+	vu32 cdma_peripherals;    // 0x410 New3DS-only.
 	u8 _0x414[0xc];
-	vu8 bootrom_overlay_cnt;    // 0x420 New3DS-only.
+	vu8 bootrom_overlay_cnt;  // 0x420 New3DS-only.
 	u8 _0x421[3];
-	vu32 bootrom_overlay_val;   // 0x424 New3DS-only.
-	vu8 unk428;                 // 0x429 New3DS-only. 1 bit. Enable CPU core 1 access to overlay regs?
+	vu32 bootrom_overlay_val; // 0x424 New3DS-only.
+	vu8 unk428;               // 0x429 New3DS-only. 1 bit. Enable CPU core 1 access to overlay regs?
 	u8 _0x429[0xbd3];
-	const vu16 socinfo;         // 0xFFC
+	const vu16 socinfo;       // 0xFFC
 } Cfg11;
 static_assert(offsetof(Cfg11, socinfo) == 0xFFC, "Error: Member socinfo of Cfg11 is not at offset 0xFFC!");
 
@@ -70,6 +70,13 @@ ALWAYS_INLINE Cfg11* getCfg11Regs(void)
 	return (Cfg11*)CFG11_REGS_BASE;
 }
 
+
+// REG_DSP_RAM_CODE_CNT[8] and REG_DSP_RAM_DATA_CNT[8].
+// Note: All defines for each of the 8 registers.
+#define DSP_RAM_MASTER_ARM      (0u)            // Bank master CPU only.
+#define DSP_RAM_MASTER_DSP      (1u)            // Bank master DSP. The ARM CPUs still have access.
+#define DSP_RAM_OFFS(n)         (((n) & 7u)<<2) // Bank offset in 32 KiB unit. 0-7.
+#define DSP_RAM_EN              BIT(7)          // Bank enable.
 
 // REG_CFG11_NULLPAGE_CNT
 #define NULLPAGE_CNT_FAULT_EN   BIT(0)  // All data accesses to 0x000-0xFFF generate data aborts.
