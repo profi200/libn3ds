@@ -28,6 +28,19 @@ extern "C"
 #endif
 
 /**
+ * @brief      Converts 8-bit RGBA components to 4-bit with nearest rounding.
+ *
+ * @param[in]  c     The 8-bit color component.
+ *
+ * @return     The color component converted to 4-bit format.
+ */
+static inline u32 rgbEight2Four(const u32 c)
+{
+	// No rounding errors for 0-255.
+	return (15 * c + 135)>>8;
+}
+
+/**
  * @brief      Converts 8-bit RGBA components to 5-bit with nearest rounding.
  *
  * @param[in]  c     The 8-bit color component.
@@ -51,6 +64,19 @@ static inline u32 rgbEight2Six(const u32 c)
 {
 	// No rounding errors for 0-255.
 	return (253 * c + 512)>>10;
+}
+
+/**
+ * @brief      Converts 4-bit RGBA components to 8-bit with nearest rounding.
+ *
+ * @param[in]  c     The 4-bit color component.
+ *
+ * @return     The color component converted to 8-bit format.
+ */
+static inline u32 rgbFour2Eight(const u32 c)
+{
+	// No rounding errors for 0-15.
+	return 17 * c;
 }
 
 /**

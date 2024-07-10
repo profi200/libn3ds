@@ -183,6 +183,11 @@ void GFX_setDoubleBuffering(const GfxLcd lcd, const bool dBuf);
 void* GFX_getBuffer(const GfxLcd lcd, const GfxSide side);
 
 /**
+ * @brief      Flushes the CPU data cache for all current frame buffers.
+ */
+void GFX_flushBuffers(void);
+
+/**
  * @brief      Swaps the buffers for all LCDs with double buffering enabled.
  */
 void GFX_swapBuffers(void);

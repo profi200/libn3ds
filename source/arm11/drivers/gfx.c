@@ -460,6 +460,26 @@ void* GFX_getBuffer(const GfxLcd lcd, const GfxSide side)
 	return state->lcds[lcd].bufs[idx];
 }
 
+// TODO: We have a threshold at which point the whole cache is flushed.
+//       These frame buffers are definitely bigger than that so we are flushing
+//       the whole cache twice! Optimize this and flush once.
+void GFX_flushBuffers(void)
+{
+	// Flush top LCD frame buffer(s).
+	// If the PDC_FB_DOUBLE_V bit is not set we have to flush 2 or 1 double sized buffer.
+	// The allocator will place left and right eye buffers in a row so we can flush them at once.
+	GfxState *const state = &g_gfxState;
+	const u32 top_fb_fmt = state->lcds[0].fb_fmt;
+	u32 sizeTop = LCD_WIDTH_TOP * LCD_HEIGHT_TOP * GFX_getPixelSize(top_fb_fmt & PDC_FB_FMT_MASK);
+	sizeTop *= ((top_fb_fmt & PDC_FB_DOUBLE_V) != 0 ? 1 : 2);
+	flushDCacheRange(GFX_getBuffer(GFX_LCD_TOP, GFX_SIDE_LEFT), sizeTop);
+
+	// Flush bottom LCD frame buffer.
+	const u32 bot_fb_fmt = state->lcds[1].fb_fmt;
+	const u32 sizeBot = LCD_WIDTH_BOT * LCD_HEIGHT_BOT * GFX_getPixelSize(bot_fb_fmt & PDC_FB_FMT_MASK);
+	flushDCacheRange(GFX_getBuffer(GFX_LCD_BOT, GFX_SIDE_LEFT), sizeBot);
+}
+
 void GFX_swapBuffers(void)
 {
 	GfxState *const state = &g_gfxState;
