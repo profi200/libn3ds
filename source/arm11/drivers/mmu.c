@@ -35,7 +35,7 @@
 
 // Predefined mem attributes. Bit 12-10 (TEX[2:0]), 1 (C), 0 (B), all other padding.
 // All of these count for outer and inner.
-#define ATTR_STRONGLY_ORDERED                (0b0000000000000u) // Always shared
+#define ATTR_STRONGLY_ORDERED                (0b0000000000000u) // Always shared.
 #define ATTR_SHARED_DEVICE                   (0b0000000000001u)
 #define ATTR_NORM_WRITE_TROUGH_NO_ALLOC      (0b0000000000010u) // Behaves as noncacheable on ARM11 MPCore.
 #define ATTR_NORM_WRITE_BACK_NO_ALLOC        (0b0000000000011u) // Behaves as write-back write-allocate.
@@ -60,9 +60,9 @@
 typedef struct
 {
 	u32 l1[4096];
-	u32 l2PrivReg[256]; // L2 table for MPCore private region
-	u32 l2Axiwram[256]; // L2 table for AXIWRAM
-	u32 l2Boot11[256];  // L2 table for boot11 (high vectors)
+	u32 l2PrivReg[256]; // L2 table for MPCore private region.
+	u32 l2DspAxi[256];  // L2 table for DSP and AXI RAM.
+	u32 l2Boot11[256];  // L2 table for boot11 (high vectors).
 } MmuTables;
 static MmuTables *const g_mmuTables = (MmuTables*)A11_MMU_TABLES_BASE;
 
@@ -152,45 +152,43 @@ static void mmuMapPages(u32 va, u32 pa, u32 num, u32 *const l2Table, bool shared
 
 void setupMmu(void)
 {
-	// FCSE PID Register (FCSE PID = 0)
-	// Note: This must be 0 before disabling the MMU otherwise UB
-	__setFcsepidr(0);
-	// Context ID Register (ASID = 0, PROCID = 0)
-	__setCidr(0);
-	// TTBR0 address shared page table walk and outer cachable write-through, no allocate on write
-	__setTtbr0((u32)g_mmuTables->l1 | 0x12);
-	// Use the 16 KiB L1 table only
-	__setTtbcr(0);
-	// Domain 0 = client, remaining domains all = no access
-	__setDacr(1);
+	__setFcsepidr(0);                        // FCSE PID Register (FCSE PID = 0). Note: Must be 0 before disabling the MMU otherwise UB.
+	__setCidr(0);                            // Context ID Register (ASID = 0, PROCID = 0).
+	__setTtbr0((u32)g_mmuTables->l1 | 0x12); // TTBR0 address shared page table walk and outer cachable write-through, no allocate on write.
+	__setTtbcr(0);                           // Use the 16 KiB L1 table only.
+	__setDacr(1);                            // Domain 0 = client, remaining domains all = no access.
 
 
 	static volatile bool syncFlag = false;
-	if(!__getCpuId())
+	if(__getCpuId() == 0)
 	{
-		// Clear L1 and L2 tables
+		// Clear L1 and L2 tables.
 		clear32((u32*)g_mmuTables, 0, sizeof(MmuTables));
 
-		// IO mem mapping
+		// IO mem mapping.
 		mmuMapSections(IO_COMMON_BASE, IO_COMMON_BASE, 4, true,
 		               PERM_PRIV_RW_USR_NA, 0, true, ATTR_SHARED_DEVICE);
 
-		// MPCore private region mapping
+		// MPCore private region mapping.
 		mmuMapPages(MPCORE_PRIV_BASE, MPCORE_PRIV_BASE, 2,
 		            g_mmuTables->l2PrivReg, false, PERM_PRIV_RW_USR_NA,
 		            0, true, L1_TO_L2(ATTR_SHARED_DEVICE));
 
-		// VRAM mapping
+		// VRAM mapping.
 		mmuMapSections(VRAM_BASE, VRAM_BASE, 6, true, PERM_PRIV_RW_USR_NA, 0,
-		               true, ATTR_NORM_WRITE_TROUGH_NO_ALLOC);
+		               true, ATTR_NORM_WRITE_BACK_ALLOC);
 
-		// AXIWRAM core 0/1 stack mapping
-		mmuMapPages(A11_C0_STACK_START, A11_C0_STACK_START, 4, g_mmuTables->l2Axiwram,
+		// DSP RAM mapping minus a guard page for the stacks.
+		mmuMapPages(DSP_RAM_BASE, DSP_RAM_BASE, (DSP_RAM_SIZE / 4096) - 1, g_mmuTables->l2DspAxi,
 		            true, PERM_PRIV_RW_USR_NA, 0, true, L1_TO_L2(ATTR_NORM_WRITE_BACK_ALLOC));
 
-		// AXIWRAM MMU table mapping
+		// AXI RAM core 0/1 stack mapping.
+		mmuMapPages(A11_C0_STACK_START, A11_C0_STACK_START, 4, g_mmuTables->l2DspAxi,
+		            true, PERM_PRIV_RW_USR_NA, 0, true, L1_TO_L2(ATTR_NORM_WRITE_BACK_ALLOC));
+
+		// AXI RAM MMU table mapping.
 		const u32 mmuTablesPages = ((sizeof(MmuTables) + 0xFFFu) & ~0xFFFu) / 0x1000;
-		mmuMapPages((u32)g_mmuTables, (u32)g_mmuTables, mmuTablesPages, g_mmuTables->l2Axiwram, true,
+		mmuMapPages((u32)g_mmuTables, (u32)g_mmuTables, mmuTablesPages, g_mmuTables->l2DspAxi, true,
 		            PERM_PRIV_RO_USR_NA, 0, true, L1_TO_L2(ATTR_NORM_WRITE_TROUGH_NO_ALLOC));
 
 		extern const u32 __start__[];
@@ -200,33 +198,33 @@ void setupMmu(void)
 		extern const u32 __data_start__[];
 		const u32 dataPages = (AXI_RAM_BASE + AXI_RAM_SIZE - (u32)__data_start__) / 0x1000;
 
-		// text
+		// text.
 		mmuMapPages((u32)__start__, (u32)__start__, (u32)__text_pages__,
-		            g_mmuTables->l2Axiwram, true, PERM_PRIV_RO_USR_NA, 0, false,
+		            g_mmuTables->l2DspAxi, true, PERM_PRIV_RO_USR_NA, 0, false,
 		            L1_TO_L2(ATTR_NORM_WRITE_BACK_ALLOC));
-		// rodata
+		// rodata.
 		mmuMapPages((u32)__rodata_start__, (u32)__rodata_start__, (u32)__rodata_pages__,
-		            g_mmuTables->l2Axiwram, true, PERM_PRIV_RO_USR_NA, 0, true,
+		            g_mmuTables->l2DspAxi, true, PERM_PRIV_RO_USR_NA, 0, true,
 		            L1_TO_L2(ATTR_NORM_WRITE_BACK_ALLOC));
-		// data, bss and heap
+		// data, bss and heap.
 		mmuMapPages((u32)__data_start__, (u32)__data_start__, dataPages,
-		            g_mmuTables->l2Axiwram, true, PERM_PRIV_RW_USR_NA, 0, true,
+		            g_mmuTables->l2DspAxi, true, PERM_PRIV_RW_USR_NA, 0, true,
 		            L1_TO_L2(ATTR_NORM_WRITE_BACK_ALLOC));
 
-		// FCRAM with New 3DS extension
+		// FCRAM with New 3DS extension.
 		mmuMapSupersections(FCRAM_BASE, FCRAM_BASE, 16, PERM_PRIV_RW_USR_NA, true,
 		                    ATTR_NORM_WRITE_BACK_ALLOC);
 
-		// Map fastboot executable start to boot11 mirror (exception vectors)
+		// Map libn3ds executable start to boot11 mirror (exception vectors).
 		mmuMapPages(BOOT11_HI_MIRROR, (u32)__start__, 1, g_mmuTables->l2Boot11, true,
 		            PERM_PRIV_RO_USR_NA, 0, false, L1_TO_L2(ATTR_NORM_WRITE_BACK_ALLOC));
 
 		// Invalidate tag RAMs before enabling SMP as recommended by the MPCore doc.
 		// TODO: Disable SCU on poweroff/reboot/FIRM launch.
 		Scu *const scu = getScuRegs();
-		scu->ctrl = SCU_CTRL_RST_VAL;          // Disable SCU and parity checking. Access to all aliases.
-		scu->inval_all = SCU_WAY_ALL;          // Invalidate SCU tag RAMs of all CPUs.
-		scu->ctrl = SCU_CTRL_RST_VAL | SCU_EN; // Enable SCU.
+		scu->ctrl      = SCU_CTRL_RST_VAL;          // Disable SCU and parity checking. Access to all aliases.
+		scu->inval_all = SCU_WAY_ALL;               // Invalidate SCU tag RAMs of all CPUs.
+		scu->ctrl      = SCU_CTRL_RST_VAL | SCU_EN; // Enable SCU.
 
 		syncFlag = true;
 		__sev();
@@ -234,21 +232,21 @@ void setupMmu(void)
 	else while(!syncFlag) __wfe();
 
 
-	// Invalidate TLB (Unified TLB operation)
+	// Invalidate TLB (Unified TLB operation).
 	__asm__ volatile("mcr p15, 0, %0, c8, c7, 0" : : "r" (0) : "memory");
 	__dsb();
 
 
 	// Enable Return stack, Dynamic branch prediction, Static branch prediction,
-	// Instruction folding and SMP mode: the CPU is taking part in coherency
+	// Instruction folding and SMP mode: the CPU is taking part in coherency.
 	__setAcr(__getAcr() | 0x2F);
 
 	// Enable MMU, D-Cache, Program flow prediction,
 	// I-Cache, high exception vectors, Unaligned data access,
-	// subpage AP bits disabled
+	// subpage AP bits disabled.
 	__setCr(__getCr() | 0xC03805);
 
-	// Invalidate Both Caches. Also flushes the branch target cache
+	// Invalidate Both Caches. Also flushes the branch target cache.
 	__asm__ volatile("mcr p15, 0, %0, c7, c7, 0" : : "r" (0) : "memory");
 	__dsb();
 	__isb();
