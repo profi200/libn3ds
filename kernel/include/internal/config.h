@@ -24,10 +24,10 @@
 /*
  * Maximum number of objects we can create (Slabheap).
 */
-#define MAX_TASKS        (3) // Including main and idle task.
-#define MAX_EVENTS       (10)
-#define MAX_MUTEXES      (3)
-#define MAX_SEMAPHORES   (0)
+#define MAX_TASKS        (4) // Including main and idle task.
+#define MAX_EVENTS       (16)
+#define MAX_MUTEXES      (8)
+#define MAX_SEMAPHORES   (2)
 #define MAX_TIMERS       (0)
 
 #define IDLE_STACK_SIZE  (0x1000) // Keep in mind this stack is used in interrupt contex! TODO: Change this.
