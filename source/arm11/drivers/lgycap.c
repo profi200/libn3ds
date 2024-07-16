@@ -169,8 +169,8 @@ KHandle LGYCAP_init(const LgyCapDev dev, const LgyCapCfg *const cfg)
 
 	LgyCap *const lgyCap = getLgyCapRegs(dev);
 	lgyCap->dim   = LGYCAP_DIM(cfg->w, cfg->h);
+	lgyCap->irq   = cfg->irq;
 	lgyCap->stat  = LGYCAP_IRQ_MASK; // Acknowledge all IRQs.
-	lgyCap->irq   = 0;
 	lgyCap->alpha = 0xFF;
 
 	// Hardware bug:
@@ -205,7 +205,7 @@ void LGYCAP_deinit(const LgyCapDev dev)
 	lgyCap->cnt = 0;
 
 	// Acknowledge all IRQs.
-	//lgyCap->stat  = LGYCAP_IRQ_MASK;
+	lgyCap->stat  = LGYCAP_IRQ_MASK;
 
 	// Kill the DMA channel and flush the FIFO.
 	DMA330_kill(dev);
@@ -229,7 +229,7 @@ void LGYCAP_stop(const LgyCapDev dev)
 	lgyCap->cnt &= ~LGYCAP_EN;
 
 	// Acknowledge all IRQs.
-	//lgyCap->stat  = LGYCAP_IRQ_MASK;
+	lgyCap->stat  = LGYCAP_IRQ_MASK;
 
 	// Kill the DMA channel and flush the FIFO.
 	DMA330_kill(dev);

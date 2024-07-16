@@ -109,6 +109,7 @@ typedef struct
 	u32 cnt; // REG_LGYCAP_CNT settings.
 	u16 w;
 	u16 h;
+	u32 irq; // REG_LGYCAP_IRQ settings.
 	u8 vLen;
 	u8 vPatt;
 	s16 vMatrix[8 * 6];
