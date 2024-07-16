@@ -1,8 +1,7 @@
 #pragma once
 
-/*
- * This code is part of libctru (https://github.com/devkitPro/libctru)
- */
+// This code is part of libctru.
+// https://github.com/devkitPro/libctru
 
 /**
  * @file console.h
@@ -45,7 +44,7 @@ typedef bool(*ConsolePrint)(void* con, int c);
 /// A font struct for the console.
 typedef struct ConsoleFont
 {
-	const u8* gfx;   ///< A pointer to the font graphics
+	u8* gfx;         ///< A pointer to the font graphics
 	u16 asciiOffset; ///< Offset to the first valid character in the font table
 	u16 numChars;    ///< Number of characters in the font graphics
 }ConsoleFont;
@@ -61,18 +60,20 @@ typedef struct ConsoleFont
  * 	{
  * 		(u8*)default_font_bin, //font gfx
  * 		0, //first ascii character in the set
- * 		128, //number of characters in the font set
+ * 		256, //number of characters in the font set
  *	},
  *	0,0, //cursorX cursorY
  *	0,0, //prevcursorX prevcursorY
- *	40, //console width
- *	30, //console height
+ *	53, //console width
+ *	24, //console height
  *	0,  //window x
  *	0,  //window y
- *	32, //window width
+ *	53, //window width
  *	24, //window height
  *	3, //tab size
- *	0, //font character offset
+ *	15, //foreground color
+*	0, //background color
+ *	0, //flags
  *	0,  //print callback
  *	false //console initialized
  * };
@@ -99,8 +100,8 @@ typedef struct PrintConsole
 	int windowHeight;        ///< Window height in characters (not implemented)
 
 	int tabSize;             ///< Size of a tab
-	int fg;                  ///< Foreground color
-	int bg;                  ///< Background color
+	u16 fg;                  ///< Foreground color
+	u16 bg;                  ///< Background color
 	int flags;               ///< Reverse/bright flags
 
 	ConsolePrint PrintChar;  ///< Callback for printing a character. Should return true if it has handled rendering the graphics (else the print engine will attempt to render via tiles).
@@ -108,21 +109,24 @@ typedef struct PrintConsole
 	bool consoleInitialised; ///< True if the console is initialized
 }PrintConsole;
 
-#define CONSOLE_COLOR_BOLD     BIT(0) ///< Bold text
-#define CONSOLE_COLOR_FAINT    BIT(1) ///< Faint text
-#define CONSOLE_ITALIC         BIT(2) ///< Italic text
-#define CONSOLE_UNDERLINE      BIT(3) ///< Underlined text
-#define CONSOLE_BLINK_SLOW     BIT(4) ///< Slow blinking text
-#define CONSOLE_BLINK_FAST     BIT(5) ///< Fast blinking text
-#define CONSOLE_COLOR_REVERSE  BIT(6) ///< Reversed color text
-#define CONSOLE_CONCEAL        BIT(7) ///< Concealed text
-#define CONSOLE_CROSSED_OUT    BIT(8) ///< Crossed out text
+#define CONSOLE_COLOR_BOLD	(1<<0) ///< Bold text
+#define CONSOLE_COLOR_FAINT	(1<<1) ///< Faint text
+#define CONSOLE_ITALIC		(1<<2) ///< Italic text
+#define CONSOLE_UNDERLINE	(1<<3) ///< Underlined text
+#define CONSOLE_BLINK_SLOW	(1<<4) ///< Slow blinking text
+#define CONSOLE_BLINK_FAST	(1<<5) ///< Fast blinking text
+#define CONSOLE_COLOR_REVERSE	(1<<6) ///< Reversed color text
+#define CONSOLE_CONCEAL		(1<<7) ///< Concealed text
+#define CONSOLE_CROSSED_OUT	(1<<8) ///< Crossed out text
+#define CONSOLE_FG_CUSTOM	(1<<9) ///< Foreground custom color
+#define CONSOLE_BG_CUSTOM	(1<<10) ///< Background custom color
 
 /// Console debug devices supported by libnds.
 typedef enum {
 	debugDevice_NULL,    ///< Swallows prints to stderr
-	debugDevice_3DMOO,   ///< Directs stderr debug statements to 3dmoo
+	debugDevice_SVC,     ///< Outputs stderr debug statements using svcOutputDebugString, which can then be captured by interactive debuggers
 	debugDevice_CONSOLE, ///< Directs stderr debug statements to 3DS console window
+	debugDevice_3DMOO = debugDevice_SVC,
 } debugDevice;
 
 /**
@@ -157,18 +161,6 @@ PrintConsole* consoleGetDefault(void);
 PrintConsole *consoleSelect(PrintConsole* console);
 
 /**
- * @brief Returns the currently used console.
- * @return A pointer to the current console.
- */
-PrintConsole *consoleGet(void);
-
-/**
- * @brief Returns the currently used foreground color.
- * @return The foreground color in BGR565.
- */
-u16 consoleGetFgColor(void);
-
-/**
  * @brief Initialise the console.
  * @param lcd     The screen/lcd to use for the console.
  * @param console A pointer to the console data to initialize (if it's NULL, the default console will be used).
@@ -176,16 +168,8 @@ u16 consoleGetFgColor(void);
  */
 PrintConsole* consoleInit(GfxLcd lcd, PrintConsole* console);
 
-/// Clears the screan by using iprintf("\x1b[2J");
+/// Clears the screen by using iprintf("\x1b[2J");
 void consoleClear(void);
-
-void consoleSetCursor(PrintConsole* console, int x, int y);
-
-void drawConsoleWindow(PrintConsole* console, int thickness, u8 colorIndex);
-
-u16 consoleGetBGR565Color(u8 colorIndex);
-
-ssize_t con_write(UNUSED struct _reent *r,UNUSED void *fd,const char *ptr, size_t len);
 
 #ifdef __cplusplus
 }

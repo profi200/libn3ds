@@ -402,6 +402,9 @@ __attribute__ ((format (printf, 3, 4))) u32 ee_snprintf(char *const buf, u32 siz
 	return res;
 }
 
+// From console.c.
+ssize_t con_write(/*struct _reent *r,void *fd,*/const char *ptr, size_t len);
+
 __attribute__ ((format (printf, 1, 2))) u32 ee_printf(const char *const fmt, ...)
 {
 	char buf[512];
@@ -410,14 +413,14 @@ __attribute__ ((format (printf, 1, 2))) u32 ee_printf(const char *const fmt, ...
 	u32 res = ee_vsnprintf(buf, 512, fmt, args);
 	va_end(args);
 
-	con_write(NULL, NULL, buf, res);
+	con_write(/*NULL, NULL,*/ buf, res);
 
 	return res;
 }
 
 u32 ee_puts(const char *const str)
 {
-	con_write(NULL, NULL, str, strnlen(str, 512));
-	con_write(NULL, NULL, "\n", 1);
+	con_write(/*NULL, NULL,*/ str, strnlen(str, 512));
+	con_write(/*NULL, NULL,*/ "\n", 1);
 	return 0;
 }
