@@ -42,10 +42,10 @@ typedef struct
 	vu32 mn1;          // 0x20 Count register 1.
 	vu32 mn2;          // 0x24 Count register 2.
 	vu32 mn3;          // 0x28 Count register 3.
-	vu32 mn4;          // 0x2C Count register 4.
-	vu32 mn5;          // 0x30 Count register 5.
-	vu32 mn6;          // 0x34 Count register 6.
-	vu32 mn7;          // 0x38 Count register 7.
+	vu32 mn4;          // 0x2C Count register 4. New 3DS only (4 CPUs).
+	vu32 mn5;          // 0x30 Count register 5. New 3DS only (4 CPUs).
+	vu32 mn6;          // 0x34 Count register 6. New 3DS only (4 CPUs).
+	vu32 mn7;          // 0x38 Count register 7. New 3DS only (4 CPUs).
 } Scu;
 static_assert(offsetof(Scu, mn7) == 0x38, "Error: Member mn7 of Scu is not at offset 0x38!");
 

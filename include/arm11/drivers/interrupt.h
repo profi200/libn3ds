@@ -78,8 +78,8 @@ typedef enum
 	IRQ_CAM2          =  73u, // Camera 2 (left eye).
 	IRQ_DSP           =  74u,
 	IRQ_Y2R1          =  75u,
-	IRQ_LGYFB_BOT     =  76u, // Legacy framebuffer bottom screen.
-	IRQ_LGYFB_TOP     =  77u, // Legacy framebuffer top screen.
+	IRQ_LGYCAP_BOT    =  76u, // Legacy capture bottom screen.
+	IRQ_LGYCAP_TOP    =  77u, // Legacy capture top screen.
 	IRQ_Y2R2          =  78u, // New3DS-only.
 	IRQ_G1            =  79u, // New3DS-only Hantro G1 decoder.
 	IRQ_PXI_SYNC      =  80u,

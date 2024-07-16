@@ -152,9 +152,9 @@ static void setScalerMatrix(LgyCapScaler *const scaler, const u32 len, const u32
 	} while(++i < 6 * 8);
 }
 
-static inline u32 getPixelSize(const u32 lgyfb_cnt)
+static inline u32 getPixelSize(const u32 lgycap_cnt)
 {
-	const u32 fmt = (lgyfb_cnt>>8) & 3u;
+	const u32 fmt = (lgycap_cnt>>8) & 3u;
 	return (fmt == (LGYCAP_FMT_BGR565>>8) ? 2 : 4 - fmt);
 }
 

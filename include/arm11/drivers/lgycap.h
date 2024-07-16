@@ -97,11 +97,11 @@ ALWAYS_INLINE LgyCap* getLgyCapRegs(const u8 dev)
 
 // REG_LGYCAP_STAT and REG_LGYCAP_IRQ
 // IRQ flags in STAT reg are acknowledged on write.
-#define LGYCAP_IRQ_DMA_REQ    BIT(0)
+#define LGYCAP_IRQ_DMA_REQ    BIT(0) // Fires for every 8 lines in the FIFO.
 #define LGYCAP_IRQ_BUF_ERR    BIT(1) // FIFO overrun?
 #define LGYCAP_IRQ_VBLANK     BIT(2)
 #define LGYCAP_IRQ_MASK       (LGYCAP_IRQ_VBLANK | LGYCAP_IRQ_BUF_ERR | LGYCAP_IRQ_DMA_REQ)
-#define LGYCAP_OUT_LINE(reg)  ((reg)>>16) // STAT only. Current output scanline?
+#define LGYCAP_OUT_LINE(reg)  ((reg)>>16) // STAT only. Current output line in the FIFO.
 
 
 typedef struct

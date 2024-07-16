@@ -1,8 +1,8 @@
 #pragma once
 
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -28,6 +28,11 @@ extern "C"
 #endif
 
 //void WEAK __systemInit(void);
+
+#ifdef __ARM11__
+void __systemBootCore1(void (*entry)(void));
+#endif
+
 void WEAK __systemDeinit(void);
 
 #ifdef __cplusplus

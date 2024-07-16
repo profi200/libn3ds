@@ -27,6 +27,7 @@
 #include "arm11/drivers/scu.h"
 
 
+// TODO: Before nabling this fix system.c to support core 2/3.
 //#define CORE123_INIT (1)
 
 
@@ -65,11 +66,11 @@ void PDN_core123Init(void)
 	Gicd *const gicd = getGicdRegs();
 	if(cfg11->socinfo & SOCINFO_LGR1)
 	{
-		getGiccRegs()->ctrl = 1;
+		getGiccRegs()->ctrl = BIT(0);
 		for(u32 i = 0; i < 4; i++) gicd->enable_clear[i] = 0xFFFFFFFFu; // Disable all interrupts.
 		gicd->pending_clear[2] = BIT(24); // Clear interrupt ID 88.
 		gicd->pri[22] = 0;                // Id 88 highest priority.
-		gicd->target[22] = 1;             // Id 88 target core 0.
+		gicd->target[22] = BIT(0);        // Id 88 target core 0.
 		gicd->enable_set[2] = BIT(24);    // Enable interrupt ID 88.
 
 		// Certain bootloaders leave the ack bit set. Clear it.
@@ -143,8 +144,8 @@ void PDN_core123Init(void)
 		gicd->enable_clear[2] = BIT(24); // Clear interrupt ID 88.
 
 		// Wakeup core 2/3 and let them jump to their entrypoint.
-		IRQ_softInterrupt(2, 0b0100);
-		IRQ_softInterrupt(3, 0b1000);
+		IRQ_softInterrupt(2, BIT(2));
+		IRQ_softInterrupt(3, BIT(3));
 #else
 		// Make sure we are in CTR mode (if not already).
 		if((pdn->lgr_socmode & SOCMODE_MASK) != SOCMODE_CTR_268MHZ)
@@ -157,7 +158,7 @@ void PDN_core123Init(void)
 
 	// Wakeup core 1
 	*((vu32*)0x1FFFFFDC) = (u32)_start;  // Core 1 entrypoint.
-	IRQ_softInterrupt(1, 0b0010);
+	IRQ_softInterrupt(1, BIT(1));
 }
 
 void PDN_setSocmode(PdnSocmode socmode)

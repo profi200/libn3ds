@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2021 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
  */
 
 #include "types.h"
+#include "arm11/drivers/scu.h"
 #include "drivers/pxi.h"
 #include "arm11/start.h"
 #include "arm11/drivers/interrupt.h"
@@ -32,13 +33,42 @@
 
 
 
+// NAKED to prevent unnecessary register pushes to the stack.
+[[noreturn]] NAKED static void core1Standby(void)
+{
+	while(1)
+	{
+		// Abuse SCU monitor counter register 3 for temporary pointer storage.
+		// This is a little cleaner than writing pointers to RAM reserved for heap.
+		Scu *const scu = getScuRegs();
+		scu->mn3 = (u32)NULL;
+
+		// Register IPI1 IRQ without a handler.
+		IRQ_registerIsr(IRQ_IPI1, 14, 0, (IrqIsr)NULL);
+
+		// Wait for IPI1 IRQ and a valid entry pointer.
+		void (*entry)(void);
+		do
+		{
+			__wfi();
+			entry = (void (*)(void))scu->mn3;
+		} while(entry == NULL);
+
+		// Unregister IPI1 IRQ.
+		IRQ_unregisterIsr(IRQ_IPI1);
+
+		// Jump to entrypoint.
+		entry();
+	}
+}
+
 void WEAK __systemInit(void)
 {
 	IRQ_init();
-	__cpsie(i); // Enables interrupts
+	__cpsie(i);   // Enables interrupts.
 	TIMER_init();
 
-	if(!__getCpuId()) // Core 0
+	if(__getCpuId() == 0) // Core 0.
 	{
 		kernelInit(2);
 		DMA330_init();
@@ -54,13 +84,20 @@ void WEAK __systemInit(void)
 		MCU_init();
 		hidInit();
 	}
-	else // Any other core
+	else // Any other core.
 	{
-		// We don't need core 1 yet so back it goes into boot11.
-		// Core 2 and 3 also go there waiting until poweroff.
-		deinitCpu();
-		((void (*)(void))0x0001004C)();
+		// TODO: When we enable core 2/3 support this needs to fixed.
+		core1Standby();
 	}
+}
+
+void __systemBootCore1(void (*entry)(void))
+{
+	// Set core 1 entrypoint.
+	getScuRegs()->mn3 = (u32)entry;
+
+	// Wake core 1 up.
+	IRQ_softInterrupt(IRQ_IPI1, BIT(1));
 }
 
 void WEAK __systemDeinit(void)
