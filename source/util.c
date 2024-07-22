@@ -1,6 +1,6 @@
 /*
- *   This file is part of open_agb_firm
- *   Copyright (C) 2023 derrek, profi200
+ *   This file is part of libn3ds
+ *   Copyright (C) 2024 derrek, profi200
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -58,17 +58,17 @@ size_t safeStrcpy(char *const dst, const char *const src, size_t num)
 
 // Limited to 6 decimal places. Doesn't support exponents.
 // Based on: https://codereview.stackexchange.com/a/158724
-float str2float(const char *str)
+double str2double(const char *str)
 {
-	for(; isspace((unsigned char)*str) != 0; str++); // Skip whitespaces.
+	while(isspace((unsigned char)*str) != 0) str++; // Skip whitespaces.
 
-	const float sign = (*str == '-' ? -1.f : 1.f);
+	const double sign = (*str == '-' ? -1.0 : 1.0);
 	if(*str == '-' || *str == '+') str++;
 
-	float val = 0.f;
+	double val = 0.0;
 	while(isdigit((unsigned char)*str) != 0)
 	{
-		val = val * 10.f + (*str - '0');
+		val = val * 10.0 + (*str - '0');
 		str++;
 	}
 
@@ -77,10 +77,15 @@ float str2float(const char *str)
 	u32 place = 1;
 	while(isdigit((unsigned char)*str) != 0)
 	{
-		val = val * 10.f + (*str - '0');
+		val = val * 10.0 + (*str - '0');
 		place *= 10;
 		str++;
 	}
 
 	return val * sign / place;
+}
+
+float str2float(const char *str)
+{
+	return str2double(str);
 }

@@ -52,12 +52,22 @@ void wait_cycles(u32 cycles);
 size_t safeStrcpy(char *const dst, const char *const src, size_t num);
 
 /**
- * @brief      Basic string to float conversion. Limited to 6 decimal places.
+ * @brief      Basic string to double conversion. Limited to 6 decimal places.
  *             Doesn't support exponents.
  *
  * @param[in]  str   The string.
  *
- * @return     The floatingpoint number represented by str.
+ * @return     The floating-point number represented by str.
+ */
+double str2double(const char *str);
+
+/**
+ * @brief      Basic string to float conversion. Limited to 6 decimal places.
+ *             Doesn't support exponents. This is a wrapper for str2double().
+ *
+ * @param[in]  str   The string.
+ *
+ * @return     The floating-point number represented by str.
  */
 float str2float(const char *str);
 
