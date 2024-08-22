@@ -90,7 +90,7 @@ static void mcuTimeDateToGbaRtc(GbaRtc *const rtc)
 	calcDayOfWeek(rtc);
 }
 
-Result LGY_prepareGbaMode(bool directBoot, u16 saveType, const char *const savePath)
+Result LGY_prepareGbaMode(bool directBoot, const u32 saveType, const char *const savePath)
 {
 	u32 cmdBuf[4];
 	cmdBuf[0] = (u32)savePath;

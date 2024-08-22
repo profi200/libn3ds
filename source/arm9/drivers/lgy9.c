@@ -49,13 +49,17 @@ static void setupBiosOverlay(bool directBoot)
 	flushDCacheRange((void*)LGY9_ARM7_STUB_LOC9, (u32)_gba_boot_size);
 }
 
-static u32 setupSaveType(u16 saveType)
+static u32 setupSaveType(const u32 saveType)
 {
 	Lgy9 *const lgy9 = getLgy9Regs();
-	lgy9->gba_save_type = saveType;
+	lgy9->gba_save_type = saveType & SAVE_TYPE_MASK;
 
-	static const u8 saveSizeShiftLut[16] = {9, 9, 13, 13, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17, 15, 0};
-	const u32 saveSize = BIT(saveSizeShiftLut[saveType & SAVE_TYPE_MASK]) & ~BIT(0);
+	// Calculate the save size. The upper 16 bits of the save type is the override size log2 or 0.
+	// This is useful when we patch games like Boktai from EEPROM to flash save for RTC support.
+	static const u8 sizeShiftLut[16] = {9, 9, 13, 13, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17, 15, 0};
+	const u32 sizeOverride = saveType>>16;
+	const u32 sizeShift = (sizeOverride > 0 && sizeOverride < 18 ? sizeOverride : sizeShiftLut[saveType & SAVE_TYPE_MASK]);
+	const u32 saveSize = BIT(sizeShift) & ~BIT(0);
 	g_saveSize = saveSize;
 
 	// Flash chip erase, flash sector erase, flash program, EEPROM write.
@@ -73,7 +77,7 @@ static u32 setupSaveType(u16 saveType)
 	return saveSize;
 }
 
-Result LGY_prepareGbaMode(bool directBoot, u16 saveType, const char *const savePath)
+Result LGY_prepareGbaMode(bool directBoot, const u32 saveType, const char *const savePath)
 {
 	getLgy9Regs()->mode = LGY_MODE_AGB;
 

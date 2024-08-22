@@ -88,7 +88,7 @@ typedef struct
 
 
 
-Result LGY_prepareGbaMode(bool directBoot, u16 saveType, const char *const savePath);
+Result LGY_prepareGbaMode(bool directBoot, const u32 saveType, const char *const savePath);
 Result LGY_setGbaRtc(const GbaRtc rtc);
 Result LGY_getGbaRtc(GbaRtc *const out);
 Result LGY_backupGbaSave(void);
