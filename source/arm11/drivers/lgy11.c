@@ -20,6 +20,7 @@
 #include "types.h"
 #include "arm11/drivers/lgy11.h"
 #include "drivers/lgy_common.h"
+#include "arm11/drivers/fcram.h"
 #include "drivers/pxi.h"
 #include "ipc_handler.h"
 #include "util.h"
@@ -49,22 +50,32 @@ static void lgySleepIsr(u32 intSource)
 	}
 }
 
-static void powerDownFcramForLegacy(u8 mode)
+static void setFcramModeForLegacy(u8 mode)
 {
+	// Make sure there are no dirty or valid cache lines in FCRAM.
+	// TODO: Unmap FCRAM in the MMU table.
 	flushDCache();
-	// TODO: Unmap FCRAM.
-	const Lgy11 *const lgy11 = getLgy11Regs();
-	while(!lgy11->mode); // Wait until legacy mode is ready.
 
-	// For GBA mode we need to additionally apply a bug fix and reset FCRAM.
+	// Wait until legacy mode is ready. In practice this should not be needed.
+	const Lgy11 *const lgy11 = getLgy11Regs();
+	while(lgy11->mode == 0);
+
+	// For GBA mode we need to additionally set fixed timings and reset FCRAM.
 	Pdn *const pdn = getPdnRegs();
 	if(mode == LGY_MODE_AGB)
 	{
-		*((vu32*)0x10201000) &= ~BIT(0);              // Bug fix for the GBA cart emu?
-		pdn->fcram_cnt = PDN_FCRAM_CNT_CLK_EN;        // Set reset low (active) but keep clock on.
+		// Sets FCRAM to fixed response timings?
+		getFcramRegs()->cfg0 &= ~FCRAM_CFG0_MODE_SYNC;
+
+		// Set reset low (active) but keep clock on.
+		// This is needed so the changed timings take affect.
+		pdn->fcram_cnt = PDN_FCRAM_CNT_CLK_EN;
 	}
-	pdn->fcram_cnt = PDN_FCRAM_CNT_NORST;             // Take it out of reset but disable clock.
-	while(pdn->fcram_cnt & PDN_FCRAM_CNT_CLK_EN_ACK); // Wait until clock is disabled.
+
+	// Take it out of reset but disable clock.
+	// Then wait until clock is disabled.
+	pdn->fcram_cnt = PDN_FCRAM_CNT_NORST;
+	while(pdn->fcram_cnt & PDN_FCRAM_CNT_CLK_EN_ACK);
 }
 
 // https://en.wikipedia.org/wiki/Determination_of_the_day_of_the_week#Sakamoto's_methods
@@ -106,7 +117,7 @@ Result LGY_prepareGbaMode(bool directBoot, const u32 saveType, const char *const
 	LGY_setGbaRtc(rtc);
 
 	// Setup FCRAM for GBA mode.
-	powerDownFcramForLegacy(LGY_MODE_AGB);
+	setFcramModeForLegacy(LGY_MODE_AGB);
 
 	// Setup IRQ handlers and sleep mode handling.
 	getLgy11Regs()->sleep = BIT(15);
