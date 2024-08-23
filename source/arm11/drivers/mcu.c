@@ -361,13 +361,13 @@ u8 MCU_getInfoLedStatus(void)
 bool MCU_getRtcTimeDate(RtcTimeDate *timeDate)
 {
 	// Read time and date at once.
-	return MCU_readRegArray(MCU_REG_RTC_S, timeDate, sizeof(RtcTimeDate));
+	return MCU_readRegArray(MCU_REG_RTC_SEC, timeDate, sizeof(RtcTimeDate));
 }
 
 bool MCU_setRtcTimeDate(const RtcTimeDate *timeDate)
 {
 	// Write time and date at once.
-	return MCU_writeRegArray(MCU_REG_RTC_S, timeDate, sizeof(RtcTimeDate));
+	return MCU_writeRegArray(MCU_REG_RTC_SEC, timeDate, sizeof(RtcTimeDate));
 }
 
 u8 MCU_getRtcErrorCorrection(void)

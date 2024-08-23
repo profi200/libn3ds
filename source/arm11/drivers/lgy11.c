@@ -81,9 +81,9 @@ static void setFcramModeForLegacy(u8 mode)
 // https://en.wikipedia.org/wiki/Determination_of_the_day_of_the_week#Sakamoto's_methods
 static void calcDayOfWeek(GbaRtc *const rtc)
 {
-	u32 y = bcd2dec(rtc->y) + 2000u;
+	u32 y = bcd2dec(rtc->year) + 2000u;
 	u8 m = bcd2dec(rtc->mon);
-	u8 d = bcd2dec(rtc->d);
+	u8 d = bcd2dec(rtc->day);
 
 	static const u8 t[12] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
 	if(m < 3) y--;

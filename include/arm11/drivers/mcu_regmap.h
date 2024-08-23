@@ -62,19 +62,19 @@ typedef enum
 	MCU_REG_INFO_LED        = 0x2Du, // (wo) 100 bytes notification/info LED pattern.
 	MCU_REG_INFO_LED_STAT   = 0x2Eu, // (ro) Info LED status.
 	// 0x2F wo with stubbed write handler.
-	MCU_REG_RTC_S           = 0x30u, // (rw) RTC second.
+	MCU_REG_RTC_SEC         = 0x30u, // (rw) RTC second.
 	MCU_REG_RTC_MIN         = 0x31u, // (rw) RTC minute.
-	MCU_REG_RTC_H           = 0x32u, // (rw) RTC hour.
+	MCU_REG_RTC_HOUR        = 0x32u, // (rw) RTC hour.
 	MCU_REG_RTC_DOW         = 0x33u, // (rw) RTC day of week (unused)?
-	MCU_REG_RTC_D           = 0x34u, // (rw) RTC day.
+	MCU_REG_RTC_DAY         = 0x34u, // (rw) RTC day.
 	MCU_REG_RTC_MON         = 0x35u, // (rw) RTC month.
-	MCU_REG_RTC_Y           = 0x36u, // (rw) RTC year.
+	MCU_REG_RTC_YEAR        = 0x36u, // (rw) RTC year.
 	MCU_REG_RTC_ERR_CORR    = 0x37u, // (rw) RTC Watch error correction.
 	MCU_REG_ALARM_MIN       = 0x38u, // (rw) Alarm minute.
-	MCU_REG_ALARM_H         = 0x39u, // (rw) Alarm hour.
-	MCU_REG_ALARM_D         = 0x3Au, // (rw) Alarm day.
+	MCU_REG_ALARM_HOUR      = 0x39u, // (rw) Alarm hour.
+	MCU_REG_ALARM_DAY       = 0x3Au, // (rw) Alarm day.
 	MCU_REG_ALARM_MON       = 0x3Bu, // (rw) Alarm month.
-	MCU_REG_ALARM_Y         = 0x3Cu, // (rw) Alarm year.
+	MCU_REG_ALARM_YEAR      = 0x3Cu, // (rw) Alarm year.
 	MCU_REG_RTC_TICK_LO     = 0x3Du, // (ro) RTC tick counter LSB in 32768 Hz units.
 	MCU_REG_RTC_TICK_HI     = 0x3Eu, // (ro) RTC tick counter MSB.
 	MCU_REG_UNK3F           = 0x3Fu, // (wo) Unknown state/control reg.

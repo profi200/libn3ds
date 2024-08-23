@@ -52,7 +52,7 @@ ALWAYS_INLINE Fcram* getFcramRegs(void)
 #define FCRAM_CFG0_SLEW_FAST      (0u)   // Probably fast slew rate. Described as "Pre Driver Strength" in Fujitsu datasheets.
 #define FCRAM_CFG0_SLEW_SLOW      BIT(1) // Probably slow slew rate.
 #define FCRAM_CFG0_STRENGTH_NORM  (0u)   // Probably normal driver strength according to Fujitsu datasheets.
-#define FCRAM_CFG0_STRENGTH_WEAK  BIT(2) // // Probably weak driver strength.
+#define FCRAM_CFG0_STRENGTH_WEAK  BIT(2) // Probably weak driver strength.
 // Bits 3 and 4 unknown. Another timing setting.
 
 // REG_FCRAM_CFG1

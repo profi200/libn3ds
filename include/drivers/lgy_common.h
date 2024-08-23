@@ -66,9 +66,9 @@ typedef struct
 	{
 		struct
 		{
-			u8 h;
+			u8 hour;
 			u8 min;
-			u8 s;
+			u8 sec;
 			u8 unused;
 		};
 		u32 time;
@@ -77,9 +77,9 @@ typedef struct
 	{
 		struct
 		{
-			u8 y;
+			u8 year;
 			u8 mon;
-			u8 d;
+			u8 day;
 			u8 dow; // Day of week.
 		};
 		u32 date;

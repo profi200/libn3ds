@@ -38,22 +38,22 @@ extern "C"
 
 typedef struct
 {
-	u8 s;   // Second.
-	u8 min; // Minute.
-	u8 h;   // Hour.
-	u8 dow; // Unused day of week.
-	u8 d;   // Day.
-	u8 mon; // Month.
-	u8 y;   // Year.
+	u8 sec;     // Second.
+	u8 min;     // Minute.
+	u8 hour;    // Hour.
+	u8 unused;  // Unused day of week.
+	u8 day;     // Day.
+	u8 mon;     // Month.
+	u8 year;    // Year.
 } RtcTimeDate;
 
 typedef struct
 {
-	u8 min; // Minute.
-	u8 h;   // Hour.
-	u8 d;   // Day.
-	u8 mon; // Month.
-	u8 y;   // Year.
+	u8 min;  // Minute.
+	u8 hour; // Hour.
+	u8 day;  // Day.
+	u8 mon;  // Month.
+	u8 year; // Year.
 } AlarmTimeDate;
 
 typedef struct
