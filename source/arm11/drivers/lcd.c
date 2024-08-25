@@ -144,6 +144,8 @@ void LCD_deinit(const u8 mcuLcdOffMask)
 
 void LCD_setBacklightPower(u8 mcuBlMask)
 {
+	if(mcuBlMask == 0) return;
+
 	// Check if we have LCD power bits set.
 	// Also check if we have power on and off bits set at the same time.
 	fb_assert((mcuBlMask & (MCU_LCD_PWR_ON | MCU_LCD_PWR_OFF)) == 0);
