@@ -242,6 +242,44 @@ void LGYCAP_stop(const LgyCapDev dev)
 	}
 }
 
+KRes LGYCAP_captureFrameUnscaled(const LgyCapDev dev)
+{
+	// Stop capture to prevent glitches and so we can safely change settings.
+	LGYCAP_stop(dev);
+
+	// Backup settings.
+	LgyCap *const lgyCap = getLgyCapRegs(dev);
+	const u32 cnt = lgyCap->cnt;
+	const u32 dim = lgyCap->dim;
+	const u32 irq = lgyCap->irq;
+
+	// Force native resolution, disable IRQs and patch DMA prog.
+	// Note: Disabling IRQs is necessary to prevent crashes
+	//       in open_agb_firm's color correction code.
+	// TODO: Support for DS(i) mode resolution.
+	lgyCap->cnt = cnt & ~(LGYCAP_HSCALE_EN | LGYCAP_VSCALE_EN);
+	lgyCap->dim = LGYCAP_DIM(240, 160);
+	lgyCap->irq = 0;
+	patchDmaProg(240, getPixelSize(cnt));
+
+	// Start capture and wait for the frame.
+	LGYCAP_start(dev);
+	KHandle event = g_frameReadyEvents[dev];
+	const KRes res = waitForEvent(event);
+	if(res != KRES_OK) return res;
+	LGYCAP_stop(dev); // Clears the event too.
+
+	lgyCap->cnt = cnt;
+	lgyCap->dim = dim;
+	lgyCap->irq = irq;
+	patchDmaProg((dim & 0x1FFu) + 1, getPixelSize(cnt));
+
+	// Capture must be restarted by the caller.
+	//LGYCAP_start(dev);
+
+	return KRES_OK;
+}
+
 void LGYCAP_start(const LgyCapDev dev)
 {
 	// Restart DMA followed by LgyCap.

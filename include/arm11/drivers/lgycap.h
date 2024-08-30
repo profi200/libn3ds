@@ -128,9 +128,46 @@ typedef enum
 
 
 
-KHandle LGYCAP_init(const LgyCapDev dev, const LgyCapCfg *const cfg); // Returns frame ready KEvent.
+/**
+ * @brief      Initializes and starts GBA/DS(i) video capture.
+ *
+ * @param[in]  dev   The GBA/DS(i) output to capture.
+ * @param[in]  cfg   The capture configuration.
+ *
+ * @return     A KEvent handle that is signaled each time a frame is captured.
+ *             The event must be cleared manually.
+ */
+KHandle LGYCAP_init(const LgyCapDev dev, const LgyCapCfg *const cfg);
+
+/**
+ * @brief      Deinitializes video capture and deletes the frame captured event.
+ *
+ * @param[in]  dev   The GBA/DS(i) output to deinitialize.
+ */
 void LGYCAP_deinit(const LgyCapDev dev);
+
+/**
+ * @brief      Stops video capture.
+ *
+ * @param[in]  dev   The GBA/DS(i) output to stop.
+ */
 void LGYCAP_stop(const LgyCapDev dev);
+
+/**
+ * @brief      Captures a single frame in native resolution and stops capture.
+ *             Useful for screenshots.
+ *
+ * @param[in]  dev   The GBA/DS(i) output to capture a single frame of.
+ *
+ * @return     Returns KRES_OK or KRES_HANDLE_DELETED.
+ */
+KRes LGYCAP_captureFrameUnscaled(const LgyCapDev dev);
+
+/**
+ * @brief      Restarts a previously stopped capture.
+ *
+ * @param[in]  dev   The GBA/DS(i) output to start capturing on.
+ */
 void LGYCAP_start(const LgyCapDev dev);
 
 #ifdef __cplusplus
