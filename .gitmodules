@@ -1,0 +1,3 @@
+[submodule "libraries/fatfs"]
+	path = libraries/fatfs
+	url = https://github.com/WonderfulToolchain/wf-fatfs
