@@ -95,18 +95,20 @@ BEGIN_ASM_FUNC invalidateBothCaches
 END_ASM_FUNC
 
 BEGIN_ASM_FUNC cleanDCache
-	mov  r1, #0
-	cleanDCache_segment_lp:
-		mov  r0, r1                       @ New segment. Reset index.
-		cleanDCache_index_lp:
-			mcr  p15, 0, r0, c7, c10, 2   @ Clean data cache entry (index and segment).
-			add  r0, r0, #CACHE_LINE_SIZE @ Increment index.
-			tst  r0, #D_CACHE_SIZE / 4
-			beq  cleanDCache_index_lp
-		adds r1, r1, #0x40000000          @ Increment segment.
-		bne  cleanDCache_segment_lp
+	mov  r0, #0
+	mov  r1, #D_CACHE_SIZE / 4
+	rsb  r1, r1, #0x40000000
+	cleanDCache_idx_seg_lp:
+		mcr  p15, 0, r0, c7, c10, 2   @ Clean data cache entry (index and segment).
+		add  r0, r0, #CACHE_LINE_SIZE @ Increment index.
+		tst  r0, #D_CACHE_SIZE / 4
+		beq  cleanDCache_idx_seg_lp
 
-	mcr  p15, 0, r1, c7, c10, 4           @ Drain write buffer.
+		@ Increment segment.
+		adds r0, r0, r1
+		bne  cleanDCache_idx_seg_lp
+
+	mcr  p15, 0, r0, c7, c10, 4       @ Drain write buffer.
 	bx   lr
 END_ASM_FUNC
 
@@ -128,18 +130,20 @@ BEGIN_ASM_FUNC cleanDCacheRange
 END_ASM_FUNC
 
 BEGIN_ASM_FUNC flushDCache
-	mov  r1, #0
-	flushDCache_segment_lp:
-		mov  r0, r1                       @ New segment. Reset index.
-		flushDCache_index_lp:
-			mcr  p15, 0, r0, c7, c14, 2   @ Clean and flush data cache entry (index and segment).
-			add  r0, r0, #CACHE_LINE_SIZE @ Increment index.
-			tst  r0, #D_CACHE_SIZE / 4
-			beq  flushDCache_index_lp
-		adds r1, r1, #0x40000000          @ Increment segment.
-		bne  flushDCache_segment_lp
+	mov  r0, #0
+	mov  r1, #D_CACHE_SIZE / 4
+	rsb  r1, r1, #0x40000000
+	flushDCache_idx_seg_lp:
+		mcr  p15, 0, r0, c7, c14, 2   @ Clean and flush data cache entry (index and segment).
+		add  r0, r0, #CACHE_LINE_SIZE @ Increment index.
+		tst  r0, #D_CACHE_SIZE / 4
+		beq  flushDCache_idx_seg_lp
 
-	mcr  p15, 0, r1, c7, c10, 4           @ Drain write buffer.
+		@ Increment segment.
+		adds r0, r0, r1
+		bne  flushDCache_idx_seg_lp
+
+	mcr  p15, 0, r0, c7, c10, 4       @ Drain write buffer.
 	bx   lr
 END_ASM_FUNC
 
