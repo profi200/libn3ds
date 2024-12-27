@@ -563,7 +563,7 @@ void GX_processCommandList(const u32 size, const u32 *const cmdList)
 	GxRegs *const gx = getGxRegs();
 	gx->p3d[GPUREG_IRQ_ACK] = 0;
 	while(gx->psc_irq_stat & IRQ_STAT_P3D)
-		wait_cycles(0x30);
+		wait_cycles(16);
 
 	// Start command list processing.
 	gx->p3d[GPUREG_CMDBUF_SIZE0] = size>>3;
