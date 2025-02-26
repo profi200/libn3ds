@@ -330,10 +330,12 @@ void GFX_init(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode)
 	}
 
 	// Not in gsp. Clear entire VRAM.
-	// Note: Benchmarks show that a single fill is significantly faster than 2 fills in
-	//       VRAM A and B at the same time. 2 fills at the same time in the same half
-	//       are again a little faster but more annoying to handle.
-	GX_memoryFill((u32*)VRAM_BASE, PSC_FILL_32_BITS, VRAM_SIZE, 0, NULL, 0, 0, 0);
+	// Note: Benchmarks show that
+	//       - 1 fill for the entire VRAM is the slowest.
+	//       - 2 fills in the same half are ~200 MiB/s faster.
+	//       - 2 fills with one in each VRAM half are twice as fast as 1.
+	GX_memoryFill((u32*)VRAM_BANK0, PSC_FILL_32_BITS, VRAM_BANK_SIZE, 0,
+	              (u32*)VRAM_BANK1, PSC_FILL_32_BITS, VRAM_BANK_SIZE, 0);
 
 	// Hardware bug:
 	// Not in gsp but HOS apps do this(?).
@@ -360,6 +362,7 @@ void GFX_init(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode)
 	// Not in gsp. Ensure VRAM is cleared.
 	// Also wait for the dummy display transfer/texture copy.
 	GFX_waitForPSC0();
+	GFX_waitForPSC1();
 	GFX_waitForPPF();
 
 	// Enable frame buffer output.
