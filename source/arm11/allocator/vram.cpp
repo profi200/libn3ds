@@ -9,58 +9,105 @@ extern "C"
 #include "mem_pool.h"
 #include "addrmap.h"
 
-static MemPool sVramPool;
+static MemPool sVramPoolA, sVramPoolB;
 
 static bool vramInit()
 {
-	auto blk = MemBlock::Create((u8*)VRAM_BASE, VRAM_SIZE);
-	if (blk)
-	{
-		sVramPool.AddBlock(blk);
-		rbtree_init(&sAddrMap, addrMapNodeComparator);
+	if (sVramPoolA.Ready() || sVramPoolB.Ready())
 		return true;
+
+	auto blkA = MemBlock::Create((u8*)VRAM_BANK0, VRAM_BANK_SIZE);
+	if (!blkA)
+		return false;
+
+	auto blkB = MemBlock::Create((u8*)VRAM_BANK1, VRAM_BANK_SIZE);
+	if (!blkB)
+	{
+		free(blkA);
+		return false;
 	}
-	return false;
+
+	sVramPoolA.AddBlock(blkA);
+	sVramPoolB.AddBlock(blkB);
+	rbtree_init(&sAddrMap, addrMapNodeComparator);
+	return true;
+}
+
+static MemPool* vramPoolForAddr(void* addr)
+{
+	uintptr_t addr_ = (uintptr_t)addr;
+	if (addr_ < VRAM_BASE)
+		return nullptr;
+	if (addr_ < VRAM_BANK1)
+		return &sVramPoolA;
+	if (addr_ < VRAM_BASE + VRAM_SIZE)
+		return &sVramPoolB;
+	return nullptr;
+}
+
+void* vramAlloc(size_t size)
+{
+	return vramMemAlignAt(size, 0x80, VRAM_ALLOC_ANY);
+}
+
+void* vramAllocAt(size_t size, vramAllocPos pos)
+{
+	return vramMemAlignAt(size, 0x80, pos);
 }
 
 void* vramMemAlign(size_t size, size_t alignment)
 {
-	// Enforce minimum alignment
-	if (alignment < 16)
-		alignment = 16;
+	return vramMemAlignAt(size, alignment, VRAM_ALLOC_ANY);
+}
 
-	// Convert alignment to shift amount
-	int shift;
-	for (shift = 4; shift < 32; shift ++)
-	{
-		if ((1U<<shift) == alignment)
-			break;
-	}
-	if (shift == 32) // Invalid alignment
+void* vramMemAlignAt(size_t size, size_t alignment, vramAllocPos pos)
+{
+	// Convert alignment to shift
+	int shift = alignmentToShift(alignment);
+	if (shift < 0)
 		return nullptr;
 
-	// Initialize the pool if it is not ready
-	if (!sVramPool.Ready() && !vramInit())
+	// Initialize the allocator if it is not ready
+	if (!vramInit())
 		return nullptr;
 
 	// Allocate the chunk
 	MemChunk chunk;
-	if (!sVramPool.Allocate(chunk, size, shift))
+	bool didAlloc = false;
+	switch (pos & VRAM_ALLOC_ANY)
+	{
+		default:
+			break;
+		case VRAM_ALLOC_A:
+			didAlloc = sVramPoolA.Allocate(chunk, size, shift);
+			break;
+		case VRAM_ALLOC_B:
+			didAlloc = sVramPoolB.Allocate(chunk, size, shift);
+			break;
+		case VRAM_ALLOC_ANY:
+		{
+			// Crude attempt at "load balancing" VRAM A and B
+			bool prefer_a = sVramPoolA.GetFreeSpace() >= sVramPoolB.GetFreeSpace();
+			MemPool& firstPool = prefer_a ? sVramPoolA : sVramPoolB;
+			MemPool& secondPool = prefer_a ? sVramPoolB : sVramPoolA;
+
+			didAlloc = firstPool.Allocate(chunk, size, shift);
+			if (!didAlloc) didAlloc = secondPool.Allocate(chunk, size, shift);
+			break;
+		}
+	}
+
+	if (!didAlloc)
 		return nullptr;
 
 	auto node = newNode(chunk);
 	if (!node)
 	{
-		sVramPool.Deallocate(chunk);
+		vramPoolForAddr(chunk.addr)->Deallocate(chunk);
 		return nullptr;
 	}
 	if (rbtree_insert(&sAddrMap, &node->node)) {}
 	return chunk.addr;
-}
-
-void* vramAlloc(size_t size)
-{
-	return vramMemAlign(size, 0x80);
 }
 
 void* vramRealloc(void* mem, size_t size)
@@ -84,7 +131,7 @@ void vramFree(void* mem)
 	if (!node) return;
 
 	// Free the chunk
-	sVramPool.Deallocate(node->chunk);
+	vramPoolForAddr(mem)->Deallocate(node->chunk);
 
 	// Free the node
 	delNode(node);
@@ -92,5 +139,5 @@ void vramFree(void* mem)
 
 u32 vramSpaceFree()
 {
-	return sVramPool.GetFreeSpace();
+	return sVramPoolA.GetFreeSpace() + sVramPoolB.GetFreeSpace();
 }

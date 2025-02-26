@@ -87,24 +87,24 @@ static void allocateFramebufs(const GfxFmt fmtTop, const GfxFmt fmtBot, const Gf
 	// The left/right buffers are always allocated at once to allow easy 2D/3D mode switching.
 
 	// First top left/right frame buffers.
-	u8 *topBuf = vramAlloc(topSize);
+	u8 *topBuf = vramAllocAt(topSize, VRAM_ALLOC_A);
 	u8 *topRightBuf = topBuf + (topSize / 2);
 	state->lcds[GFX_LCD_TOP].bufs[0] = topBuf;
 	state->lcds[GFX_LCD_TOP].bufs[1] = topRightBuf;
 
 	// First bottom frame buffer.
-	u8 *botBuf = vramAlloc(botSize);
+	u8 *botBuf = vramAllocAt(botSize, VRAM_ALLOC_A);
 	state->lcds[GFX_LCD_BOT].bufs[0] = botBuf;
 	state->lcds[GFX_LCD_BOT].bufs[1] = botBuf;
 
 	// Second top left/right frame buffers.
-	topBuf = vramAlloc(topSize);
+	topBuf = vramAllocAt(topSize, VRAM_ALLOC_A);
 	topRightBuf = topBuf + (topSize / 2);
 	state->lcds[GFX_LCD_TOP].bufs[2] = topBuf;
 	state->lcds[GFX_LCD_TOP].bufs[3] = topRightBuf;
 
 	// Second bottom frame buffer.
-	botBuf = vramAlloc(botSize);
+	botBuf = vramAllocAt(botSize, VRAM_ALLOC_A);
 	state->lcds[GFX_LCD_BOT].bufs[2] = botBuf;
 	state->lcds[GFX_LCD_BOT].bufs[3] = botBuf;
 
