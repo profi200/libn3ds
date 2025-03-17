@@ -75,9 +75,9 @@ static void dmaIrqHandler(const u32 intSource)
 	gx->pdc1.v_total = vtotal;
 	// Wide mode:
 	/*u32 vtotal;
-	if(pdc0->v_count > 828 - 82) vtotal = 830; // Slower than GBA.
-	else                         vtotal = 829; // Faster than GBA.
-	pdc0->v_total = vtotal;*/
+	if(gx->pdc0.v_count > 828 - 82) vtotal = 830; // Slower than GBA.
+	else                            vtotal = 829; // Faster than GBA.
+	gx->pdc0.v_total = vtotal;*/
 
 	signalEvent(g_frameReadyEvents[dev], false);
 }
