@@ -135,6 +135,22 @@ void GFX_deinit(void);
 void GFX_setFormat(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode);
 
 /**
+ * @brief      Returns the frame buffer format of the given LCD.
+ *
+ * @param[in]  lcd   The lcd.
+ *
+ * @return     The frame buffer format.
+ */
+GfxFmt GFX_getFormat(const GfxLcd lcd);
+
+/**
+ * @brief      Returns the current display mode of the top LCD.
+ *
+ * @return     The top LCD display mode.
+ */
+GfxTopMode GFX_getTopMode(void);
+
+/**
  * @brief      Powers on LCD backlights.
  *
  * @param[in]  mask  The backlights to power on.

@@ -62,7 +62,7 @@ typedef struct
 	u8 swapMask;       // Double buffering masks for top and bottom. Bit 0 top, 1 bottom.
 	u8 swap;           // Currently active frame buffer. Bit 0 top, 1 bottom.
 	u8 mcuLcdState;    // Note: We use the power off bits to track power on.
-	//GfxTopMode mode;   // Current topscreen mode. TODO
+	GfxTopMode mode;   // Current topscreen mode.
 	LcdState lcds[2];  // 0 top, 1 bottom.
 	u32 lcdLum;        // Current LCD luminance for both LCDs.
 } GfxState;
@@ -126,6 +126,8 @@ static void allocateFramebufs(const GfxFmt fmtTop, const GfxFmt fmtBot, const Gf
 	                                  outModeTop | PDC_FB_FMT(fmtTop);
 	state->lcds[GFX_LCD_BOT].fb_fmt = PDC_FB_DMA_INT(8u) | PDC_FB_BURST_24_32 |
 	                                  PDC_FB_OUT_A | PDC_FB_FMT(fmtBot);
+
+	state->mode = mode;
 }
 
 static void freeFramebufs(void)
@@ -418,6 +420,16 @@ void GFX_setFormat(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mo
 
 	// TODO: Should we leave disabling fill to the caller to avoid glitches?
 	GFX_setForceBlack(false, false);
+}
+
+GfxFmt GFX_getFormat(const GfxLcd lcd)
+{
+	return g_gfxState.lcds[lcd].fb_fmt & PDC_FB_FMT_MASK;
+}
+
+GfxTopMode GFX_getTopMode(void)
+{
+	return g_gfxState.mode;
 }
 
 void GFX_powerOnBacklight(const GfxBl mask)
