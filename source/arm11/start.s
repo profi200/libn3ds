@@ -93,6 +93,13 @@ BEGIN_ASM_FUNC _start no_section
 	adr r2, _sysmode_stacks
 	ldr sp, [r2, r4, lsl #2]
 
+	@ GCC can generate vfp code even if no fp math is used.
+	@ Make sure vfp is enabled before calling C/C++ functions.
+	bl setupVfp
+
+	@ Map DSP RAM so ARM11 can access it.
+	bl mapDspRam
+
 	cmp r4, #0
 	bne _start_skip_bss_init_array
 
@@ -113,8 +120,6 @@ _start_skip_bss_init_array:
 	ldrh r2, =PM_CCNT_IRQ | PM_PMN1_IRQ | PM_PMN0_IRQ | PM_CCNT_RST | PM_PMN01_RST
 	mcr p15, 0, r2, c15, c12, 0 @ Write Performance Monitor Control Register
 	blx setupMmu
-	bl mapDspRam
-	bl setupVfp
 	cpsie a
 	blx __systemInit
 
