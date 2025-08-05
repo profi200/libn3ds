@@ -25,6 +25,8 @@
 #include "arm11/start.h"
 #include "util.h"
 #include "arm11/drivers/scu.h"
+#include "kevent.h"
+#include "arm11/drivers/gx.h"
 
 
 // TODO: Before nabling this fix system.c to support core 2/3.
@@ -213,4 +215,37 @@ void PDN_controlGpu(const bool enableClk, const bool resetPsc, const bool resetO
 		wait_cycles(12); // 4x the needed cycles in case we are in LGR2 mode.
 		pdn->gpu_cnt = reg | PDN_GPU_CNT_NORST_ALL;
 	}
+}
+
+static void pdn_isr(UNUSED u32 intSource) 
+{
+	getPdnRegs()->wake_enable = 0;
+	getPdnRegs()->wake_reason = PDN_WAKE_SHELL_OPENED;
+}
+
+void PDN_sleep(void)
+{
+	IRQ_registerIsr(IRQ_PDN, 14, 0, pdn_isr);
+	getPdnRegs()->wake_enable = PDN_WAKE_SHELL_OPENED;
+
+	if (getPdnRegs()->cnt & PDN_CNT_VRAM_OFF)
+	{
+		// Disable VRAM banks. This is needed for PDN sleep mode.
+		GxRegs *const gx = getGxRegs();
+		gx->psc_vram |= PSC_VRAM_BANK_DIS_ALL;
+	}
+
+	getPdnRegs()->cnt |= PDN_CNT_SLEEP;
+
+	// turning off Gpu needs to be done after sleeping
+	PDN_controlGpu(false, false, false);
+	__wfi();
+}
+
+void PDN_wakeup(void)
+{
+	PDN_controlGpu(true, true, false);
+	GxRegs *const gx = getGxRegs();
+	gx->psc_vram &= ~PSC_VRAM_BANK_DIS_ALL;
+
 }

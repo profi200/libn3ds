@@ -588,6 +588,8 @@ void GX_processCommandList(const u32 size, const u32 *const cmdList)
 
 void GFX_sleep(void)
 {
+	GFX_setForceBlack(true, true);
+
 	const GfxState *const state = &g_gfxState;
 	LCD_deinit(state->mcuLcdState);
 
@@ -603,30 +605,30 @@ void GFX_sleep(void)
 	// Stop display controllers.
 	stopDisplayControllersSafe();
 
+	for(u8 i = 0; i < 6; i++)
+	{
+		unbindInterruptEvent(IRQ_PSC0 + i);
+	}
+
 	// Wait for at least 1 horizontal line. 40 µs in this case.
 	// 16713.680875044929009032708 / 413 = 40.468960956525251837852 µs.
 	// TODO: 40 µs may not be enough in legacy mode?
 	TIMER_sleepUs(40);
 
 	// Flush caches to VRAM.
-	flushDCacheRange((void*)VRAM_BASE, VRAM_SIZE);
+	flushDCacheRange((void*)VRAM_BASE, VRAM_SIZE);	
 
-	// Disable VRAM banks. This is needed for PDN sleep mode.
-	GxRegs *const gx = getGxRegs();
-	gx->psc_vram |= PSC_VRAM_BANK_DIS_ALL;
-
-	// Stop clock.
-	PDN_controlGpu(false, false, false);
 }
 
 void GFX_sleepAwake(void)
 {
-	// Resume clock and reset PSC.
-	PDN_controlGpu(true, true, false);
+	for(u8 i = 0; i < 6; i++)
+	{
+		bindInterruptToEvent(g_gfxState.events[i], IRQ_PSC0 + i, 14);
+	}
 
 	// Restore PSC settings.
 	GxRegs *const gx = getGxRegs();
-	gx->psc_vram &= ~PSC_VRAM_BANK_DIS_ALL;
 	gx->gpu_clk  = 0x70100;
 	gx->psc_fill0.cnt = 0;
 	gx->psc_fill1.cnt = 0;
@@ -645,7 +647,7 @@ void GFX_sleepAwake(void)
 	// Since both PDCs are not reset in sleep mode this is not strictly necessary.
 	// Warning: If we decide to change this to a full reinit restore the mode!
 	const GfxState *const state = &g_gfxState;
-	gx->pdc0.swap = state->swap;    // Bit 1 is not writable.
+	gx->pdc0.swap = state->swap;	// Bit 1 is not writable.
 	gx->pdc1.swap = state->swap>>1;
 	gx->pdc0.cnt  = PDC_CNT_OUT_EN | GFX_PDC0_IRQS | PDC_CNT_EN;
 	gx->pdc1.cnt  = PDC_CNT_OUT_EN | GFX_PDC1_IRQS | PDC_CNT_EN;
@@ -655,14 +657,15 @@ void GFX_sleepAwake(void)
 	// Power on LCDs and backlights.
 	LCD_init(state->mcuLcdState<<1, state->lcdLum);
 
-	// Active backlight and luminance stuff.
-	// TODO
 
 	// Not from gsp. Wait for VRAM clear finish.
 	GFX_waitForPSC0();
 
 	// Enable frame buffer output.
 	GFX_setForceBlack(false, false);
+
+	GFX_waitForVBlank0();
+	GFX_waitForVBlank0();
 }
 
 bool GFX_setupExceptionFrameBuffer(void)
