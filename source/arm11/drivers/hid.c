@@ -33,7 +33,8 @@
                            MCU_IRQ_BATT_CHARGE_STOP | MCU_IRQ_SHELL_OPEN | \
                            MCU_IRQ_SHELL_CLOSE | MCU_IRQ_WIFI_PRESS | \
                            MCU_IRQ_HOME_RELEASE | MCU_IRQ_HOME_PRESS | \
-                           MCU_IRQ_POWER_HELD | MCU_IRQ_POWER_PRESS)
+                           MCU_IRQ_POWER_HELD | MCU_IRQ_POWER_PRESS | \
+                           MCU_IRQ_LOW_BATT)
 
 #define CPAD_THRESHOLD  (400)
 
@@ -75,6 +76,7 @@ static void updateMcuHidState(void)
 	tmp |= state>>10 & KEY_BAT_CHARGING;                    // Battery started charging
 	if(state & BIT(14)) tmp &= ~KEY_BAT_CHARGING;           // Battery stopped charging
 	tmp |= state>>16 & KEY_VOL_SLIDER;                      // Volume slider update
+	tmp |= state>>6 & KEY_LOW_BATTERY;                      // Low battery notification
 	g_extraKeys = tmp;
 }
 

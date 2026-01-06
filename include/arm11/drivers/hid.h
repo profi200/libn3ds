@@ -81,7 +81,8 @@ enum
 	KEY_WIFI         = BIT(3),
 	KEY_SHELL        = BIT(4), // Auto clears on open
 	KEY_BAT_CHARGING = BIT(5), // Auto clears when charging stops
-	KEY_VOL_SLIDER   = BIT(6)
+	KEY_VOL_SLIDER   = BIT(6),
+	KEY_LOW_BATTERY  = BIT(7)
 };
 
 typedef struct
