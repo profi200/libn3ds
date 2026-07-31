@@ -33,7 +33,7 @@ extern "C"
                                  MCU_IRQ_BATT_CHARGE_STOP | MCU_IRQ_ACC_DATA_READY | MCU_IRQ_ACC_RW_DONE | \
                                  MCU_IRQ_WATCHDOG | MCU_IRQ_SHELL_OPEN | MCU_IRQ_SHELL_CLOSE | \
                                  MCU_IRQ_WIFI_PRESS | MCU_IRQ_HOME_RELEASE | MCU_IRQ_HOME_PRESS | \
-                                 MCU_IRQ_POWER_HELD | MCU_IRQ_POWER_PRESS))
+                                 MCU_IRQ_POWER_HELD | MCU_IRQ_POWER_PRESS | MCU_IRQ_LOW_BATT))
 
 
 typedef struct
