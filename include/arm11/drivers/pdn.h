@@ -161,6 +161,8 @@ void PDN_core123Init(void);
 void PDN_setSocmode(PdnSocmode socmode);
 void PDN_poweroffCore23(void);
 void PDN_controlGpu(const bool enableClk, const bool resetPsc, const bool resetOther);
+void PDN_sleep(void);
+void PDN_wakeup(void);
 
 #ifdef __cplusplus
 } // extern "C"
