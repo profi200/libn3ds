@@ -91,6 +91,14 @@ void WEAK __systemInit(void)
 	}
 }
 
+void __systemWaitCore1Standby(void)
+{
+	/* Wait until the current Core 1 job has returned to the standby loop. */
+	while(getScuRegs()->mn3 != 0u)
+		__asm__ volatile("nop");
+	__dsb();
+}
+
 void __systemBootCore1(void (*entry)(void))
 {
 	// Set core 1 entrypoint.

@@ -302,6 +302,50 @@ static void oldBootloaderWorkaround(void)
 	(void)MCU_getIrqs(MCU_LCD_IRQ_MASK);
 }
 
+static void initVramAfterReset(void)
+{
+	// Not in gsp. Clear entire VRAM.
+	// Note: Benchmarks show that
+	//       - 1 fill for the entire VRAM is the slowest.
+	//       - 2 fills in the same half are ~200 MiB/s faster.
+	//       - 2 fills with one in each VRAM half are twice as fast as 1.
+	GX_memoryFill((u32*)VRAM_BANK0, PSC_FILL_32_BITS, VRAM_BANK_SIZE, 0,
+	              (u32*)VRAM_BANK1, PSC_FILL_32_BITS, VRAM_BANK_SIZE, 0);
+
+	// Hardware bug:
+	// Not in gsp but HOS apps do this(?).
+	// PPF is (sometimes) glitchy if the first transfer after reset is a texture copy.
+	// A single dummy texture copy/display transfer fixes it.
+	// For display transfer 64x64 is the minimum or display transfers will be permanently glitchy.
+	// Note: Nintendos code does a 128x128 display transfer.
+	// Note: 32x32 display transfer with same flags/format will always hang.
+	//GX_displayTransfer((u32*)VRAM_BASE, PPF_DIM(128, 128), (u32*)(VRAM_BASE + 0x8000), PPF_DIM(128, 128),
+	//                   PPF_O_FMT(GX_ABGR4) | PPF_I_FMT(GX_ABGR4) | PPF_NO_TILED_2_LINEAR);
+	GX_textureCopy((u32*)VRAM_BASE, 0, (u32*)(VRAM_BASE + 16), 0, 16);
+}
+
+static void initDisplayAfterReset(void)
+{
+	const GfxState *const state = &g_gfxState;
+
+	// Get the display controllers up and running.
+	// This needs to happen before LCD init (LCDs need some clock pulses to reset?).
+	displayControllerInit(state->mode);
+
+	// Initialize/power on the LCDs.
+	// Note: This will also enable forced black output.
+	LCD_init(state->mcuLcdState<<1, state->lcdLum);
+
+	// Not in gsp. Ensure VRAM is cleared.
+	// Also wait for the dummy display transfer/texture copy.
+	GFX_waitForPSC0();
+	GFX_waitForPSC1();
+	GFX_waitForPPF();
+
+	// Enable frame buffer output.
+	GFX_setForceBlack(false, false);
+}
+
 void GFX_init(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode)
 {
 	// Initialize GFX state.
@@ -331,44 +375,12 @@ void GFX_init(const GfxFmt fmtTop, const GfxFmt fmtBot, const GfxTopMode mode)
 		state->events[i] = kevent;
 	}
 
-	// Not in gsp. Clear entire VRAM.
-	// Note: Benchmarks show that
-	//       - 1 fill for the entire VRAM is the slowest.
-	//       - 2 fills in the same half are ~200 MiB/s faster.
-	//       - 2 fills with one in each VRAM half are twice as fast as 1.
-	GX_memoryFill((u32*)VRAM_BANK0, PSC_FILL_32_BITS, VRAM_BANK_SIZE, 0,
-	              (u32*)VRAM_BANK1, PSC_FILL_32_BITS, VRAM_BANK_SIZE, 0);
-
-	// Hardware bug:
-	// Not in gsp but HOS apps do this(?).
-	// PPF is (sometimes) glitchy if the first transfer after reset is a texture copy.
-	// A single dummy texture copy/display transfer fixes it.
-	// For display transfer 64x64 is the minimum or display transfers will be permanently glitchy.
-	// Note: Nintendos code does a 128x128 display transfer.
-	// Note: 32x32 display transfer with same flags/format will always hang.
-	//GX_displayTransfer((u32*)VRAM_BASE, PPF_DIM(128, 128), (u32*)(VRAM_BASE + 0x8000), PPF_DIM(128, 128),
-	//                   PPF_O_FMT(GX_ABGR4) | PPF_I_FMT(GX_ABGR4) | PPF_NO_TILED_2_LINEAR);
-	GX_textureCopy((u32*)VRAM_BASE, 0, (u32*)(VRAM_BASE + 16), 0, 16);
+	initVramAfterReset();
 
 	// Allocate our frame buffers.
 	allocateFramebufs(fmtTop, fmtBot, mode);
 
-	// Get the display controllers up and running.
-	// This needs to happen before LCD init (LCDs need some clock pulses to reset?).
-	displayControllerInit(mode);
-
-	// Initialize/power on the LCDs.
-	// Note: This will also enable forced black output.
-	LCD_init(mcuLcdState<<1, lcdLum);
-
-	// Not in gsp. Ensure VRAM is cleared.
-	// Also wait for the dummy display transfer/texture copy.
-	GFX_waitForPSC0();
-	GFX_waitForPSC1();
-	GFX_waitForPPF();
-
-	// Enable frame buffer output.
-	GFX_setForceBlack(false, false);
+	initDisplayAfterReset();
 }
 
 void GFX_deinit(void)
@@ -663,6 +675,14 @@ void GFX_sleepAwake(void)
 
 	// Enable frame buffer output.
 	GFX_setForceBlack(false, false);
+}
+
+void GFX_sleepAwakeCold(void)
+{
+	// Whole-system PDN sleep resets the graphics blocks and loses VRAM.
+	hardwareReset();
+	initVramAfterReset();
+	initDisplayAfterReset();
 }
 
 bool GFX_setupExceptionFrameBuffer(void)

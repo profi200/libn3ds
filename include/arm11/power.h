@@ -18,6 +18,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "types.h"
+
 
 
 #ifdef __cplusplus
@@ -25,6 +27,7 @@ extern "C"
 {
 #endif
 
+bool power_sleep(void);
 [[noreturn]] void power_off(void);
 [[noreturn]] void power_reboot(void);
 

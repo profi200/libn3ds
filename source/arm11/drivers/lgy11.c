@@ -32,15 +32,25 @@
 
 
 
+static volatile bool g_gbaKeypadWakeEnabled = true;
+
 static void lgySleepIsr(u32 intSource)
 {
 	Lgy11 *const lgy11 = getLgy11Regs();
 	if(intSource == IRQ_LGY_SLEEP)
 	{
-		// Workaround for The Legend of Zelda - A Link to the Past.
-		// This game doesn't set the IRQ enable bit so we force it
-		// on the 3DS side. Unknown if other games have this bug.
-		REG_HID_PADCNT = lgy11->padcnt | BIT(14);
+		if(g_gbaKeypadWakeEnabled)
+		{
+			// Workaround for The Legend of Zelda - A Link to the Past.
+			// This game doesn't set the IRQ enable bit so we force it
+			// on the 3DS side. Unknown if other games have this bug.
+			REG_HID_PADCNT = lgy11->padcnt | BIT(14);
+		}
+		else
+		{
+			// Host-controlled sleep is woken explicitly through LGY_SLEEP_CNT.
+			REG_HID_PADCNT = 0;
+		}
 	}
 	else // IRQ_HID_PADCNT
 	{
@@ -120,11 +130,24 @@ Result LGY_prepareGbaMode(bool directBoot, const u32 saveType, const char *const
 	setFcramModeForLegacy(LGY_MODE_AGB);
 
 	// Setup IRQ handlers and sleep mode handling.
+	g_gbaKeypadWakeEnabled = true;
 	getLgy11Regs()->sleep = BIT(15);
 	IRQ_registerIsr(IRQ_LGY_SLEEP, 14, 0, lgySleepIsr);
 	IRQ_registerIsr(IRQ_HID_PADCNT, 14, 0, lgySleepIsr);
 
 	return RES_OK;
+}
+
+Result LGY_setGbaStopVector(const bool enabled)
+{
+	const u32 cmdBuf[1] = {enabled};
+	return PXI_sendCmd(IPC_CMD9_SET_GBA_STOP_VECTOR, cmdBuf, 1);
+}
+
+void LGY11_setGbaKeypadWakeBridge(const bool enabled)
+{
+	g_gbaKeypadWakeEnabled = enabled;
+	if(!enabled) REG_HID_PADCNT = 0;
 }
 
 Result LGY_setGbaRtc(const GbaRtc rtc)
