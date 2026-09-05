@@ -26,12 +26,22 @@
 
 
 BEGIN_ASM_FUNC _gba_vector_overlay
-	mov  r0, #1
-	mov  r1, #0x4000000
-	strb r0, [r1, #0x300]  @ "POSTFLG"
-	ldr  pc, =0x3007E00
+	/*
+	 * Persistent GBA exception-vector overlay.
+	 *
+	 * The abort/reserved slots at 0x0C-0x14 host a minimal STOP trampoline.
+	 * The IRQ vector at 0x18 normally continues through the GBA BIOS and is
+	 * redirected to 0x0C only for a host-controlled GBA STOP transition.
+	 */
+	.word 0xEA000018  @ 0x00 Reset -> BIOS reset path.
+	.word 0xEA000004  @ 0x04 Undefined instruction.
+	.word 0xEA00004C  @ 0x08 SWI/SVC -> BIOS SVC handler.
+	.word 0xE92D1004  @ 0x0C stmdb sp!, {r2, r12}.
+	.word 0xEF030000  @ 0x10 SWI 03h / STOP.
+	.word 0xE8BD1004  @ 0x14 ldmia sp!, {r2, r12}.
+	.word 0xEA000042  @ 0x18 IRQ -> BIOS IRQ handler at 0x128.
+	.word 0xE59FD1A0  @ 0x1C FIQ.
 
-.pool
 .global _gba_vector_overlay_size
 _gba_vector_overlay_size = . - _gba_vector_overlay
 END_ASM_FUNC
@@ -43,13 +53,15 @@ BEGIN_ASM_FUNC _gba_boot
 	add  sp, r1, #0x6B  @ 0x3007E88
 	msr  CPSR_fsxc, #PSR_INT_OFF | PSR_SYS_MODE
 	add  sp, r1, #0x5B  @ 0x3007E78
-	mov  r3, #0x4700000
+	mov  r3, #0x4000000
 	bx   r1
 
 .thumb
 _gba_boot_thumb:
 	movs r0, #1
-	str  r0, [r3]  @ Disable BIOS overlay.
+	movs r1, #3
+	lsls r1, r1, #8
+	strb r0, [r3, r1]  @ POSTFLG = 1. Keep the vector overlay enabled.
 	@ The original ARM7 stub waits 256 cycles here (for the BIOS overlay disable?).
 	@ The original ARM7 stub waits 1677800 cycles (100 ms) here for LCD/LgyFb sync.
 	@ The original ARM7 stub waits for REG_VCOUNT = 160 here.
@@ -58,8 +70,6 @@ _gba_boot_thumb:
 	movs r0, #0xFF    @ Clear WRAM, iWRAM, palette RAM, VRAM, OAM
 	                  @ + reset SIO, sound and all other registers.
 
-.global _gba_boot_swi_a9_addr
-_gba_boot_swi_a9_addr = . - _gba_boot + 0x80BFE00 @ location in ARM9 address space.
 	swi  0x01       @ RegisterRamReset
 	@ After BIOS intro REG_TM0CNT_L is set to 0xFF8C instead of 0.
 	@ No other differences between direct boot and BIOS.

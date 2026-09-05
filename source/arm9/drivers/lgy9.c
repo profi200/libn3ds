@@ -37,16 +37,27 @@ static char g_savePath[512] = {0};
 
 
 
+#define GBA_IRQ_VECTOR_BIOS   (0xEA000042u) // b 0x00000128 from vector 0x18.
+#define GBA_IRQ_VECTOR_STOP   (0xEAFFFFFBu) // b 0x0000000C from vector 0x18.
+
 static void setupBiosOverlay(bool directBoot)
 {
-	copy32((u32*)getLgy9Regs()->a7_vector, (u32*)_gba_vector_overlay, (u32)_gba_vector_overlay_size);
-	//static const u32 biosVectors[8] = {0xEA000018, 0xEA000004, 0xEA00004C, 0xEA000002,
-	//                                   0xEA000001, 0xEA000000, 0xEA000042, 0xE59FD1A0};
-	//copy32(getLgy9Regs()->a7_vector, biosVectors, 32);
+	Lgy9 *const lgy9 = getLgy9Regs();
+	copy32((u32*)lgy9->a7_vector, (u32*)_gba_vector_overlay, (u32)_gba_vector_overlay_size);
 
-	copy32((u32*)LGY9_ARM7_STUB_LOC9, (u32*)_gba_boot, (u32)_gba_boot_size);
-	if(!directBoot) *_gba_boot_swi_a9_addr = 0x26; // Patch swi 0x01 (RegisterRamReset) to swi 0x26 (HardReset).
-	flushDCacheRange((void*)LGY9_ARM7_STUB_LOC9, (u32)_gba_boot_size);
+	if(directBoot)
+	{
+		/*
+		 * Reuse the existing ARM7 direct-boot stub while keeping the vector
+		 * overlay enabled for runtime GBA STOP redirection. The reset vector loads
+		 * the stub address from the otherwise unused FIQ slot.
+		 */
+		lgy9->a7_vector[0] = 0xE59FF014u; // ldr pc, [pc, #0x14] -> slot 0x1C.
+		lgy9->a7_vector[7] = LGY9_ARM7_STUB_LOC;
+
+		copy32((u32*)LGY9_ARM7_STUB_LOC9, (u32*)_gba_boot, (u32)_gba_boot_size);
+		flushDCacheRange((void*)LGY9_ARM7_STUB_LOC9, (u32)_gba_boot_size);
+	}
 }
 
 static u32 setupSaveType(const u32 saveType)
@@ -103,6 +114,12 @@ Result LGY_prepareGbaMode(bool directBoot, const u32 saveType, const char *const
 	}
 
 	return res;
+}
+
+Result LGY_setGbaStopVector(const bool enabled)
+{
+	getLgy9Regs()->a7_vector[6] = (enabled ? GBA_IRQ_VECTOR_STOP : GBA_IRQ_VECTOR_BIOS);
+	return RES_OK;
 }
 
 Result LGY_setGbaRtc(const GbaRtc rtc)

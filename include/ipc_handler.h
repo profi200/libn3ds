@@ -76,7 +76,8 @@ typedef enum
 
 	// Miscellaneous API.
 	//IPC_CMD9_TEST            = MAKE_CMD9(0, 0, 0),
-	IPC_CMD9_PREPARE_POWER   = MAKE_CMD9(0, 0, 0)  // Also used for panic() and guruMeditation().
+	IPC_CMD9_PREPARE_POWER   = MAKE_CMD9(0, 0, 0), // Also used for panic() and guruMeditation().
+	IPC_CMD9_SET_GBA_STOP_VECTOR = MAKE_CMD9(0, 0, 1)
 } IpcCmd9;
 
 enum {_CMD11_C_BASE = __COUNTER__ + 1}; // Start at 0.

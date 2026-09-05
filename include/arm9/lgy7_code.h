@@ -33,7 +33,6 @@ extern const u32 _gba_vector_overlay_size[];
 
 // ARM7 boot code for GBA mode.
 [[noreturn]] void _gba_boot(void);
-extern u8 _gba_boot_swi_a9_addr[]; // "swi 0x01" location in ARM9 address space.
 extern const u32 _gba_boot_size[];
 
 #ifdef __cplusplus

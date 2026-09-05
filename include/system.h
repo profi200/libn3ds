@@ -30,6 +30,7 @@ extern "C"
 //void WEAK __systemInit(void);
 
 #ifdef __ARM11__
+void __systemWaitCore1Standby(void);
 void __systemBootCore1(void (*entry)(void));
 #endif
 

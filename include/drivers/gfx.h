@@ -278,6 +278,14 @@ void GFX_sleep(void);
  */
 void GFX_sleepAwake(void);
 
+/**
+ * @brief      Reinitializes graphics hardware after whole-system PDN sleep.
+ *
+ *             Unlike GFX_sleepAwake(), this performs a full hardware reset.
+ *             VRAM contents are lost and must be reconstructed by the caller.
+ */
+void GFX_sleepAwakeCold(void);
+
 bool GFX_setupExceptionFrameBuffer(void);
 
 #endif // #ifdef __ARM11__

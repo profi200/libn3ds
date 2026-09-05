@@ -57,6 +57,17 @@ ALWAYS_INLINE Lgy11* getLgy11Regs(void)
 
 
 void LGY11_switchMode(void);
+void LGY11_setGbaKeypadWakeBridge(bool enabled);
+
+static inline bool LGY11_isGbaSleeping(void)
+{
+	return (getLgy11Regs()->sleep & BIT(1)) != 0u;
+}
+
+static inline void LGY11_wakeGba(void)
+{
+	getLgy11Regs()->sleep |= (u16)(BIT(0) | BIT(1));
+}
 
 static inline void LGY11_setInputState(const u16 pressed)
 {
